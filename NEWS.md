@@ -8,7 +8,7 @@
 * `R/default.R`, default R script.
 * `R/01-design.R`, skeleton script make batch design for omics (currently "empty").
 * `R/02-qc_idats.Rmd`, YAML header for Rmarkdown template in `umr1283/dmapaq`.
-* `R/02-qc_idats_snps.Rmd`, YAML header for Rmarkdown template in `umr1283/dmapaq`.
+* `R/02-qc_idats_snps.Rmd`, YAML header for Rmarkdown template in `umr1283/dmapaq` (mostly for mQTL analysis).
 * `R/03-qc_plink.Rmd`, skeleton script or YAML header for Rmarkdown template in `umr1283/dgapaq`.
 * `R/04-qc_impute.Rmd`, skeleton script or YAML header for Rmarkdown template in `umr1283/dgapaq`.
 * `R/05-ethnicity.R`, skeleton script to perform etnicity inference using 1,000 Genomes and HRC imputed VCF files.
