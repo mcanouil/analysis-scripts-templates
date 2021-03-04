@@ -1,0 +1,54 @@
+---
+params:
+  project_name: !r gsub("(.*)_.*", "\\1", list.files(here::here(), pattern = ".Rproj$"))
+  title: !r paste0("[", params[["project_name"]], "] EPIC Array Quality-Control")
+  author_name: "Mickaël CANOUIL, *Ph.D.*"
+  author_affiliation: "INSERM U1283, CNRS UMR 8199, European Genomic Institute for Diabetes (EGID), Institut Pasteur de Lille, University of Lille, Lille University Hospital, Lille, F-59000, France."
+  author_email: "mickael.canouil@cnrs.fr"
+  output_directory: !r here::here("outputs", "02-qc_idats")
+  csv_file: !r file.path("/disks/DATA/Projects", params[["project_name"]], "EPIC/Ssample_sheet.csv")
+  design: !r here::here("outputs", "01-design", "design.xlsx")
+  data_directory: !r file.path("/disks/DATA/Projects", params[["project_name"]], "EPIC/idats/")
+  array: "EPIC"
+  annotation: "ilm10b4.hg19"
+  filter_snps: TRUE
+  filter_non_cpg: TRUE
+  filter_xy: TRUE
+  filter_multihit: TRUE
+  filter_beads: TRUE
+  population: NULL
+  bead_cutoff: 0.05
+  detection_pvalues: 0.01
+  filter_callrate: TRUE
+  callrate_samples: 0.99
+  callrate_probes: 1
+  sex_threshold: NULL 
+  sex_colname: "sexe"
+  norm_background: "oob"
+  norm_dye: "RELIC"
+  norm_quantile: "quantile1" 
+  cell_tissue: "blood"
+  pca: TRUE
+  pca_vars: !r c("Sample_Plate", "Sentrix_ID")
+  pca_threshold: 2
+  max_labels: 15
+title: '`r params[["title"]]`'
+author:
+- name: '`r params[["author_name"]]`'
+  affiliation: '`r params[["author_affiliation"]]`'
+  email: '`r params[["author_email"]]`'
+date: '`r format(Sys.time(), "%B %d, %Y")`'
+output:
+  bookdown::html_document2:
+    theme: simplex
+    toc: true
+    toc_depth: 3
+    toc_float: 
+      collapsed: false
+    fig_width: 6.3
+    fig_height: 4.7
+    number_sections: true
+    self_contained: true
+---
+
+<!-- https://github.com/umr1283/dmapaq -->

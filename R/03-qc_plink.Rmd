@@ -1,0 +1,53 @@
+---
+params:
+  project_name: !r gsub("(.*)_.*", "\\1", list.files(here::here(), pattern = ".Rproj$"))
+  title: !r paste0("[", params[["project_name"]], "] Omni2.5 Array Quality-Control")
+  author_name: "Mickaël CANOUIL, *Ph.D.*"
+  author_affiliation: "INSERM U1283, CNRS UMR 8199, European Genomic Institute for Diabetes (EGID), Institut Pasteur de Lille, University of Lille, Lille University Hospital, Lille, F-59000, France."
+  author_email: "mickael.canouil@cnrs.fr"
+  input_files: "/disks/RUN/Array/Dmap/plink/..."
+  output_directory: !r here::here("outputs", "03-qc_plink")
+  cohort_name: !r params[["project_name"]]
+  array: "Illumina Omni2.5"
+  callrate_samples: 0.90
+  callrate_snps: 0.95
+  sex_threshold: !r c(0.2, 0.8)
+  heterozygosity_threshold: 4
+  maf_threshold: 0.01
+  hwe_pvalue: 0.0001
+  includes_relatives: FALSE
+  mendelian_samples: 0.05
+  mendelian_snps: 0.1
+  ibd_threshold: 0.2
+  population: NULL
+  pca_components: 10
+  pca_threshold: 3
+  max_labels: 15
+  check_bim_script: !r system.file("perl", "HRC-1000G-check-bim-NoReadKey.pl", package = "dgapaq")
+  imputation_ref: "1KG"
+  imputation_panel: "/disks/DATA/ExternalData/1kg/hg19/Reference_genome/1000GP_Phase3_combined.legend"
+  ref1kg_panel: "/disks/DATA/ExternalData/1kg/samples_description/integrated_call_samples_v3.20130502.ALL.panel"
+  ref1kg_fasta: "/disks/DATA/ExternalData/1kg/hg19/human_g1k_v37.fasta"
+  ref1kg_population: "/disks/DATA/ExternalData/1kg/samples_description/1kg_pop_description.tsv"
+  ref1kg_genotypes: "/disks/DATA/ExternalData/1kg/hg19/Genotypes/RawPLINK/ALL/"
+  bin_path: !r list(bcftools = "/usr/bin/bcftools", bgzip = "/usr/bin/bgzip", plink = "/usr/bin/plink1.9", gcta = "/usr/bin/gcta64")
+title: '`r params[["title"]]`'
+author:
+- name: '`r params[["author_name"]]`'
+  affiliation: '`r params[["author_affiliation"]]`'
+  email: '`r params[["author_email"]]`'
+date: '`r format(Sys.time(), "%B %d, %Y")`'
+output:
+  bookdown::html_document2:
+    theme: simplex
+    toc: true
+    toc_depth: 3
+    toc_float: 
+      collapsed: false
+    fig_width: 6.3
+    fig_height: 4.7
+    number_sections: true
+    self_contained: true
+---
+  
+<!-- https://github.com/umr1283/dgapaq -->

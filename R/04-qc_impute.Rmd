@@ -1,0 +1,31 @@
+---
+params:
+  project_name: !r gsub("(.*)_.*", "\\1", list.files(here::here(), pattern = ".Rproj$"))
+  input_directory: !r file.path("/disks/DATA/Projects", params[["project_name"]], "QC/Omni2.5/vcf_imputed")
+  output_directory: !r here::here("outputs", "04-qc_impute")
+  title: !r paste0("[", params[["project_name"]], "] Post-Imputation Quality-Control")
+  author_name: "Mickaël CANOUIL, *Ph.D.*"
+  author_affiliation: "INSERM U1283, CNRS UMR 8199, European Genomic Institute for Diabetes (EGID), Institut Pasteur de Lille, University of Lille, Lille University Hospital, Lille, F-59000, France."
+  author_email: "mickael.canouil@cnrs.fr"
+  vcftools_path: "/usr/bin/vcftools"
+title: '`r params[["title"]]`'
+author:
+- name: '`r params[["author_name"]]`'
+  affiliation: '`r params[["author_affiliation"]]`'
+  email: '`r params[["author_email"]]`'
+date: '`r format(Sys.time(), "%B %d, %Y")`'
+output:
+  bookdown::html_document2:
+    theme: simplex
+    toc: true
+    toc_depth: 3
+    toc_float: 
+      collapsed: false
+    fig_width: 6.3
+    fig_height: 9.4
+    number_sections: true
+    self_contained: true
+    mathjax: default
+---
+
+<!-- https://github.com/umr1283/dgapaq -->
