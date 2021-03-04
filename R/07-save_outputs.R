@@ -5,6 +5,7 @@ project_name <- gsub("(.*)_.*", "\\1", list.files(here(), pattern = ".Rproj$"))
 
 ### Input ==========================================================================================
 epic <- here("outputs", "02-qc_idats")
+epic_snps <- here("outputs", "02-qc_idats_snps")
 omni <- here("outputs", "03-qc_plink")
 ethnicity <- here("outputs", "05-ethnicity")
 omni_hg38 <- here("outputs", "06-omni_to_hg38")
@@ -29,6 +30,19 @@ for (ifile in c("EPIC_QC_betavalues.csv.gz", "EPIC_QC_mset.rds", "EPIC_QC_phenot
 file.copy(
   from = here("reports", paste0(project_name, "_EPIC_QC.html")),
   to = file.path(output_directory, "EPIC", paste0(project_name, "_EPIC_QC.html")),
+  overwrite = TRUE
+)
+
+for (ifile in c("EPIC_QC_betavalues.csv.gz", "EPIC_QC_mset.rds", "EPIC_QC_phenotypes.csv")) {
+  file.copy(
+    from = file.path(epic_snps, ifile),
+    to = file.path(output_directory, "EPIC", gsub("^([^.]*)\\.(.*)$", "\\1_SNPs.\\2", ifile)),
+    overwrite = TRUE
+  )
+}
+file.copy(
+  from = here("reports", paste0(project_name, "_EPIC_QC_SNPs.html")),
+  to = file.path(output_directory, "EPIC", paste0(project_name, "_EPIC_QC_SNPs.html")),
   overwrite = TRUE
 )
 

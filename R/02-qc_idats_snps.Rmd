@@ -5,13 +5,13 @@ params:
   author_name: "Mickaël CANOUIL, *Ph.D.*"
   author_affiliation: "INSERM U1283, CNRS UMR 8199, European Genomic Institute for Diabetes (EGID), Institut Pasteur de Lille, University of Lille, Lille University Hospital, Lille, F-59000, France."
   author_email: ""
-  output_directory: !r here::here("outputs", "02-qc_idats")
+  output_directory: !r here::here("outputs", "02-qc_idats_snps")
   csv_file: !r file.path("/disks/DATA/Projects", params[["project_name"]], "EPIC/sample_sheet.csv")
   design: !r here::here("outputs", "01-design", "design.xlsx")
   data_directory: !r file.path("/disks/DATA/Projects", params[["project_name"]], "EPIC/idats/")
   array: "EPIC"
   annotation: "ilm10b4.hg19"
-  filter_snps: TRUE
+  filter_snps: FALSE
   filter_non_cpg: TRUE
   filter_xy: TRUE
   filter_multihit: TRUE
