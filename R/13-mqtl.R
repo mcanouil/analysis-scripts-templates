@@ -73,7 +73,7 @@ beta_matrix <- fread(
   header = TRUE
 )
 beta_matrix <- `rownames<-`(
-  as.matrix((function(x) log2(x) - log2(1 - x))(beta_matrix[, -"cpg_id"])), 
+  as.matrix((function(x) log2(x) - log2(1 - x))(beta_matrix[j = -"cpg_id"])), 
   beta_matrix[["cpg_id"]]
 )[, sample_sheet_qc[["Sample_ID"]]]
 
@@ -89,16 +89,19 @@ epic_qc <- merge(
   y = as.data.table(epic_qc_annot, keep.rownames = "CpG"), 
   by = "CpG"
 )
-epic_qc[, (c("#Chr", "start", "end", "grp")) := list(chr, pos, pos, chr)]
-epic_qc <- epic_qc[, .SD, .SDcols = c("grp", "#Chr", "start", "end", "CpG", sample_sheet_qc[["vcf_id"]])]
+epic_qc[j = (c("#Chr", "start", "end", "grp")) := list(chr, pos, pos, chr)]
+epic_qc <- epic_qc[j = .SD, .SDcols = c("grp", "#Chr", "start", "end", "CpG", sample_sheet_qc[["vcf_id"]])]
 epic_qc <- epic_qc[order(`#Chr`, start)]
 
-epic_qc[, (function(x, y) {
-  fwrite(x, file = file.path(output_epic, sprintf("chr%02d.bed", unique(y))), quote = FALSE, sep = "\t")
-  system(paste("bgzip -f", file.path(output_epic, sprintf("chr%02d.bed", unique(y)))))
-  system(paste("tabix -p bed -f", file.path(output_epic, sprintf("chr%02d.bed.gz", unique(y)))))
-  return(TRUE)
-})(.SD, `#Chr`), by = grp]
+epic_qc[
+  j = (function(x, y) {
+    fwrite(x, file = file.path(output_epic, sprintf("chr%02d.bed", unique(y))), quote = FALSE, sep = "\t")
+    system(paste("bgzip -f", file.path(output_epic, sprintf("chr%02d.bed", unique(y)))))
+    system(paste("tabix -p bed -f", file.path(output_epic, sprintf("chr%02d.bed.gz", unique(y)))))
+    return(TRUE)
+  })(.SD, `#Chr`), 
+  by = grp
+]
 
 
 ### mQTL analysis (fastQTL) =======================================================================
@@ -159,8 +162,8 @@ for (ichr in sprintf("chr%02d", 1:22)) {
           x = list(
             fread(file.path(output_fastqtl, sprintf("%s_%s_%s.txt.gz", project_name, ianalysis, ichr))),
             as.data.table(epic_qc_annot, keep.rownames = "cpg_id"),
-            as.data.table(Other, keep.rownames = "cpg_id")[, 
-              list(
+            as.data.table(Other, keep.rownames = "cpg_id")[
+              j = list(
                 UCSC_RefGene_Name = paste(unique(tstrsplit(UCSC_RefGene_Name, split = ";")), collapse = ";")
               ), 
               by = "cpg_id"
@@ -225,15 +228,15 @@ unlink(setdiff(
 
 
 ### Set chmod ======================================================================================
-# Sys.chmod(
-#   list.files(output_directory, full.names = TRUE), 
-#   mode = "0775", use_umask = FALSE
-# )
-# Sys.chmod(
-#   list.files(output_directory, full.names = TRUE, recursive = TRUE, all.files = TRUE), 
-#   mode = "0775", use_umask = FALSE
-# )
-# invisible(system(paste("chgrp -R staff", output_directory), intern = TRUE))
+Sys.chmod(
+  list.files(output_directory, full.names = TRUE),
+  mode = "0775", use_umask = FALSE
+)
+Sys.chmod(
+  list.files(output_directory, full.names = TRUE, recursive = TRUE, all.files = TRUE),
+  mode = "0775", use_umask = FALSE
+)
+invisible(system(paste("chgrp -R staff", output_directory), intern = TRUE))
 
 
 ### Complete =======================================================================================
