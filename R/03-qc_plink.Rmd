@@ -4,7 +4,7 @@ params:
   title: !r paste0("[", params[["project_name"]], "] Omni2.5 Array Quality-Control")
   author_name: "Mickaël CANOUIL, *Ph.D.*"
   author_affiliation: "INSERM U1283, CNRS UMR 8199, European Genomic Institute for Diabetes (EGID), Institut Pasteur de Lille, University of Lille, Lille University Hospital, Lille, F-59000, France."
-  author_email: "mickael.canouil@cnrs.fr"
+  author_email: ""
   input_files: "/disks/RUN/Array/Dmap/plink/..."
   output_directory: !r here::here("outputs", "03-qc_plink")
   cohort_name: !r params[["project_name"]]

@@ -4,7 +4,7 @@ params:
   title: !r paste0("[", params[["project_name"]], "] EPIC Array Quality-Control")
   author_name: "Mickaël CANOUIL, *Ph.D.*"
   author_affiliation: "INSERM U1283, CNRS UMR 8199, European Genomic Institute for Diabetes (EGID), Institut Pasteur de Lille, University of Lille, Lille University Hospital, Lille, F-59000, France."
-  author_email: "mickael.canouil@cnrs.fr"
+  author_email: ""
   output_directory: !r here::here("outputs", "02-qc_idats")
   csv_file: !r file.path("/disks/DATA/Projects", params[["project_name"]], "EPIC/Ssample_sheet.csv")
   design: !r here::here("outputs", "01-design", "design.xlsx")
