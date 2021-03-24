@@ -282,7 +282,7 @@ invisible(lapply(
       Reactome = {
         genes_list <- results[pvalue < pvalue_gene_gsea & !is.na(entrezgene_id)][order(-log2FoldChange)][j = setNames(log2FoldChange, entrezgene_id)]
         gsePathway(
-          geneList = genes_list[!duplicated(genes_list)], 
+          geneList = genes_list[!duplicated(genes_list) & names(genes_list) != ""], 
           organism = organism[["reactome"]],
           pvalueCutoff = fdr_pathway_gsea, 
           pAdjustMethod = "BH"
@@ -291,7 +291,7 @@ invisible(lapply(
       GO_BP = {
         genes_list <- results[pvalue < pvalue_gene_gsea][order(-log2FoldChange)][j = setNames(log2FoldChange, ensembl_gene_id)]
         gseGO(
-          geneList = genes_list[!duplicated(genes_list)],
+          geneList = genes_list[!duplicated(genes_list) & names(genes_list) != ""],
           OrgDb = get(organism[["go"]]),
           keyType = "ENSEMBL",
           ont = "BP",
@@ -302,7 +302,7 @@ invisible(lapply(
       GO_CC = {
         genes_list <- results[pvalue < pvalue_gene_gsea][order(-log2FoldChange)][j = setNames(log2FoldChange, ensembl_gene_id)]
         gseGO(
-          geneList = genes_list[!duplicated(genes_list)],
+          geneList = genes_list[!duplicated(genes_list) & names(genes_list) != ""],
           OrgDb = get(organism[["go"]]),
           keyType = "ENSEMBL",
           ont = "CC",
@@ -313,7 +313,7 @@ invisible(lapply(
       GO_MF = {
         genes_list <- results[pvalue < pvalue_gene_gsea][order(-log2FoldChange)][j = setNames(log2FoldChange, ensembl_gene_id)]
         gseGO(
-          geneList = genes_list[!duplicated(genes_list)],
+          geneList = genes_list[!duplicated(genes_list) & names(genes_list) != ""],
           OrgDb = get(organism[["go"]]),
           keyType = "ENSEMBL",
           ont = "MF",
@@ -324,7 +324,7 @@ invisible(lapply(
       KEGG = {
         genes_list <- results[pvalue < pvalue_gene_gsea & !is.na(uniprotswissprot)][order(-log2FoldChange)][j = setNames(log2FoldChange, uniprotswissprot)]
         gseKEGG(
-          geneList = genes_list[!duplicated(genes_list)],
+          geneList = genes_list[!duplicated(genes_list) & names(genes_list) != ""],
           organism = organism[["kegg"]], 
           keyType = "uniprot", 
           pvalueCutoff = fdr_pathway_gsea, 
