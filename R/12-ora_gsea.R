@@ -354,7 +354,7 @@ invisible(lapply(
           by = "ID"
         )[
           j = peripheral_enrichment := setdiff(
-            genes_set,
+            unlist(tstrsplit(genes_set, "/"), recursive = TRUE),
             unlist(tstrsplit(core_enrichment, "/"), recursive = TRUE)
           ),
           by = "ID"
