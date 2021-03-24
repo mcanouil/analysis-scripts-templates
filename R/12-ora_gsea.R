@@ -121,7 +121,8 @@ invisible(lapply(
     
     write_xlsx(
       x = setNames(lapply(enrich_sets, FUN = function(.enrich) {
-        if (!is.null(.enrich)) .enrich@result else data.frame()
+        if (is.null(.enrich)) return(data.frame())
+        enrich@result
       }), gsub("Gene Ontology", "GO", names(enrich_sets))), 
       path = file.path(output_directory, "over_representation.xlsx")
     )
@@ -341,27 +342,42 @@ invisible(lapply(
     
     write_xlsx(
       x = setNames(lapply(enrich_sets, FUN = function(.enrich) {
-        if (!is.null(.enrich)) .enrich@result else data.frame()
+        if (is.null(.enrich) || nrow(.enrich@result) == 0) return(data.frame())
+        merge(
+          x = setDT(.enrich@result), 
+          y = setnames(as.data.table(
+            x = sapply(.enrich@geneSets, function(.l) {
+              paste(sort(intersect(.l, names(.enrich@geneList))), collapse = "/")
+            }), 
+            keep.rownames = TRUE
+          ), c("ID", "genes_set")),
+          by = "ID"
+        )[
+          j = peripheral_enrichment := setdiff(
+            genes_set,
+            unlist(tstrsplit(core_enrichment, "/"), recursive = TRUE)
+          ),
+          by = "ID"
+        ]
       }), gsub("Gene Ontology", "GO", names(enrich_sets))), 
       path = file.path(output_directory, "gene_set_enrichment.xlsx")
     )
     
     write_xlsx(
       x = setNames(lapply(enrich_sets, FUN = function(.enrich) {
-        if (!is.null(.enrich)) {
-          merge(
-            x = results,
-            y = rbindlist(
-              mapply(
-                FUN = data.table, 
-                entrezgene_id = .enrich@geneSets, 
-                gsid = names(.enrich@geneSets), 
-                SIMPLIFY = FALSE
-              )
-            ),
-            by = "entrezgene_id"
-          )
-        } else data.frame()
+        if (!is.null(.enrich)) return(data.frame())
+        merge(
+          x = results,
+          y = rbindlist(
+            mapply(
+              FUN = data.table, 
+              entrezgene_id = .enrich@geneSets, 
+              gsid = names(.enrich@geneSets), 
+              SIMPLIFY = FALSE
+            )
+          ),
+          by = "entrezgene_id"
+        )
       }), gsub("Gene Ontology", "GO", names(enrich_sets))), 
       path = file.path(output_directory, "gene_set_list.xlsx")
     )
