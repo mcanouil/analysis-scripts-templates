@@ -353,10 +353,17 @@ invisible(lapply(
           ), c("ID", "genes_set")),
           by = "ID"
         )[
-          j = peripheral_enrichment := setdiff(
-            unlist(tstrsplit(genes_set, "/"), recursive = TRUE),
-            unlist(tstrsplit(core_enrichment, "/"), recursive = TRUE)
-          ),
+          j = peripheral_enrichment := {
+            peripheral_set <- setdiff(
+              unlist(tstrsplit(genes_set, "/"), recursive = TRUE),
+              unlist(tstrsplit(core_enrichment, "/"), recursive = TRUE)
+            )
+            if (length(peripheral_set) == 0) {
+              return(NA_character_) 
+            } else  {
+              paste(peripheral_set, collapse = "/")
+            }
+          },
           by = "ID"
         ]
       }), gsub("Gene Ontology", "GO", names(enrich_sets))), 
