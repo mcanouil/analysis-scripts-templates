@@ -359,7 +359,7 @@ invisible(lapply(
               unlist(tstrsplit(core_enrichment, "/"), recursive = TRUE)
             )
             if (length(peripheral_set) == 0) {
-              return(NA_character_) 
+              NA_character_
             } else  {
               paste(peripheral_set, collapse = "/")
             }
