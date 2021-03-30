@@ -122,7 +122,7 @@ invisible(lapply(
     write_xlsx(
       x = setNames(lapply(enrich_sets, FUN = function(.enrich) {
         if (is.null(.enrich)) return(data.frame())
-        enrich@result
+        .enrich@result
       }), gsub("Gene Ontology", "GO", names(enrich_sets))), 
       path = file.path(output_directory, "over_representation.xlsx")
     )
