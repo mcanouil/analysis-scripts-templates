@@ -1,8 +1,12 @@
 # analysis_templates (development version)
 
-+ `R/13-mqtl.R`, skeleton R script to perform mQTL analysis (methylation Vs. genotypes).
-+ `R/14-eqtl.R`, skeleton R script to perform eQTL analysis (expression Vs. genotypes.
-+ `R/12-ora_gsea.R`, add genes set and peripheral sets (genes set - core set).
++ `R/13-mqtl.R`, 
+    + Skeleton R script to perform mQTL analysis (methylation Vs. genotypes).
++ `R/14-eqtl.R`, 
+    + Skeleton R script to perform eQTL analysis (expression Vs. genotypes.
++ `R/12-ora_gsea.R`, 
+    + Add genes set and peripheral sets (genes set - core set).
+    + Fix typos.
 
 # analysis_templates 0.1.0
 
