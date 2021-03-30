@@ -26,7 +26,7 @@ suppressPackageStartupMessages({
   library(data.table)
   library(clusterProfiler)
   library(ReactomePA)
-  library(organism[["reactome"]], character.only = TRUE)
+  library(organism[["go"]], character.only = TRUE)
   library(glue)
   library(writexl)
 })
