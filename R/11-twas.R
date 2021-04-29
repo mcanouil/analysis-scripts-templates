@@ -420,11 +420,19 @@ for (rna_level in c("genes", "isoforms")) {
     geom_tile(colour = "white", na.rm = TRUE) +
     geom_richtext(
       mapping = aes(
-        label = gsub(
-          pattern = "(.*)e([-+]*)0*(.*)",
-          replacement = "\\1<br>&times;<br>10<sup>\\2\\3</sup>",
-          x = format(.data[["Pr(>F)"]], digits = 2, nsmall = 2, scientific = TRUE)
-        )
+        label = (function(x) {
+          x_fmt <- x
+          x_fmt[as.numeric(x) < 0.01] <- gsub(
+            pattern = "(.*)e([-+]*)0*(.*)",
+            replacement = "\\1<br>&times;<br>10<sup>\\2\\3</sup>",
+            x = format(x_fmt[as.numeric(x) < 0.01], digits = 2, nsmall = 2, scientific = TRUE)
+          )
+          x_fmt[as.numeric(x) >= 0.01] <- format(
+            x = as.numeric(x_fmt[as.numeric(x) >= 0.01]), 
+            digits = 2, nsmall = 2
+          )
+          x_fmt
+        })(.data[["Pr(>F)"]])
       ),
       colour = "white",
       fill = NA,
@@ -442,16 +450,15 @@ for (rna_level in c("genes", "isoforms")) {
           format(
             x = pca_res[["pve"]][as.numeric(gsub("PC", "", x))] * 100,
             digits = 2,
-            nsmall = 2
+            nsmall = 3
           ),
           " %)</i>"
         )
       }
     ) +
     scale_y_discrete(
-      expand = c(0, 0), 
-      breaks = keep_technical,
-      labels = names(keep_technical)
+      expand = c(0, 0),
+      labels = function(x) names(keep_technical[match(gsub("`", "", x), keep_technical)])
     ) +
     labs(
       x = "Principal Components",
@@ -521,7 +528,7 @@ for (rna_level in c("genes", "isoforms")) {
       plot_annotation(
         title = paste0(
           "Structure Detection For: '<i>", 
-          names(keep_technical)[grep(ivar, keep_technical)], 
+          names(keep_technical[match(ivar, keep_technical)]), 
           "</i>'"
         ),
         tag_levels = "A", 
