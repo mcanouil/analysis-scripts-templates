@@ -493,8 +493,7 @@ for (rna_level in c("genes", "isoforms")) {
                   scale_colour_viridis_c(
                     name = NULL,
                     begin = 0,
-                    end = 0.75, 
-                    labels = if (ivar == "Co") { function(x) gsub("uM", " µM", x) } else identity
+                    end = 0.75
                   )
                 } else {
                   list(
@@ -503,8 +502,7 @@ for (rna_level in c("genes", "isoforms")) {
                       name = NULL,
                       begin = if (pca_dfxy[, uniqueN(.SD), .SDcols = ivar] == 2) 0.25 else 0,
                       end = 0.75, 
-                      guide = guide_legend(override.aes = list(size = 4)), 
-                      labels = if (ivar == "Co") { function(x) gsub("uM", " µM", x) } else identity
+                      guide = guide_legend(override.aes = list(size = 4))
                     ),
                     if (length(unique(pca_dfxy[[ivar]])) > 10) {
                       theme(legend.position = "none")
