@@ -544,7 +544,7 @@ for (rna_level in c("genes", "isoforms")) {
   }
 
   ## DE --------------------------------------------------------------------------------------------
-  annot_dt <- setDT(getBM(
+  ensembl_dt <- setDT(getBM(
     attributes = c(
       glue("ensembl_{rna_level_name}_id"), 
       "entrezgene_id",
@@ -564,6 +564,46 @@ for (rna_level in c("genes", "isoforms")) {
     }),
     by = c(glue("ensembl_{rna_level_name}_id"))
   ][j = ensembl_version := ensembl_version]
+  
+  
+  entrez_dt <- setDT(getBM(
+    attributes = c(
+      glue("ensembl_{rna_level_name}_id"), 
+      "entrezgene_id"
+    ),
+    filters = glue("ensembl_{rna_level_name}_id"),
+    values = list(rownames(txi_counts[["counts"]])),
+    mart = mart
+  ))[
+    j = lapply(.SD, function(x) {
+      out <- paste(setdiff(unique(x), ""), collapse = ";")
+      fifelse(out == "", NA_character_, out)
+    }),
+    by = c(glue("ensembl_{rna_level_name}_id"))
+  ]
+  
+  uniprot_dt <- setDT(getBM(
+    attributes = c(
+      glue("ensembl_{rna_level_name}_id"), 
+      "uniprotswissprot"
+    ),
+    filters = glue("ensembl_{rna_level_name}_id"),
+    values = list(rownames(txi_counts[["counts"]])),
+    mart = mart
+  ))[
+    j = lapply(.SD, function(x) {
+      out <- paste(setdiff(unique(x), ""), collapse = ";")
+      fifelse(out == "", NA_character_, out)
+    }),
+    by = c(glue("ensembl_{rna_level_name}_id"))
+  ]
+  
+  annot_dt <- merge(
+    x = ensembl_dt, 
+    y = merge(x = entrez_dt, y = uniprot_dt, by = glue("ensembl_{rna_level_name}_id"), all = TRUE),
+    by = glue("ensembl_{rna_level_name}_id"),
+    all.x = TRUE
+  )
 
   for (ntrait in names(traits)) {
     local({
