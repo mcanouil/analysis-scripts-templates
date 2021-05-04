@@ -19,7 +19,6 @@ suppressPackageStartupMessages({
   library(readxl)
   library(tximport)
   library(DESeq2)
-  library(glue)
   library(biomaRt)
   library(httr)
   library(flashpcaR)
@@ -303,6 +302,8 @@ if (!all(grepl(sample_tissue, unique(res_tissue[["best_tissue "]])))) {
 for (rna_level in c("genes", "isoforms")) {
   rna_level_name <- unname(c("genes" = "gene", "isoforms" = "transcript")[rna_level])
   
+  ensembl_id <- sprintf("ensembl_%s_id", rna_level_name)
+  
   rsem_files <- setNames(sample_sheet_qc[["rnaseq_path"]], sample_sheet_qc[["Sample_ID"]])
   txi_counts <- tximport(
     files = gsub("\\.genes\\.results$", paste0(".", rna_level, ".results"), rsem_files),
@@ -546,7 +547,7 @@ for (rna_level in c("genes", "isoforms")) {
   ## DE --------------------------------------------------------------------------------------------
   ensembl_dt <- setDT(getBM(
     attributes = c(
-      glue("ensembl_{rna_level_name}_id"), 
+      ensembl_id, 
       "entrezgene_id",
       "uniprotswissprot",
       "chromosome_name", 
@@ -554,7 +555,7 @@ for (rna_level in c("genes", "isoforms")) {
       "end_position", 
       "external_gene_name"
     ),
-    filters = glue("ensembl_{rna_level_name}_id"),
+    filters = ensembl_id,
     values = list(rownames(txi_counts[["counts"]])),
     mart = mart
   ))[
@@ -562,16 +563,16 @@ for (rna_level in c("genes", "isoforms")) {
       out <- paste(setdiff(unique(x), ""), collapse = ";")
       fifelse(out == "", NA_character_, out)
     }),
-    by = c(glue("ensembl_{rna_level_name}_id"))
+    by = c(ensembl_id)
   ][j = ensembl_version := ensembl_version]
   
   
   entrez_dt <- setDT(getBM(
     attributes = c(
-      glue("ensembl_{rna_level_name}_id"), 
+      ensembl_id, 
       "entrezgene_id"
     ),
-    filters = glue("ensembl_{rna_level_name}_id"),
+    filters = ensembl_id,
     values = list(rownames(txi_counts[["counts"]])),
     mart = mart
   ))[
@@ -579,15 +580,15 @@ for (rna_level in c("genes", "isoforms")) {
       out <- paste(setdiff(unique(x), ""), collapse = ";")
       fifelse(out == "", NA_character_, out)
     }),
-    by = c(glue("ensembl_{rna_level_name}_id"))
+    by = c(ensembl_id)
   ]
   
   uniprot_dt <- setDT(getBM(
     attributes = c(
-      glue("ensembl_{rna_level_name}_id"), 
+      ensembl_id, 
       "uniprotswissprot"
     ),
-    filters = glue("ensembl_{rna_level_name}_id"),
+    filters = ensembl_id,
     values = list(rownames(txi_counts[["counts"]])),
     mart = mart
   ))[
@@ -595,15 +596,17 @@ for (rna_level in c("genes", "isoforms")) {
       out <- paste(setdiff(unique(x), ""), collapse = ";")
       fifelse(out == "", NA_character_, out)
     }),
-    by = c(glue("ensembl_{rna_level_name}_id"))
+    by = c(ensembl_id)
   ]
   
   annot_dt <- merge(
     x = ensembl_dt, 
-    y = merge(x = entrez_dt, y = uniprot_dt, by = glue("ensembl_{rna_level_name}_id"), all = TRUE),
-    by = glue("ensembl_{rna_level_name}_id"),
+    y = merge(x = entrez_dt, y = uniprot_dt, by = ensembl_id, all = TRUE),
+    by = ensembl_id,
     all.x = TRUE
   )
+  
+  annot_dt[[ensembl_id]]
 
   for (ntrait in names(traits)) {
     local({
@@ -628,7 +631,7 @@ for (rna_level in c("genes", "isoforms")) {
         x = rownames(dds),
         converge = mcols(stats_dds)$betaConv
       )
-      setnames(x = is_issue, old = "x", new = glue("ensembl_{rna_level_name}_id"))
+      setnames(x = is_issue, old = "x", new = ensembl_id)
       
       if (is.factor(sample_sheet_qc[[trait]])) {
         results_dt <- rbindlist(apply(
@@ -644,7 +647,7 @@ for (rna_level in c("genes", "isoforms")) {
               independentFiltering = FALSE, 
               cooksCutoff = FALSE
             )
-            results_dt <- as.data.table(results_dds, keep.rownames = glue("ensembl_{rna_level_name}_id"))
+            results_dt <- as.data.table(results_dds, keep.rownames = ensembl_id)
             setnames(results_dt, old = "padj", new = "fdr")
             results_dt[j = contrast := paste0(.trait, ": ", .contrast[2], " Vs. ", .contrast[1], " (ref)")]
             results_dt
@@ -658,7 +661,7 @@ for (rna_level in c("genes", "isoforms")) {
           independentFiltering = FALSE, 
           cooksCutoff = FALSE
         )
-        results_dt <- as.data.table(results_dds, keep.rownames = glue("ensembl_{rna_level_name}_id"))
+        results_dt <- as.data.table(results_dds, keep.rownames = ensembl_id)
         setnames(results_dt, old = "padj", new = "fdr")
         results_dt[j = contrast := trait]
       }
@@ -666,9 +669,9 @@ for (rna_level in c("genes", "isoforms")) {
       results_dt[j = Trait := ntrait]
       
       results_annot_dt <- merge(
-        x = merge(x = results_dt, y = is_issue, by = glue("ensembl_{rna_level_name}_id")), 
+        x = merge(x = results_dt, y = is_issue, by = ensembl_id), 
         y = annot_dt, 
-        by = glue("ensembl_{rna_level_name}_id"),
+        by = ensembl_id,
         all.x = TRUE
       )
 
