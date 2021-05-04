@@ -178,6 +178,7 @@ draw_volcano <- function(
   data, x, y, 
   label_x = "Fold-Change (log<sub>2</sub>)", 
   label_y = "P-value",
+  label_colour = label_x,
   alpha = 0.05, 
   max_p = 1
 ) {
@@ -196,10 +197,10 @@ draw_volcano <- function(
       ggplot2::geom_vline(xintercept = 0, linetype = 2, colour = "black") +
       ggplot2::geom_point(size = 0.50) +
       ggrepel::geom_label_repel(
-        data = ~ .x[!is.na(external_gene_name) & fdr < 0.05],#[order(pvalue)][j = .SD[which.min(pvalue)], by = "external_gene_name"][1:5],
+        data = ~ .x[!is.na(external_gene_name) & fdr < 0.05][order(pvalue)][1:10], # max 10
         mapping = aes(label = .data[["external_gene_name"]]), 
         min.segment.length = unit(0, "lines"),
-        size = 1.25,
+        size = 1.5,
         show.legend = FALSE,
         na.rm = TRUE,
         nudge_y = 0.5,
@@ -211,7 +212,7 @@ draw_volcano <- function(
         trans = "sqrt", 
         limits = c(0, data[pvalue <= 0.05, max(abs(.SD)), .SDcols = x])
       ) +
-      ggplot2::labs(x = label_x, y = label_y) +
+      ggplot2::labs(x = label_x, y = label_y, colour = label_colour) +
       ggplot2::theme(legend.position = "none") +
       ggplot2::annotate(
         geom = "rect",
