@@ -607,7 +607,9 @@ for (rna_level in c("genes", "isoforms")) {
     all.x = TRUE
   )
   
-  annot_dt[[ensembl_id]]
+  if (length(setdiff(rownames(txi_counts[["counts"]]), annot_dt[[ensembl_id]])) != 0) {
+    stop(sprintf('Not all "%s" have been found! Please check Ensembl version!', ensembl_id))
+  }
 
   for (ntrait in names(traits)) {
     local({
