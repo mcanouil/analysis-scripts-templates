@@ -689,7 +689,7 @@ for (rna_level in c("genes", "isoforms")) {
         )
       )
       
-      volcano_gg <- draw_volcano(
+      lvp <- draw_volcano(
         data = results_annot_dt, x = "log2FoldChange", y = "pvalue", 
         label_x = "Fold-Change (log<sub>2</sub>)", 
         label_y = "P-value",
@@ -697,33 +697,32 @@ for (rna_level in c("genes", "isoforms")) {
         max_p = 1
       )
       
-      p_volcano <- volcano_gg[[1]] + 
+      p_volcano <- wrap_plots(lvp) +
         labs(
           title = paste("Volcano Plot:", unique(results_annot_dt[["Trait"]])),
-          subtitle = paste0("Model: BIO_ID + <b>", trait, "</b>"),
-          caption = paste0(
-            "P-value < 0.05: ", 
-            glue_collapse(
-              x = paste0(
-                sapply(volcano_gg, function(.gg) {
-                  format(sum(.gg$data[["pvalue"]] < 0.05), big.mark = ",", digits = 0, trim = TRUE)
-                })
-              ),
-              sep = ", ", 
-              last = " and "
-            ),
-            ".<br>",
-            "FDR < 0.05: ", 
-            glue_collapse(
-              x = paste0(
-                sapply(volcano_gg, function(.gg) {
-                  format(sum(.gg$data[["fdr"]] < 0.05), big.mark = ",", digits = 0, trim = TRUE)
-                })
-              ),
-              sep = ", ", 
-              last = " and "
-            ),
-            "."
+          subtitle = sprintf("Model: %s", paste(labels(terms(base_form)), collapse = " + ")),
+          caption = paste(
+            sapply(
+              X = c("pvalue", "fdr"), 
+              lp = lvp,
+              alpha = 0.05,
+              FUN = function(lp, p, alpha) {
+                out <- sprintf("<b>%s</b>) %s",
+                  LETTERS[seq_along(lp)],
+                  sapply(lp, function(.gg) {
+                    format(sum(.gg$data[[p]] < alpha, na.rm = TRUE), big.mark = ",", digits = 0, trim = TRUE)
+                  })
+                )
+                sprintf(
+                  fmt = "%s < %s: %s and %s.",
+                  c("pvalue" = "P-value", "fdr" = "FDR")[p], 
+                  0.05,
+                  paste(out[-length(out)], collapse = ", "),
+                  out[length(out)]
+                )
+              }
+            ), 
+            collapse = "<br>"
           )
         ) +
         theme(plot.caption = element_markdown(face = "italic", size = rel(0.75)))
