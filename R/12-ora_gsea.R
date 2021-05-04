@@ -64,7 +64,7 @@ invisible(lapply(
   FUN = function(.file) {
     results <- fread(.file)[order(pvalue)]
     enrich_sets <- list(
-      Reactome = enrichPathway(
+      "Reactome" = enrichPathway(
         gene = unique(na.exclude(unlist(strsplit(results[pvalue < pvalue_gene_ora][["entrezgene_id"]], ";")))), 
         universe = unique(na.exclude(unlist(strsplit(results[["entrezgene_id"]], ";")))),
         organism = organism[["reactome"]],
@@ -72,7 +72,7 @@ invisible(lapply(
         pAdjustMethod = "BH",
         readable = TRUE
       ),
-      GO_BP = enrichGO(
+      "Gene Ontology Biological Process" = enrichGO(
         gene = unique(results[pvalue < pvalue_gene_ora][["ensembl_gene_id"]]),
         universe = unique(results[["ensembl_gene_id"]]),
         OrgDb = get(organism[["go"]]),
@@ -82,7 +82,7 @@ invisible(lapply(
         pAdjustMethod = "BH",
         readable = TRUE
       ),
-      GO_CC = enrichGO(
+      "Gene Ontology Cellular Component" = enrichGO(
         gene = unique(results[pvalue < pvalue_gene_ora][["ensembl_gene_id"]]),
         universe = unique(results[["ensembl_gene_id"]]),
         OrgDb = get(organism[["go"]]),
@@ -92,7 +92,7 @@ invisible(lapply(
         pAdjustMethod = "BH",
         readable = TRUE
       ),
-      GO_MF = enrichGO(
+      "Gene Ontology Molecular Function" = enrichGO(
         gene = unique(results[pvalue < pvalue_gene_ora][["ensembl_gene_id"]]),
         universe = unique(results[["ensembl_gene_id"]]),
         OrgDb = get(organism[["go"]]),
@@ -102,7 +102,7 @@ invisible(lapply(
         pAdjustMethod = "BH",
         readable = TRUE
       ),
-      KEGG = enrichKEGG(
+      "KEGG" = enrichKEGG(
         gene = unique(na.exclude(unlist(strsplit(results[pvalue < pvalue_gene_ora][["uniprotswissprot"]], ";")))), 
         universe = unique(na.exclude(unlist(strsplit(results[["uniprotswissprot"]], ";")))),
         organism = organism[["kegg"]], 
@@ -111,13 +111,6 @@ invisible(lapply(
         pAdjustMethod = "BH"
       )
     )
-    names(enrich_sets) <- c(
-      "Reactome" = "Reactome",
-      "GO_BP" = "Gene Ontology Biological Process",
-      "GO_CC" = "Gene Ontology Cellular Component",
-      "GO_MF" = "Gene Ontology Molecular Function",
-      "KEGG" = "KEGG"
-    )[names(enrich_sets)]
     
     write_xlsx(
       x = setNames(lapply(enrich_sets, FUN = function(.enrich) {
@@ -178,7 +171,7 @@ invisible(lapply(
       
       is_too_big <- nrow(.dt) > 25
       
-      if (is_too_big) .dt <- last(.dt, 25)
+      if (is_too_big) .dt <- first(.dt[order(pvalue)], 25)
       
       ggplot(data = .dt) +
         aes(x = GeneRatio, y = Description, colour = -log10(p.adjust), size = Count) +
@@ -201,9 +194,19 @@ invisible(lapply(
           colour = "-log<sub>10</sub>(FDR)<br>(Benjamini-Hochberg)",
           size = "Number of Genes"
         ) +
+        theme_minimal(base_size = 10, base_family = "Tex Gyre Termes") +
         theme(
-          legend.title = element_markdown(),
-          axis.text.y = element_markdown(size = rel(0.75))
+          plot.title.position = "plot",
+          plot.caption.position = "plot",
+          plot.title = element_markdown(),
+          plot.subtitle = element_markdown(face = "italic", size = rel(0.80)),
+          plot.caption = element_markdown(face = "italic", size = rel(0.75)),
+          axis.title.x = element_markdown(),
+          axis.text.x = element_markdown(),
+          axis.title.y = element_markdown(),
+          axis.text.y = element_markdown(size = rel(0.75)),
+          panel.grid.minor = element_blank(),
+          egend.title = element_markdown()
         ) +
         guides(
           colour = guide_colourbar(
@@ -230,43 +233,46 @@ invisible(lapply(
         format(length(.enrich@universe), digits = 0, big.mark = ",")
       )
     })
+    caption_plots <- sprintf(fmt = "<b>%s</b>) %s",
+      LETTERS[seq_along(caption_plots)],
+      caption_plots
+    )
     
+    subtitle_plots <- sprintf(fmt = "<b>%s</b>) %s",
+      LETTERS[seq_along(enrich_plots)], 
+      names(enrich_plots)
+    )
+
     agg_png(
-      filename = file.path(output_directory, "over_representation.png"),
+      filename = file.path(output_directory, "gene_set_enrichment.png"),
       width = 16, height = 16, units = "cm", res = 300, scaling = 0.60
     )
       print(
         wrap_plots(c(enrich_plots, list(guide_area())), ncol = 2, guides = "collect") +
           plot_annotation(
             title = "Over-representation Test",
-            subtitle = paste0(
-              "With ",
-              glue_collapse(
-                x = paste0("<b>", LETTERS[seq_along(enrich_plots)], "</b>) ", names(enrich_plots)),
-                sep = ", ",
-                last = " and "
-              ),
-              "."
+            subtitle = sprintf("With %s and %s.",
+              paste(subtitle_plots[-length(subtitle_plots)], collapse = ", "),
+              subtitle_plots[length(subtitle_plots)]
             ),
-            caption = paste0(
-              "Mapped genes for ",
-              glue_collapse(
-                x = sprintf(fmt = "<b>%s</b>) %s",
-                  LETTERS[seq_along(caption_plots)],
-                  caption_plots
-                ),
-                sep = ", ",
-                last = " and "
-              ),
-              "."
+            caption = sprintf("Mapped genes for %s and %s.",
+              paste(caption_plots[-length(caption_plots)], collapse = ", "),
+              caption_plots[length(caption_plots)]
             ),
             tag_levels = "A",
-            theme = theme(
-              legend.direction = "vertical",
-              legend.box.just = "center", 
-              legend.justification = -1.5,
-              plot.caption = element_markdown(face = "italic", size = rel(0.6))
-            )
+            theme = theme_minimal(base_size = 10, base_family = "Tex Gyre Termes") +
+              theme(
+                plot.title.position = "plot",
+                plot.caption.position = "plot",
+                plot.title = element_markdown(),
+                plot.subtitle = element_markdown(face = "italic", size = rel(0.80)),
+                plot.caption = element_markdown(face = "italic", size = rel(0.75)),
+                axis.title.x = element_markdown(),
+                axis.text.x = element_markdown(),
+                axis.title.y = element_markdown(),
+                axis.text.y = element_markdown(),
+                panel.grid.minor = element_blank()
+              )
           )
       )
     invisible(dev.off())
@@ -279,7 +285,7 @@ invisible(lapply(
   FUN = function(.file) {
     results <- fread(.file)[order(pvalue)]
     enrich_sets <- list(
-      Reactome = {
+      "Reactome" = {
         genes_list <- results[
           pvalue < pvalue_gene & !is.na(entrezgene_id) & entrezgene_id != ""
         ][
@@ -295,7 +301,7 @@ invisible(lapply(
           pAdjustMethod = "BH"
         )
       },
-      GO_BP = {
+      "Gene Ontology Biological Process" = {
         genes_list <- results[
           pvalue < pvalue_gene & !is.na(ensembl_gene_id) & ensembl_gene_id != ""
         ][
@@ -313,7 +319,7 @@ invisible(lapply(
           pAdjustMethod = "BH"
         )
       },
-      GO_CC = {
+      "Gene Ontology Cellular Component" = {
         genes_list <- results[
           pvalue < pvalue_gene & !is.na(ensembl_gene_id) & ensembl_gene_id != ""
         ][
@@ -331,7 +337,7 @@ invisible(lapply(
           pAdjustMethod = "BH"
         )
       },
-      GO_MF = {
+      "Gene Ontology Molecular Function" = {
         genes_list <- results[
           pvalue < pvalue_gene & !is.na(ensembl_gene_id) & ensembl_gene_id != ""
         ][
@@ -349,7 +355,7 @@ invisible(lapply(
           pAdjustMethod = "BH"
         )
       },
-      KEGG = {
+      "KEGG" = {
         genes_list <- results[
           pvalue < pvalue_gene & !is.na(uniprotswissprot) & uniprotswissprot != ""
         ][
@@ -367,14 +373,7 @@ invisible(lapply(
         )
       }
     )
-    names(enrich_sets) <- c(
-      "Reactome" = "Reactome",
-      "GO_BP" = "Gene Ontology Biological Process",
-      "GO_CC" = "Gene Ontology Cellular Component",
-      "GO_MF" = "Gene Ontology Molecular Function",
-      "KEGG" = "KEGG"
-    )[names(enrich_sets)]
-    
+
     write_xlsx(
       x = setNames(lapply(enrich_sets, FUN = function(.enrich) {
         if (is.null(.enrich) || nrow(.enrich@result) == 0) return(data.frame())
@@ -473,7 +472,7 @@ invisible(lapply(
       
       is_too_big <- nrow(.dt) > 25
       
-      if (is_too_big) .dt <- last(.dt, 25)
+      if (is_too_big) .dt <- first(.dt[order(pvalue)], 25)
       
       ggplot(data = .dt) +
         aes(x = enrichmentScore, y = Description, colour = -log10(p.adjust), size = setSize) +
@@ -496,9 +495,19 @@ invisible(lapply(
           colour = "-log<sub>10</sub>(FDR)<br>(Benjamini-Hochberg)",
           size = "Number of Genes"
         ) +
+        theme_minimal(base_size = 10, base_family = "Tex Gyre Termes") +
         theme(
-          legend.title = element_markdown(),
-          axis.text.y = element_markdown(size = rel(0.75))
+          plot.title.position = "plot",
+          plot.caption.position = "plot",
+          plot.title = element_markdown(),
+          plot.subtitle = element_markdown(face = "italic", size = rel(0.80)),
+          plot.caption = element_markdown(face = "italic", size = rel(0.75)),
+          axis.title.x = element_markdown(),
+          axis.text.x = element_markdown(),
+          axis.title.y = element_markdown(),
+          axis.text.y = element_markdown(size = rel(0.75)),
+          panel.grid.minor = element_blank(),
+          egend.title = element_markdown()
         ) +
         guides(
           colour = guide_colourbar(
@@ -524,6 +533,15 @@ invisible(lapply(
         pvalue_gene_gsea
       )
     })
+    caption_plots <- sprintf(fmt = "<b>%s</b>) %s",
+      LETTERS[seq_along(caption_plots)],
+      caption_plots
+    )
+    
+    subtitle_plots <- sprintf(fmt = "<b>%s</b>) %s",
+      LETTERS[seq_along(enrich_plots)], 
+      names(enrich_plots)
+    )
     
     agg_png(
       filename = file.path(output_directory, "gene_set_enrichment.png"),
@@ -533,34 +551,28 @@ invisible(lapply(
         wrap_plots(c(enrich_plots, list(guide_area())), ncol = 2, guides = "collect") +
           plot_annotation(
             title = "Gene Set Enrichment Analysis",
-            subtitle = paste0(
-              "With ",
-              glue_collapse(
-                x = paste0("<b>", LETTERS[seq_along(enrich_plots)], "</b>) ", names(enrich_plots)),
-                sep = ", ",
-                last = " and "
-              ),
-              "."
+            subtitle = sprintf("With %s and %s.",
+              paste(subtitle_plots[-length(subtitle_plots)], collapse = ", "),
+              subtitle_plots[length(subtitle_plots)]
             ),
-            caption = paste0(
-              "Mapped genes for ",
-              glue_collapse(
-                x = sprintf(fmt = "<b>%s</b>) %s",
-                  LETTERS[seq_along(caption_plots)],
-                  caption_plots
-                ),
-                sep = ", ",
-                last = " and "
-              ),
-              "."
+            caption = sprintf("Mapped genes for %s and %s.",
+              paste(caption_plots[-length(caption_plots)], collapse = ", "),
+              caption_plots[length(caption_plots)]
             ),
             tag_levels = "A",
-            theme = theme(
-              legend.direction = "vertical",
-              legend.box.just = "center", 
-              legend.justification = -1.5,
-              plot.caption = element_markdown(face = "italic", size = rel(0.6))
-            )
+            theme = theme_minimal(base_size = 10, base_family = "Tex Gyre Termes") +
+              theme(
+                plot.title.position = "plot",
+                plot.caption.position = "plot",
+                plot.title = element_markdown(),
+                plot.subtitle = element_markdown(face = "italic", size = rel(0.80)),
+                plot.caption = element_markdown(face = "italic", size = rel(0.75)),
+                axis.title.x = element_markdown(),
+                axis.text.x = element_markdown(),
+                axis.title.y = element_markdown(),
+                axis.text.y = element_markdown(),
+                panel.grid.minor = element_blank()
+              )
           )
       )
     invisible(dev.off())
