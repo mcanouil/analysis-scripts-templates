@@ -28,15 +28,20 @@ suppressPackageStartupMessages({
 ### Setup biomaRt ==================================================================================
 set_config(config(ssl_verifypeer = FALSE)) # Fix SSL check error
 
-mart <- try(useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl"), silent = TRUE)
-if (inherits(mart, "try-error")) {
-  mart <- useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
-}
-ensembl_version <- paste(
-  "GRCh38", 
-  setDT(listEnsemblArchives())[current_release == "*", version],
-  sep = " - "
-)
+species <- "hsapiens_gene_ensembl"
+build <- 38
+version <- 103
+
+get_mart <- quote(useEnsembl(
+  biomart = "ensembl", 
+  dataset = species, 
+  version = version, 
+  GRCh = if (build == 37) build else NULL
+))
+
+mart <- try(eval(get_mart), silent = TRUE)
+if (inherits(mart, "try-error")) mart <- eval(get_mart)
+ensembl_version <- sprintf("GRCh%d-%d", build, version)
 
 
 ### Analysis =======================================================================================
