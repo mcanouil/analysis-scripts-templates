@@ -367,7 +367,7 @@ for (rna_level in c("genes", "isoforms")) {
     measure.vars = grep("^PC[0-9]+$", names(pca_dfxy), value = TRUE),
     variable.name = "pc",
     value.name = "values"
-  )[pc %in% sprintf("PC%02d", 1:5)][,
+  )[pc %in% sprintf("PC%02d", 1:n_comp)][,
     {
       m <- model.matrix(
         object = as.formula(
