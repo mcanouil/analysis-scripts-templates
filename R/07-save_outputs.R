@@ -1,3 +1,4 @@
+message(timestamp(quiet = TRUE))
 ### Project Setup ==================================================================================
 library(here)
 project_name <- gsub("(.*)_.*", "\\1", list.files(here(), pattern = ".Rproj$"))
@@ -198,3 +199,4 @@ Sys.chmod(
 
 ### Complete =======================================================================================
 message("Success!", appendLF = TRUE)
+message(timestamp(quiet = TRUE))
