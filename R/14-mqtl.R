@@ -2,7 +2,7 @@ message(timestamp(quiet = TRUE))
 ### Project Setup ==================================================================================
 library(here)
 project_name <- gsub("(.*)_.*", "\\1", list.files(here(), pattern = ".Rproj$"))
-output_directory <- here("outputs", "13-eqtl")
+output_directory <- here("outputs", "14-mqtl")
 dir.create(output_directory, recursive = TRUE, showWarnings = FALSE, mode = "0775")
 
 invisible(sapply(c("epic", "covariates", "fastqtl", "fastqtl_annotated", "fastqtl_combined"), function(x) {

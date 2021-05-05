@@ -2,7 +2,7 @@ message(timestamp(quiet = TRUE))
 ### Project Setup ==================================================================================
 library(here)
 project_name <- gsub("(.*)_.*", "\\1", list.files(here(), pattern = ".Rproj$"))
-output_directory <- here("outputs", "14-eqtl")
+output_directory <- here("outputs", "15-eqtl")
 dir.create(output_directory, recursive = TRUE, showWarnings = FALSE, mode = "0775")
 
 vep_directory <- here("outputs", "08-vep_vcf_docker")
