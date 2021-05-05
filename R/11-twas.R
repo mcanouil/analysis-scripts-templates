@@ -231,6 +231,57 @@ draw_volcano <- function(
   out
 }
 
+plot_planes <- function(pca_dfxy, ivar, fig_n_comp) {
+  apply(
+    X = combn(sprintf("PC%02d", 1:fig_n_comp), 2),
+    MARGIN = 2,
+    FUN = function(.x) {
+      ggplot(data = pca_dfxy[, .SD, .SDcols = c(ivar, .x)]) +
+        aes(x = .data[[.x[1]]], y = .data[[.x[2]]], colour = .data[[ivar]]) +
+        geom_hline(yintercept = 0, linetype = 2, na.rm = TRUE) +
+        geom_vline(xintercept = 0, linetype = 2, na.rm = TRUE) +
+        geom_point(size = 0.75, na.rm = TRUE) +
+        {
+          if (is.numeric(pca_dfxy[[ivar]])) {
+            scale_colour_viridis_c(
+              name = NULL,
+              begin = 0,
+              end = 0.75
+            )
+          } else {
+            list(
+              stat_ellipse(type = "norm", na.rm = TRUE, show.legend = FALSE),
+              scale_colour_viridis_d(
+                name = NULL,
+                begin = if (pca_dfxy[, uniqueN(.SD), .SDcols = ivar] == 2) 0.25 else 0,
+                end = 0.75,
+                guide = guide_legend(override.aes = list(size = 4))
+              ),
+              if (length(unique(pca_dfxy[[ivar]])) > 10) {
+                theme(legend.position = "none")
+              } else {
+                NULL
+              }
+            )
+          }
+        } +
+        theme_minimal(base_size = 10, base_family = "Tex Gyre Termes") +
+        theme(
+          plot.title.position = "plot",
+          plot.caption.position = "plot",
+          plot.title = element_markdown(),
+          plot.subtitle = element_markdown(face = "italic", size = rel(0.80)),
+          plot.caption = element_markdown(face = "italic", size = rel(0.65)),
+          axis.title.x = element_markdown(),
+          axis.text.x = element_markdown(),
+          axis.title.y = element_markdown(),
+          axis.text.y = element_markdown(),
+          panel.grid.minor = element_blank()
+        )
+    }
+  )
+}
+
 
 ### Setup biomaRt ==================================================================================
 set_config(config(ssl_verifypeer = FALSE)) # Fix SSL check error
@@ -360,6 +411,19 @@ for (rna_level in c("genes", "isoforms")) {
       x = "Principal Components",
       y = "Contribution"
     ) +
+    theme_minimal(base_size = 10, base_family = "Tex Gyre Termes") +
+    theme(
+      plot.title.position = "plot",
+      plot.caption.position = "plot",
+      plot.title = element_markdown(),
+      plot.subtitle = element_markdown(face = "italic", size = rel(0.80)),
+      plot.caption = element_markdown(face = "italic", size = rel(0.65)),
+      axis.title.x = element_markdown(),
+      axis.text.x = element_markdown(),
+      axis.title.y = element_markdown(),
+      axis.text.y = element_markdown(),
+      panel.grid.minor = element_blank()
+    ) +
     theme(panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())
   
   asso_dt <- melt(
@@ -371,17 +435,17 @@ for (rna_level in c("genes", "isoforms")) {
     {
       m <- model.matrix(
         object = as.formula(
-          object = paste0("values ~ ", paste(keep_technical, collapse = " + "))
+          object = paste0("values ~ ", paste(paste0("`", keep_technical, "`"), collapse = " + "))
         ),
         data = .SD
       )
-  
+
       if (qr(m)$rank == ncol(m)) {
         out <- as.data.table(
           anova(
             lm(
               formula = as.formula(
-                object = paste0("values ~ ", paste(keep_technical, collapse = " + "))
+                object = paste0("values ~ ", paste(paste0("`", keep_technical, "`"), collapse = " + "))
               ),
               data = .SD
             )
@@ -394,7 +458,7 @@ for (rna_level in c("genes", "isoforms")) {
             as.data.table(
               anova(
                 lm(
-                  formula = as.formula(paste0("values ~ ", .x)),
+                  formula = as.formula(paste0("values ~ `", .x, "`")),
                   data = .SD
                 )
               ),
@@ -412,14 +476,14 @@ for (rna_level in c("genes", "isoforms")) {
     aes(
       x = factor(.data[["pc"]]),
       y = factor(
-        x = .data[["term"]], 
+        x = .data[["term"]],
         levels = setorderv(
           x = dcast(
-            data = asso_dt[j = list(pc, term, `Pr(>F)` = fifelse(`Pr(>F)` <= 0.1, `Pr(>F)`, NA_real_))], 
-            formula = term ~ pc, 
+            data = asso_dt[j = list(pc, term, `Pr(>F)` = fifelse(`Pr(>F)` <= 0.1, `Pr(>F)`, NA_real_))],
+            formula = term ~ pc,
             value.var = "Pr(>F)"
-          ), 
-          cols = levels(asso_dt[["pc"]])[1:n_comp], 
+          ),
+          cols = levels(asso_dt[["pc"]])[1:n_comp],
           order = -1
         )[["term"]]
       ),
@@ -482,70 +546,64 @@ for (rna_level in c("genes", "isoforms")) {
       ),
       fill = "P-Value"
     ) +
+    theme_minimal(base_size = 10, base_family = "Tex Gyre Termes") +
+    theme(
+      plot.title.position = "plot",
+      plot.caption.position = "plot",
+      plot.title = element_markdown(),
+      plot.subtitle = element_markdown(face = "italic", size = rel(0.80)),
+      plot.caption = element_markdown(face = "italic", size = rel(0.65)),
+      axis.title.x = element_markdown(),
+      axis.text.x = element_markdown(),
+      axis.title.y = element_markdown(),
+      axis.text.y = element_markdown(),
+      panel.grid.minor = element_blank()
+    ) +
     theme(plot.caption = element_markdown())
-  
+
   agg_png(
-    filename = file.path(output_directory, paste0(rna_level_name, "_pca_asso.png")), 
-    width = 16, height = 12, units = "cm", res = 300
+    filename = file.path(output_directory, "pca", "gene_pca_asso.png"),
+    width = 16, height = 12, units = "cm", res = 300, scaling = 1
   )
     print(pca_asso)
   invisible(dev.off())
-  
+
   for (ivar in keep_technical) {
     p <- wrap_plots(
       c(
-        apply(
-          X = combn(sprintf("PC%02d", 1:fig_n_comp), 2),
-          MARGIN = 2,
-          FUN = function(x) {
-            ggplot(data = pca_dfxy[, .SD, .SDcols = c(ivar, x)]) +
-              aes(x = .data[[x[1]]], y = .data[[x[2]]], colour = .data[[ivar]]) +
-              geom_hline(yintercept = 0, linetype = 2, na.rm = TRUE) +
-              geom_vline(xintercept = 0, linetype = 2, na.rm = TRUE) +
-              geom_point(size = 0.50, na.rm = TRUE) +
-              {
-                if (is.numeric(pca_dfxy[[ivar]])) {
-                  scale_colour_viridis_c(
-                    name = NULL,
-                    begin = 0,
-                    end = 0.75
-                  )
-                } else {
-                  list(
-                    stat_ellipse(type = "norm", na.rm = TRUE, show.legend = FALSE),
-                    scale_colour_viridis_d(
-                      name = NULL,
-                      begin = if (pca_dfxy[, uniqueN(.SD), .SDcols = ivar] == 2) 0.25 else 0,
-                      end = 0.75, 
-                      guide = guide_legend(override.aes = list(size = 4))
-                    ),
-                    if (length(unique(pca_dfxy[[ivar]])) > 10) {
-                      theme(legend.position = "none")
-                    } else {
-                      NULL
-                    }
-                  )
-                }
-              }
-          }
-        ), 
+        plot_planes(pca_dfxy, ivar, fig_n_comp),
         list(p_inertia)
-      ), 
+      ),
       guides = "collect"
-    ) + 
+    ) +
       plot_annotation(
         title = paste0(
-          "Structure Detection For: '<i>", 
-          names(keep_technical[match(ivar, keep_technical)]), 
+          "Structure Detection For: '<i>",
+          names(keep_technical[match(ivar, keep_technical)]),
           "</i>'"
         ),
-        tag_levels = "A", 
-        theme = theme(plot.title = element_markdown())
+        tag_levels = "A",
+        theme = theme_minimal(base_size = 10, base_family = "Tex Gyre Termes") +
+        theme(
+          plot.title.position = "plot",
+          plot.caption.position = "plot",
+          plot.title = element_markdown(),
+          plot.subtitle = element_markdown(face = "italic", size = rel(0.80)),
+          plot.caption = element_markdown(face = "italic", size = rel(0.65)),
+          axis.title.x = element_markdown(),
+          axis.text.x = element_markdown(),
+          axis.title.y = element_markdown(),
+          axis.text.y = element_markdown(),
+          panel.grid.minor = element_blank()
+        )
       )
-    
+
     agg_png(
-      filename = file.path(output_directory, paste0(rna_level_name, "_pca_planes_", tolower(ivar), ".png")), 
-      width = 16, height = 12, units = "cm", res = 300
+      filename = sprintf("%s/pca/gene_pca_planes_%s.png",
+        output_directory, 
+        tolower(gsub("[.]+$|^[.]+|^X+", "", gsub("[.]+", ".", make.names(ivar))))
+      ),
+      width = 16, height = 12, units = "cm", res = 300, scaling = 1
     )
       print(p)
     invisible(dev.off())
