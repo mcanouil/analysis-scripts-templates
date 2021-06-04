@@ -76,13 +76,13 @@ enrich_sets <- lapply(
         genes_list <- results[
           pvalue < pvalue_gene & !is.na(entrezgene_id) & entrezgene_id != ""
         ][
-          !duplicated(entrezgene_id)
+          !duplicated(sub(";.*", "", entrezgene_id))
         ][
-          i = order(-log2FoldChange),
-          j = setNames(log2FoldChange, entrezgene_id)
+          i = order(log2FoldChange, decreasing = TRUE),
+          j = setNames(log2FoldChange, sub(";.*", "", entrezgene_id))
         ]
         gsePathway(
-          geneList = sub(";.*", "", genes_list), 
+          geneList = genes_list, 
           organism = organism[["reactome"]],
           pvalueCutoff = fdr_term, 
           pAdjustMethod = "BH"
@@ -92,13 +92,13 @@ enrich_sets <- lapply(
         genes_list <- results[
           pvalue < pvalue_gene & !is.na(ensembl_gene_id) & ensembl_gene_id != ""
         ][
-          !duplicated(ensembl_gene_id)
+          !duplicated(sub(";.*", "", ensembl_gene_id))
         ][
-          i = order(-log2FoldChange),
-          j = setNames(log2FoldChange, ensembl_gene_id)
+          i = order(log2FoldChange, decreasing = TRUE),
+          j = setNames(log2FoldChange, sub(";.*", "", ensembl_gene_id))
         ]
         gseGO(
-          geneList = sub(";.*", "", genes_list),
+          geneList = genes_list,
           OrgDb = get(organism[["go"]]),
           keyType = "ENSEMBL",
           ont = "BP",
@@ -110,13 +110,13 @@ enrich_sets <- lapply(
         genes_list <- results[
           pvalue < pvalue_gene & !is.na(ensembl_gene_id) & ensembl_gene_id != ""
         ][
-          !duplicated(ensembl_gene_id)
+          !duplicated(sub(";.*", "", ensembl_gene_id))
         ][
-          i = order(-log2FoldChange),
-          j = setNames(log2FoldChange, ensembl_gene_id)
+          i = order(log2FoldChange, decreasing = TRUE),
+          j = setNames(log2FoldChange, sub(";.*", "", ensembl_gene_id))
         ]
         gseGO(
-          geneList = sub(";.*", "", genes_list),
+          geneList = genes_list,
           OrgDb = get(organism[["go"]]),
           keyType = "ENSEMBL",
           ont = "CC",
@@ -128,13 +128,13 @@ enrich_sets <- lapply(
         genes_list <- results[
           pvalue < pvalue_gene & !is.na(ensembl_gene_id) & ensembl_gene_id != ""
         ][
-          !duplicated(ensembl_gene_id)
+          !duplicated(sub(";.*", "", ensembl_gene_id))
         ][
-          i = order(-log2FoldChange),
-          j = setNames(log2FoldChange, ensembl_gene_id)
+          i = order(log2FoldChange, decreasing = TRUE),
+          j = setNames(log2FoldChange, sub(";.*", "", ensembl_gene_id))
         ]
         gseGO(
-          geneList = sub(";.*", "", genes_list),
+          geneList = genes_list,
           OrgDb = get(organism[["go"]]),
           keyType = "ENSEMBL",
           ont = "MF",
@@ -146,13 +146,13 @@ enrich_sets <- lapply(
         genes_list <- results[
           pvalue < pvalue_gene & !is.na(uniprotswissprot) & uniprotswissprot != ""
         ][
-          !duplicated(uniprotswissprot)
+          !duplicated(sub(";.*", "", uniprotswissprot))
         ][
-          i = order(-log2FoldChange),
-          j = setNames(log2FoldChange, uniprotswissprot)
+          i = order(log2FoldChange, decreasing = TRUE),
+          j = setNames(log2FoldChange, sub(";.*", "", uniprotswissprot))
         ]
         gseKEGG(
-          geneList = sub(";.*", "", genes_list),
+          geneList = genes_list,
           organism = organism[["kegg"]], 
           keyType = "uniprot", 
           pvalueCutoff = fdr_term, 

@@ -129,15 +129,15 @@ list(
       list(
         "Reactome" = {
           genes_list <- results[
-            downstream_pvalue < threshold_gene_gsea & !is.na(entrezgene_id) & entrezgene_id != ""
+            fdr < threshold_gene_gsea & !is.na(entrezgene_id) & entrezgene_id != ""
           ][
-            !duplicated(entrezgene_id)
+            !duplicated(sub(";.*", "", entrezgene_id))
           ][
-            i = order(-slope),
-            j = setNames(slope, entrezgene_id)
+            i = order(log2FoldChange, decreasing = TRUE),
+            j = setNames(log2FoldChange, sub(";.*", "", entrezgene_id))
           ]
           gsePathway(
-            geneList = sub(";.*", "", genes_list), 
+            geneList = genes_list, 
             organism = organism[["reactome"]],
             pvalueCutoff = threshold_pathway_gsea, 
             pAdjustMethod = "BH"
@@ -145,15 +145,15 @@ list(
         },
         "Gene Ontology Biological Process" = {
           genes_list <- results[
-            downstream_pvalue < threshold_gene_gsea & !is.na(ensembl_gene_id) & ensembl_gene_id != ""
+            fdr < threshold_gene_gsea & !is.na(ensembl_gene_id) & ensembl_gene_id != ""
           ][
-            !duplicated(ensembl_gene_id)
+            !duplicated(sub(";.*", "", ensembl_gene_id))
           ][
-            i = order(-slope),
-            j = setNames(slope, ensembl_gene_id)
+            i = order(log2FoldChange, decreasing = TRUE),
+            j = setNames(log2FoldChange, sub(";.*", "", ensembl_gene_id))
           ]
           gseGO(
-            geneList = sub(";.*", "", genes_list),
+            geneList = genes_list,
             OrgDb = get(organism[["go"]]),
             keyType = "ENSEMBL",
             ont = "BP",
@@ -163,15 +163,15 @@ list(
         },
         "Gene Ontology Cellular Component" = {
           genes_list <- results[
-            downstream_pvalue < threshold_gene_gsea & !is.na(ensembl_gene_id) & ensembl_gene_id != ""
+            fdr < threshold_gene_gsea & !is.na(ensembl_gene_id) & ensembl_gene_id != ""
           ][
-            !duplicated(ensembl_gene_id)
+            !duplicated(sub(";.*", "", ensembl_gene_id))
           ][
-            i = order(-slope),
-            j = setNames(slope, ensembl_gene_id)
+            i = order(log2FoldChange, decreasing = TRUE),
+            j = setNames(log2FoldChange, sub(";.*", "", ensembl_gene_id))
           ]
           gseGO(
-            geneList = sub(";.*", "", genes_list),
+            geneList = genes_list,
             OrgDb = get(organism[["go"]]),
             keyType = "ENSEMBL",
             ont = "CC",
@@ -181,15 +181,15 @@ list(
         },
         "Gene Ontology Molecular Function" = {
           genes_list <- results[
-            downstream_pvalue < threshold_gene_gsea & !is.na(ensembl_gene_id) & ensembl_gene_id != ""
+            fdr < threshold_gene_gsea & !is.na(ensembl_gene_id) & ensembl_gene_id != ""
           ][
-            !duplicated(ensembl_gene_id)
+            !duplicated(sub(";.*", "", ensembl_gene_id))
           ][
-            i = order(-slope),
-            j = setNames(slope, ensembl_gene_id)
+            i = order(log2FoldChange, decreasing = TRUE),
+            j = setNames(log2FoldChange, sub(";.*", "", ensembl_gene_id))
           ]
           gseGO(
-            geneList = sub(";.*", "", genes_list),
+            geneList = genes_list,
             OrgDb = get(organism[["go"]]),
             keyType = "ENSEMBL",
             ont = "MF",
@@ -199,15 +199,15 @@ list(
         },
         "KEGG" = {
           genes_list <- results[
-            downstream_pvalue < threshold_gene_gsea & !is.na(uniprotswissprot) & uniprotswissprot != ""
+            fdr < threshold_gene_gsea & !is.na(uniprotswissprot) & uniprotswissprot != ""
           ][
-            !duplicated(uniprotswissprot)
+            !duplicated(sub(";.*", "", uniprotswissprot))
           ][
-            i = order(-slope),
-            j = setNames(slope, uniprotswissprot)
+            i = order(log2FoldChange, decreasing = TRUE),
+            j = setNames(log2FoldChange, sub(";.*", "", uniprotswissprot))
           ]
           gseKEGG(
-            geneList = sub(";.*", "", genes_list),
+            geneList = genes_list,
             organism = organism[["kegg"]], 
             keyType = "uniprot", 
             pvalueCutoff = threshold_pathway_gsea, 
