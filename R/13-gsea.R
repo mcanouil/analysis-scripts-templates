@@ -82,7 +82,7 @@ enrich_sets <- lapply(
           j = setNames(log2FoldChange, entrezgene_id)
         ]
         gsePathway(
-          geneList = genes_list, 
+          geneList = sub(";.*", "", genes_list), 
           organism = organism[["reactome"]],
           pvalueCutoff = fdr_term, 
           pAdjustMethod = "BH"
@@ -98,7 +98,7 @@ enrich_sets <- lapply(
           j = setNames(log2FoldChange, ensembl_gene_id)
         ]
         gseGO(
-          geneList = genes_list,
+          geneList = sub(";.*", "", genes_list),
           OrgDb = get(organism[["go"]]),
           keyType = "ENSEMBL",
           ont = "BP",
@@ -116,7 +116,7 @@ enrich_sets <- lapply(
           j = setNames(log2FoldChange, ensembl_gene_id)
         ]
         gseGO(
-          geneList = genes_list,
+          geneList = sub(";.*", "", genes_list),
           OrgDb = get(organism[["go"]]),
           keyType = "ENSEMBL",
           ont = "CC",
@@ -134,7 +134,7 @@ enrich_sets <- lapply(
           j = setNames(log2FoldChange, ensembl_gene_id)
         ]
         gseGO(
-          geneList = genes_list,
+          geneList = sub(";.*", "", genes_list),
           OrgDb = get(organism[["go"]]),
           keyType = "ENSEMBL",
           ont = "MF",
@@ -152,7 +152,7 @@ enrich_sets <- lapply(
           j = setNames(log2FoldChange, uniprotswissprot)
         ]
         gseKEGG(
-          geneList = genes_list,
+          geneList = sub(";.*", "", genes_list),
           organism = organism[["kegg"]], 
           keyType = "uniprot", 
           pvalueCutoff = fdr_term, 
@@ -162,7 +162,7 @@ enrich_sets <- lapply(
     )
 
     write_xlsx(
-      x = setNames(lapply(enrich_sets, FUN = function(.enrich) {
+      x = setNames(lapply(gsea, FUN = function(.enrich) {
         if (is.null(.enrich) || nrow(.enrich@result) == 0) return(data.frame())
         merge(
           x = setDT(.enrich@result), 
@@ -186,29 +186,58 @@ enrich_sets <- lapply(
             }
           },
           by = "ID"
+        ][
+          j = c("core_enrichment_symbols", "genes_set_symbols", "peripheral_enrichment_symbols") := lapply(
+            X = .SD,
+            FUN = function(icol) {
+              sapply(
+                X = icol, 
+                res = results,
+                FUN = function(x, res) {
+                  x <- unlist(setdiff(na.exclude(strsplit(x, "/")), c("", "NA")))
+                  if (all(grepl("ENSG", x))) {
+                    id <- "ensembl_gene_id"
+                  } else if (
+                    all(grepl("[[:alpha:]]", substr(x, 1, 1)) & 
+                      !grepl("[[:digit:]]", substr(x, 1, 1)))
+                  ) {
+                    id <- "uniprotswissprot"
+                  } else {
+                    id <- "entrezgene_id"
+                  }
+                  gene_symbols <- unname(setNames(res[["external_gene_name"]], res[[id]])[x])
+                  
+                  if (length(gene_symbols) == 0) return(NA_character_)
+                  
+                  paste(gene_symbols, collapse = "/")
+                }
+              )
+            }
+          ),
+          .SDcols = c("core_enrichment", "genes_set", "peripheral_enrichment")
         ]
-      }), gsub("Gene Ontology", "GO", names(enrich_sets))), 
+      }), gsub("Gene Ontology", "GO", names(gsea))), 
       path = file.path(output_directory, "gene_set_enrichment.xlsx")
     )
     
-    write_xlsx(
-      x = setNames(lapply(enrich_sets, FUN = function(.enrich) {
-        if (!is.null(.enrich)) return(data.frame())
-        merge(
-          x = results,
-          y = rbindlist(
-            mapply(
-              FUN = data.table, 
-              entrezgene_id = .enrich@geneSets, 
-              gsid = names(.enrich@geneSets), 
-              SIMPLIFY = FALSE
-            )
-          ),
-          by = "entrezgene_id"
-        )
-      }), gsub("Gene Ontology", "GO", names(enrich_sets))), 
-      path = file.path(output_directory, "gene_set_list.xlsx")
-    )
+    # write_xlsx(
+    #   x = setNames(lapply(enrich_sets, FUN = function(.enrich) {
+    #     if (!is.null(.enrich)) return(data.frame())
+    #     merge(
+    #       x = results,
+    #       y = rbindlist(
+    #         mapply(
+    #           FUN = data.table, 
+    #           entrezgene_id = .enrich@geneSets, 
+    #           gsid = names(.enrich@geneSets), 
+    #           SIMPLIFY = FALSE
+    #         )
+    #       ),
+    #       by = "entrezgene_id"
+    #     )
+    #   }), gsub("Gene Ontology", "GO", names(enrich_sets))), 
+    #   path = file.path(output_directory, "gene_set_list.xlsx")
+    # )
     
     enrich_sets
   }
