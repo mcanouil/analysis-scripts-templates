@@ -21,7 +21,7 @@
 + `R/02-qc_idats_snps.Rmd`, YAML header for Rmarkdown template in `umr1283/dmapaq` (mostly for mQTL analysis).
 + `R/03-qc_plink.Rmd`, skeleton script or YAML header for Rmarkdown template in `umr1283/dgapaq`.
 + `R/04-qc_impute.Rmd`, skeleton script or YAML header for Rmarkdown template in `umr1283/dgapaq`.
-+ `R/05-ethnicity.R`, skeleton script to perform etnicity inference using 1,000 Genomes and HRC imputed VCF files.
++ `R/05-ethnicity.R`, skeleton script to perform ethnicity inference using 1,000 Genomes and HRC imputed VCF files.
 + `R/06-omni_to_hg38.R`, skeleton R script to upgrade genotyping arrays to GRCh38 genome assembly.
 + `R/07-save_outputs.R`, skeleton R script to store "sensitive"/"fragile" data to a more secure disk.
 + `R/08-vep_vcf_docker.R`, skeleton R script with iterative steps to retrieve RSID and gene's symbol using VEP (Docker).
