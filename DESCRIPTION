@@ -1,5 +1,5 @@
 Package: analysis_templates
-Title: Omics Analysis Scripts
+Title: Script Templates To Work With Omics Datasets
 Version: 0.2.0.9000
 Authors@R: 
     person(given = "Mickael",
