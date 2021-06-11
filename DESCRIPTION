@@ -1,5 +1,6 @@
 Package: analysis_templates
-Title: Script Templates To Work With Omics Datasets
+Title: Mickaël Canouil's Analysis Scripts Templates
+Description: Script Templates To Work With Omics Datasets.
 Version: 0.2.0.9000
 Authors@R: 
     person(given = "Mickael",
