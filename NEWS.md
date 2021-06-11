@@ -1,12 +1,17 @@
 # analysis_templates (development version)
 
-+ `R/13-mqtl.R`, 
++ `R/14-mqtl.R`, 
     + Skeleton R script to perform mQTL analysis (methylation Vs. genotypes).
-+ `R/14-eqtl.R`, 
-    + Skeleton R script to perform eQTL analysis (expression Vs. genotypes.
-+ `R/12-ora_gsea.R`, 
++ `R/15-eqtl.R`, 
+    + Skeleton R script to perform eQTL analysis (expression Vs. genotypes).
++ `R/12-ora.R` and `R/tar_ora.R`, 
+    + Add gene symbols for KEGG.
+    + Add ORA as a simple R script or `targets` setup.
++ `R/13-gsea.R` and `R/tar_gsea.R`, 
     + Add genes set and peripheral sets (genes set - core set).
-    + Fix typos.
+    + Add gene symbols in addition to Ensembl, Uniprot or Entrez gene IDs.
+    + Fix ties using pvalue as secondary parameter in sorting and removing `.Machine$double.eps` for the second value.
+    + Add GSEA as a simple R script or `targets` setup.
 
 # analysis_templates 0.1.0
 
