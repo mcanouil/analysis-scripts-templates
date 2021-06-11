@@ -1,6 +1,6 @@
 Package: analysis_templates
 Title: Omics Analysis Scripts
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: 
     person(given = "Mickael",
            family = "Canouil",
