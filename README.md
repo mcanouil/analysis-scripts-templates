@@ -1,4 +1,4 @@
-# Mickaël Canouil’s Analysis Scripts Templates
+# Mickaël Canouil's Analysis Scripts Templates
 
 <!-- badges: start -->
 
