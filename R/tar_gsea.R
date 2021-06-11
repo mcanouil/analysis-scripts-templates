@@ -133,9 +133,10 @@ list(
           ][
             !duplicated(sub(";.*", "", entrezgene_id))
           ][
-            i = order(log2FoldChange, decreasing = TRUE),
+            i = order(log2FoldChange, pvalue, decreasing = TRUE),
             j = setNames(log2FoldChange, sub(";.*", "", entrezgene_id))
           ]
+          genes_list[duplicated(genes_list)] <- genes_list[duplicated(genes_list)] - .Machine$double.eps
           gsePathway(
             geneList = genes_list, 
             organism = organism[["reactome"]],
@@ -149,9 +150,10 @@ list(
           ][
             !duplicated(sub(";.*", "", ensembl_gene_id))
           ][
-            i = order(log2FoldChange, decreasing = TRUE),
+            i = order(log2FoldChange, pvalue, decreasing = TRUE),
             j = setNames(log2FoldChange, sub(";.*", "", ensembl_gene_id))
           ]
+          genes_list[duplicated(genes_list)] <- genes_list[duplicated(genes_list)] - .Machine$double.eps
           gseGO(
             geneList = genes_list,
             OrgDb = get(organism[["go"]]),
@@ -167,9 +169,10 @@ list(
           ][
             !duplicated(sub(";.*", "", ensembl_gene_id))
           ][
-            i = order(log2FoldChange, decreasing = TRUE),
+            i = order(log2FoldChange, pvalue, decreasing = TRUE),
             j = setNames(log2FoldChange, sub(";.*", "", ensembl_gene_id))
           ]
+          genes_list[duplicated(genes_list)] <- genes_list[duplicated(genes_list)] - .Machine$double.eps
           gseGO(
             geneList = genes_list,
             OrgDb = get(organism[["go"]]),
@@ -185,9 +188,10 @@ list(
           ][
             !duplicated(sub(";.*", "", ensembl_gene_id))
           ][
-            i = order(log2FoldChange, decreasing = TRUE),
+            i = order(log2FoldChange, pvalue, decreasing = TRUE),
             j = setNames(log2FoldChange, sub(";.*", "", ensembl_gene_id))
           ]
+          genes_list[duplicated(genes_list)] <- genes_list[duplicated(genes_list)] - .Machine$double.eps
           gseGO(
             geneList = genes_list,
             OrgDb = get(organism[["go"]]),
@@ -203,9 +207,10 @@ list(
           ][
             !duplicated(sub(";.*", "", uniprotswissprot))
           ][
-            i = order(log2FoldChange, decreasing = TRUE),
+            i = order(log2FoldChange, pvalue, decreasing = TRUE),
             j = setNames(log2FoldChange, sub(";.*", "", uniprotswissprot))
           ]
+          genes_list[duplicated(genes_list)] <- genes_list[duplicated(genes_list)] - .Machine$double.eps
           gseKEGG(
             geneList = genes_list,
             organism = organism[["kegg"]], 
