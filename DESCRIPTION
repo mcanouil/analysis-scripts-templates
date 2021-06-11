@@ -1,0 +1,13 @@
+Package: analysis_templates
+Title: Omics Analysis Scripts
+Version: 0.1.0
+Authors@R: 
+    person(given = "Mickael",
+           family = "Canouil",
+           role = c("aut", "cre"),
+           email = "mickael.canouil@cnrs.fr",
+           comment = c(ORCID = "0000-0002-3396-4549"))
+License: MIT + file LICENSE
+URL: https://github.com/mcanouil/analysis_templates
+BugReports: https://github.com/mcanouil/analysis_templates/issues
+Encoding: UTF-8
