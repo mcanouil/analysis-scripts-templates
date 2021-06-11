@@ -110,14 +110,48 @@ enrich_sets <- lapply(
         pAdjustMethod = "BH",
         readable = TRUE
       ),
-      "KEGG" = enrichKEGG(
-        gene = unique(na.exclude(unlist(strsplit(results[pvalue < pvalue_gene][["uniprotswissprot"]], ";")))), 
-        universe = unique(na.exclude(unlist(strsplit(results[["uniprotswissprot"]], ";")))),
-        organism = organism[["kegg"]], 
-        keyType = "uniprot", 
-        pvalueCutoff = fdr_pathway, 
-        pAdjustMethod = "BH"
-      )
+      "KEGG" = {
+        kegg_res <- enrichKEGG(
+          gene = unique(na.exclude(unlist(strsplit(results[downstream_pvalue < threshold_gene_ora][["uniprotswissprot"]], ";")))),
+          universe = unique(na.exclude(unlist(strsplit(results[["uniprotswissprot"]], ";")))),
+          organism = organism[["kegg"]],
+          keyType = "uniprot",
+          pvalueCutoff = threshold_pathway_ora,
+          pAdjustMethod = "BH"
+        )
+        kegg_res@result <- setDT(kegg_res@result)[
+          j = "geneID_symbols" := lapply(
+            X = .SD,
+            FUN = function(icol) {
+              sapply(
+                X = icol, 
+                res = results,
+                FUN = function(x, res) {
+                  x <- unlist(setdiff(na.exclude(strsplit(x, "/")), c("", "NA")))
+                  if (all(grepl("ENSG", x))) {
+                    id <- "ensembl_id"
+                  } else if (
+                    all(grepl("[[:alpha:]]", substr(x, 1, 1)) & 
+                      !grepl("[[:digit:]]", substr(x, 1, 1)))
+                  ) {
+                    id <- "uniprotswissprot"
+                  } else {
+                    id <- "entrezgene_id"
+                  }
+                  gene_symbols <- unname(setNames(res[["external_gene_name"]], res[[id]])[x])
+                  
+                  if (length(gene_symbols) == 0) return(NA_character_)
+                  
+                  paste(gene_symbols, collapse = "/")
+                }
+              )
+            }
+          ),
+          .SDcols = "geneID"
+        ]
+        setDF(kegg_res@result)
+        kegg_res
+      }
     )
     
     write_xlsx(
