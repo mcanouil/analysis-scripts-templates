@@ -4,8 +4,9 @@ library(targets)
 # library(here)
 # library(data.table)
 
+# tar_option_set(cue = tar_cue(mode = "never"))
+
 # targets::tar_renv(extras = "visNetwork", path = "scripts/_dependencies.R")
-tar_option_set(cue = tar_cue(mode = "never"))
 
 
 ### project setup ==================================================================================
@@ -13,6 +14,9 @@ output_directory <- here("outputs", "gsea")
 dir.create(output_directory, mode = "0775", showWarnings = FALSE)
 
 set_ensembl_version <- 103
+
+threshold_gene_gsea <- 0.05
+threshold_pathway_gsea <- 1
 
 organism <- c(
   "reactome" = "human",
@@ -32,9 +36,6 @@ organism <- c(
 #   "kegg" = "rno",
 #   "ensembl" = "rnorvegicus_gene_ensembl"
 # )
-
-threshold_gene_gsea <- 0.05
-threshold_pathway_gsea <- 1
 
 
 ### targets ========================================================================================
