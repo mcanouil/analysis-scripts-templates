@@ -1,6 +1,6 @@
 # analysis_templates (development version)
 
-+ `target/`,
++ `target/`
     + `tar_ora.R`, `targets` setup to compute over-representation analysis.
     + `tar_gsea.R`, `targets` setup to compute gene-set enrichment analysis.
     + `tar_methylation.R`, `targets` setup to compute idats (methylation) files quality-control.
@@ -9,6 +9,12 @@
     + `tar-qc_plink`, functions, used in `tar_genotype.R`, to compute PLINK files quality-control.
     + `tar-pval_trans`, p-value ggplot2 axis transformation.
     + `tar-sub_chunk`, function to create sub-chunk inside a chunk in RMarkdown.
+
++ `R/`
+    + `14-mqtl.R`, fix missing variables.
+    + `15-eqtl.R`, fix missing variables.
+    + `16-eqtm.R`, new expression-methylation analysis.
+    + `16-eqtm_estimated_time.R`, new script to estimate computation time from `16-eqtm.R`'s log.
 
 # analysis_templates 0.2.0
 
