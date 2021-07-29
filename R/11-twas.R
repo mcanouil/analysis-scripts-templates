@@ -678,7 +678,7 @@ for (rna_level in c("genes", "isoforms")) {
   for (ntrait in names(traits)) {
     local({
       trait <- traits[[ntrait]]
-      base_form <- as.formula(paste0("~ BIO_ID + ", trait))
+      base_form <- as.formula(paste0("~ ", trait))
       
       dds_pheno <- na.exclude(sample_sheet_qc[j = .SD, .SDcols = c("Sample_ID", all.vars(base_form))])
       dds_counts <- lapply(
