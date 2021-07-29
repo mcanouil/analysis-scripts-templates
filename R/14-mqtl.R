@@ -14,6 +14,10 @@ vep_directory <- here("outputs", "08-vep_vcf_docker")
 
 data_directory <- file.path("/disks/DATA/Projects", project_name, "QC")
 
+phenotype <- here("docs", "phenotype.xlsx")
+ethnicity <- file.path(data_directory, "Omni2.5", paste0(project_name, "_ethnicity.csv"))
+exclusion <- file.path(data_directory, "Omni2.5", paste0(project_name, "_QC_exclusion.xlsx"))
+
 
 ### Load Packages ==================================================================================
 suppressPackageStartupMessages({

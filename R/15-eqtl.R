@@ -9,6 +9,10 @@ vep_directory <- here("outputs", "08-vep_vcf_docker")
 
 run_directory <- "/disks/RUN/Run_XXX/Output/RSEM"
 
+phenotype <- here("docs", "phenotype.xlsx")
+ethnicity <- file.path(data_directory, "Omni2.5", paste0(project_name, "_ethnicity.csv"))
+exclusion <- file.path(data_directory, "Omni2.5", paste0(project_name, "_QC_exclusion.xlsx"))
+
 seed <- as.numeric(Sys.Date())
 cis_window <- 500
 
