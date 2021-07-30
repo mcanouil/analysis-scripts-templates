@@ -341,7 +341,7 @@ covariates <- list(
 ### Check Tissue ===================================================================================
 sample_tissue <- "Liver"
 res_tissue <- summary(find_tissue(sample_sheet_qc[["rnaseq_path"]]))
-if (!all(grepl(sample_tissue, unique(res_tissue[["best_tissue "]])))) {
+if (!all(grepl(sample_tissue, unique(res_tissue[["best_tissue"]])))) {
   message(
     paste0('Tissue found using GTEx does not match "', sample_tissue, '" for all samples!'), 
     appendLF = TRUE
