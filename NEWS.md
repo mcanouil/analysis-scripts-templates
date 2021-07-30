@@ -11,6 +11,7 @@
     + `tar-sub_chunk`, function to create sub-chunk inside a chunk in RMarkdown.
 
 + `R/`
+    + `**-****`, fix project name to not include file extension. 
     + `11-twas.R`, 
         - fix #2 (@Ning-L).
         - ensure Ensembl ID does not contain version.
