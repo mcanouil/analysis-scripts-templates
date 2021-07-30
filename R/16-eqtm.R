@@ -142,6 +142,7 @@ for (rna_level in do_rna_level) {
     txOut = rna_level == "isoforms", 
     countsFromAbundance = "no", 
   ))
+  txi_counts$length[txi_counts$length == 0] <- 1
   
   dds <- suppressMessages(DESeqDataSetFromTximport(
     txi = txi_counts, 
