@@ -1,7 +1,7 @@
 message(timestamp(quiet = TRUE))
 ### Project Setup ==================================================================================
 library(here)
-project_name <- gsub("(.*)_.*", "\\1", list.files(here(), pattern = ".Rproj$"))
+project_name <- sub("(.*)_*\\..*", "\\1", list.files(here(), pattern = ".Rproj$"))
 output_directory <- here("outputs", "16-eqtm")
 dir.create(output_directory, recursive = TRUE, showWarnings = FALSE, mode = "0775")
 
@@ -54,7 +54,7 @@ if (interactive()) plan(sequential) else plan(multicore, workers = workers)
 message(sprintf("Number of workers: %d", workers))
 
 ##------ data.table ------##
-setDTthreads(threads = 1)
+setDTthreads(threads = workers)
 
 
 ### Setup biomaRt ==================================================================================
@@ -78,7 +78,7 @@ phenotype_matrix <- fread(
   colClasses = c("Sample_ID" = "character")
 )
 
-sample_sheet_qc_init <- merge(
+sample_sheet_qc <- merge(
   x = fread(
     file = phenotype, 
     colClasses = c("Sample_ID" = "character")
@@ -98,7 +98,7 @@ sample_sheet_qc_init <- merge(
 beta_matrix <- fread(
   file = file.path(data_directory, "EPIC", "EPIC_QC_betavalues.csv.gz"), 
   header = TRUE, 
-  select = c("cpg_id", sample_sheet_qc_init[["Sample_ID"]])
+  select = c("cpg_id", sample_sheet_qc[["Sample_ID"]])
 )
 
 methyl_annot <- suppressWarnings(as.data.table( # In .local(x, row.names, optional, ...) : Arguments in '...' ignored
@@ -132,10 +132,10 @@ for (rna_level in do_rna_level) {
     files = setNames(
       object = sprintf(
         "%s/sample%04d_Ensembl-%s.%s.results",
-        run_directory, as.numeric(sample_sheet_qc_init[["Sample_ID"]]), 
+        run_directory, as.numeric(sample_sheet_qc[["Sample_ID"]]), 
         sub(".*-", "", ensembl_version), rna_level
       ), 
-      nm = sample_sheet_qc_init[["Sample_ID"]]
+      nm = sample_sheet_qc[["Sample_ID"]]
     ),
     type = "rsem", 
     txIn = rna_level == "isoforms", 
@@ -297,7 +297,7 @@ for (rna_level in do_rna_level) {
       files <- future_sapply(
         X = chunk_data, 
         cov_formula = default_covariates,
-        pheno = sample_sheet_qc_init,
+        pheno = sample_sheet_qc,
         future.packages = c("data.table", "stats", "broom", "progress"),
         future.globals = FALSE, 
         future.chunk.size = workers_multiplier,
