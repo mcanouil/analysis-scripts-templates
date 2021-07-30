@@ -5,7 +5,7 @@ project_name <- sub("(.*)_*\\..*", "\\1", list.files(here(), pattern = ".Rproj$"
 output_directory <- here("outputs", "16-eqtm")
 dir.create(output_directory, recursive = TRUE, showWarnings = FALSE, mode = "0775")
 
-debug <- FALSE # FALSE or number of pairs to run
+debug <- FALSE # FALSE or number of chunk to run
 
 workers <- 40
 workers_multiplier <- 5
@@ -193,10 +193,6 @@ for (rna_level in do_rna_level) {
     by.y = sprintf("ensembl_%s_id", rna_level_name)
   )[j = ensembl := ensembl_version]
   
-  ##------ DEBUGGING ------##
-  if (!isFALSE(debug)) rna_annot <- rna_annot[1:debug, ]
-  ##------    END    ------##
-  
   message(sprintf(
     "Number of %ss: %s",
     rna_level_name, 
@@ -261,6 +257,10 @@ for (rna_level in do_rna_level) {
     rna_level_name,
     format(max(cis_cpg_gene_pairs[["W"]]), big.mark = ",")
   ))
+  
+  ##------ DEBUGGING ------##
+  if (!isFALSE(debug)) cis_cpg_gene_pairs <- cis_cpg_gene_pairs[W %in% 1:debug]
+  ##------    END    ------##
   
   message(sprintf("Time taken for eQTM: %s", bench_time({
     results <- cis_cpg_gene_pairs[, list(W = unique(W), file = NA_character_), by = "transcript_id"]
