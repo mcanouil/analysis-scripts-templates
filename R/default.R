@@ -27,8 +27,8 @@ suppressPackageStartupMessages({
 #   plot.title.position = "plot",
 #   plot.caption.position = "plot",
 #   plot.title = element_markdown(),
-#   plot.subtitle = element_markdown(face = "italic", size = rel(0.80)),
-#   plot.caption = element_markdown(face = "italic", size = rel(0.65)),
+#   plot.subtitle = element_markdown(face = "italic"),
+#   plot.caption = element_markdown(face = "italic"),
 #   axis.title.x = element_markdown(),
 #   axis.text.x = element_markdown(),
 #   axis.title.y = element_markdown(),
@@ -40,27 +40,6 @@ suppressPackageStartupMessages({
 
 
 ### Analysis =======================================================================================
-
-
-### Archive ========================================================================================
-# if (!Sys.getenv("USER") %in% c("root", "") && file.exists("~/.fex/id")) {
-#   local({
-#     owd <- getwd()
-#     setwd(normalizePath(output_directory))
-#     archive_name <- file.path(
-#       normalizePath(output_directory),
-#       paste0(
-#         format(Sys.Date(), format = "%Y%m%d"), "_",
-#         project_name, "_", 
-#         gsub("[0-9]+\\-", "", basename(output_directory)), ".zip"
-#       )
-#     )
-#     zip(archive_name, files = list.files())
-#     fex_out <- system(paste("fexsend", archive_name, "."), intern = TRUE)
-#     unlink(archive_name)
-#     setwd(owd)
-#   })
-# }
 
 
 ### Set chmod ======================================================================================
