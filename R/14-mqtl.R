@@ -78,7 +78,7 @@ beta_matrix <- fread(
   header = TRUE
 )
 beta_matrix <- `rownames<-`(
-  as.matrix((function(x) log2(x) - log2(1 - x))(beta_matrix[j = -"cpg_id"])), 
+  (function(x) as.matrix(log2(x) - log2(1 - x)))(beta_matrix[j = -"cpg_id"]),
   beta_matrix[["cpg_id"]]
 )[, sample_sheet_qc[["Sample_ID"]]]
 

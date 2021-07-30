@@ -117,7 +117,7 @@ methyl_annot <- suppressWarnings(as.data.table( # In .local(x, row.names, option
 beta_matrix <- (function(x) setDF(x[, -"cpg_id"], rownames = x[["cpg_id"]]))(
   beta_matrix[cpg_id %in% methyl_annot[["cpg_id"]]]
 )
-beta_matrix <- as.matrix((function(x) log2(x) - log2(1 - x))(beta_matrix))
+beta_matrix <- (function(x) as.matrix(log2(x) - log2(1 - x)))(beta_matrix)
 
 message(sprintf(
   "Number of CpGs: %s",

@@ -11,13 +11,18 @@
     + `tar-sub_chunk`, function to create sub-chunk inside a chunk in RMarkdown.
 
 + `R/`
-    + `**-****`, fix project name to not include file extension. 
+    + `**-****.R`, fix project name to not include file extension. 
+    + `10-ewas.R`, tweak & refactor some code.
     + `11-twas.R`, 
         - fix #2 (@Ning-L).
         - ensure Ensembl ID does not contain version.
-    + `14-mqtl.R`, fix missing variables.
+    + `14-mqtl.R`, 
+        - fix missing variables.
+        - tweak & refactor some code.
     + `15-eqtl.R`, fix missing variables.
-    + `16-eqtm.R`, new expression-methylation analysis.
+    + `16-eqtm.R`, 
+        - new expression-methylation analysis.
+        - tweak & refactor some code.
     + `16-eqtm_estimated_time.R`, new script to estimate computation time from `16-eqtm.R`'s log.
 
 # analysis_templates 0.2.0
