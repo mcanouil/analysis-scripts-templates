@@ -80,7 +80,11 @@ find_tissue <- function(
   ]
   
   samples_tissue <- Reduce(
-    f = function(x, y) merge(x, y, by = "Tissue", all = TRUE), 
+    f = function(x, y) {
+      merge(x, y, by = "Tissue", all = TRUE)[
+        j =  `:=`(gene_id = sub("\\..*$", "", gene_id))
+      ]
+    }, 
     x = lapply(
       X = files,
       .gtex = gtex_markers,

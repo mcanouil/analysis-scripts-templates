@@ -11,7 +11,9 @@
     + `tar-sub_chunk`, function to create sub-chunk inside a chunk in RMarkdown.
 
 + `R/`
-    + `11-twas.R`, fix #2 (@Ning-L).
+    + `11-twas.R`, 
+        - fix #2 (@Ning-L).
+        - ensure Ensembl ID does not contain version.
     + `14-mqtl.R`, fix missing variables.
     + `15-eqtl.R`, fix missing variables.
     + `16-eqtm.R`, new expression-methylation analysis.
