@@ -306,27 +306,14 @@ for (rna_level in do_rna_level) {
           setDTthreads(threads = 1)
           
           lm_eqtm <- function(formula, data) {
-            mod <- lm(
+            tidy(lm(
               formula = as.formula(sprintf("%s ~ mvalue + %s", names(data)[[2]], formula)), 
               data = data
-            )
-  
-            out <- as.data.table(tryCatch(
-              expr = tidy(mod), 
-              warning = function(w) {
-                out <- suppressWarnings(tidy(mod))
-                out[["warning"]] <- w$message
-                out
-              }
             ))[
               term %in% "mvalue"
             ][
               j = `:=`(response = names(data)[[2]], term = NULL)
             ]
-            
-            if (!any(grepl("warning", names(out)))) out[j = "warning" := NA_character_]
-            
-            out
           }
           
           file <- sprintf("%s/%s.csv.gz", tempdir(), names(data)[[2]])
