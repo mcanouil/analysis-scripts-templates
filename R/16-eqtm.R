@@ -95,7 +95,7 @@ sample_sheet_qc <- merge(
 ]
 
 #### EPIC data -------------------------------------------------------------------------------------
-beta_matrix <- fread(
+raw_beta_matrix <- fread(
   file = file.path(data_directory, "EPIC", "EPIC_QC_betavalues.csv.gz"), 
   header = TRUE, 
   select = c("cpg_id", sample_sheet_qc[["Sample_ID"]])
@@ -110,17 +110,17 @@ methyl_annot <- suppressWarnings(as.data.table( # In .local(x, row.names, option
   ],
   keep.rownames = "cpg_id"
 ))[
-  i = !is.na(Start_hg38) & cpg_id %in% intersect(beta_matrix[["cpg_id"]], cpg_id),
+  i = !is.na(Start_hg38) & cpg_id %in% intersect(raw_beta_matrix[["cpg_id"]], cpg_id),
   j = list(CHR_hg38, Start_hg38 = as.integer(Start_hg38), cpg_id)
 ]
 
-beta_matrix <- (function(x) log2(x) - log2(1 - x))(
-  as.matrix(beta_matrix[cpg_id %in% methyl_annot[["cpg_id"]]], "cpg_id")
+raw_beta_matrix <- (function(x) log2(x) - log2(1 - x))(
+  as.matrix(raw_beta_matrix[cpg_id %in% methyl_annot[["cpg_id"]]], "cpg_id")
 )
 
 message(sprintf(
   "Number of CpGs: %s",
-  format(nrow(beta_matrix), big.mark = ",")
+  format(nrow(raw_beta_matrix), big.mark = ",")
 ))
 
 #### RNA-seq data & eQTM ---------------------------------------------------------------------------
@@ -230,7 +230,7 @@ for (rna_level in do_rna_level) {
   cis_cpg_gene_pairs <- cis_cpg_gene_pairs_info[j = c("count_id", "cpg_id", "W")]
   
   counts_vst <- counts_vst[unique(cis_cpg_gene_pairs[["count_id"]]), , drop = FALSE]
-  beta_matrix <- beta_matrix[unique(cis_cpg_gene_pairs[["cpg_id"]]), , drop = FALSE]
+  beta_matrix <- raw_beta_matrix[unique(cis_cpg_gene_pairs[["cpg_id"]]), , drop = FALSE]
   
   #### eQTM ----------------------------------------------------------------------------------------
   message(timestamp(quiet = TRUE))
@@ -256,7 +256,7 @@ for (rna_level in do_rna_level) {
   ))
   
   ##------ DEBUGGING ------##
-  if (!isFALSE(debug)) cis_cpg_gene_pairs <- cis_cpg_gene_pairs[W %in% 0:debug]
+  if (!isFALSE(debug)) cis_cpg_gene_pairs <- cis_cpg_gene_pairs[W %in% 0:(debug - 1)]
   ##------    END    ------##
   
   message(sprintf("Time taken for eQTM: %s", bench_time({
@@ -345,7 +345,7 @@ for (rna_level in do_rna_level) {
     
   fwrite(
     x = merge(
-      x = cis_cpg_gene_pairs,
+      x = setnames(cis_cpg_gene_pairs[j = -c("W")], "count_id", sprintf("%s_id", rna_level_name)),
       y = setnames(rbindlist(lapply(results[["file"]], fread)), "response", sprintf("%s_id", rna_level_name)),
       by = c(sprintf("%s_id", rna_level_name), "cpg_id")
     )[j = fdr_storey := qvalue(p.value)$qvalues], 
