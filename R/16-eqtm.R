@@ -114,10 +114,9 @@ methyl_annot <- suppressWarnings(as.data.table( # In .local(x, row.names, option
   j = list(CHR_hg38, Start_hg38 = as.integer(Start_hg38), cpg_id)
 ]
 
-beta_matrix <- (function(x) setDF(x[, -"cpg_id"], rownames = x[["cpg_id"]]))(
-  beta_matrix[cpg_id %in% methyl_annot[["cpg_id"]]]
+beta_matrix <- (function(x) log2(x) - log2(1 - x))(
+  as.matrix(beta_matrix[cpg_id %in% methyl_annot[["cpg_id"]]], "cpg_id")
 )
-beta_matrix <- (function(x) as.matrix(log2(x) - log2(1 - x)))(beta_matrix)
 
 message(sprintf(
   "Number of CpGs: %s",
@@ -161,34 +160,38 @@ for (rna_level in do_rna_level) {
     function(x) sprintf("%s_%s", rna_level_name, x)
   )
 
-  annot_biomart <- setDT(getBM(
-    attributes = c(
-      sprintf("ensembl_%s_id", rna_level_name), 
-      "chromosome_name", "start_position", "end_position",
-      "transcription_start_site", "external_gene_name"
-    ),
-    filters = sprintf("ensembl_%s_id", rna_level_name),
-    values = list(unique(ensembl_ids[[sprintf("%s_id_noversion", rna_level_name)]])),
-    mart = mart
-  ))[
-    i = order(chromosome_name, transcription_start_site),
-    j = list(
+  annot_biomart <- setnames(
+    x = setDT(getBM(
+      attributes = c(
+        sprintf("ensembl_%s_id", rna_level_name), 
+        "chromosome_name", 
+        list(
+          gene = c("start_position", "end_position"),
+          transcript = c("transcript_start", "transcript_end")
+        )[[rna_level_name]],
+        "external_gene_name"
+      ),
+      filters = sprintf("ensembl_%s_id", rna_level_name),
+      values = list(unique(ensembl_ids[[sprintf("%s_id_noversion", rna_level_name)]])),
+      mart = mart
+    )), 
+    old = function(x) sub("^transcript_|_position$", "", x)
+  )[
+    i = order(chromosome_name, start),
+    j = `:=`(
       chr = sprintf("chr%s", chromosome_name), 
       start_cis_window = fifelse(
-        test = transcription_start_site < cis_window, 
+        test = start < cis_window, 
         yes = 0, 
-        no  = transcription_start_site - cis_window
+        no  = start - cis_window
       ),
-      transcription_start_site, 
-      end_cis_window = transcription_start_site + cis_window, 
-      .SD
-    ),
-    .SDcols = sprintf("ensembl_%s_id", rna_level_name)
+      end_cis_window = start + cis_window
+    )
   ]
   
   rna_annot <- merge(
     x = ensembl_ids,
-    y = setnames(annot_biomart, function(x) sub("^\\.SD\\.", "", x)),
+    y = annot_biomart,
     by.x = sprintf("%s_id_noversion", rna_level_name),
     by.y = sprintf("ensembl_%s_id", rna_level_name)
   )[j = ensembl := ensembl_version]
@@ -207,32 +210,31 @@ for (rna_level in do_rna_level) {
   ][
     j = position_cpg := Start_hg38
   ]
-  
+
   cis_cpg_gene_pairs_info <- methyl_annot[
     i = rna_annot, 
-    j = list(transcript_id, cpg_id, transcription_start_site, position_cpg), 
+    j = list(ID = get(sprintf("%s_id", rna_level_name)), start, cpg_id, position_cpg), 
     on = list(CHR_hg38 = chr, Start_hg38 >= start_cis_window, Start_hg38 <= end_cis_window), 
     by = .EACHI, 
     nomatch = NULL
   ][
-    j = list(
-      transcript_id, cpg_id, 
-      chr = CHR_hg38,
-      position_cpg,
-      transcription_start_site,
-      dist = transcription_start_site - position_cpg
+    j = `:=`(
+      dist = start - position_cpg,
+      W = as.integer(factor(ID)) %/% (workers * workers_multiplier)
     )
   ][
-    order(transcript_id, cpg_id)
+    j = setorderv(
+      x = setnames(.SD, "ID", sprintf("ensembl_%s_id", rna_level_name)), 
+      cols = c(sprintf("ensembl_%s_id", rna_level_name), "cpg_id")
+    ),
+    .SDcols = c("ID", "start", "cpg_id", "CHR_hg38", "position_cpg", "dist", "W")
   ]
-  
+
   cis_cpg_gene_pairs <- cis_cpg_gene_pairs_info[
-    j = list(
-      transcript_id, cpg_id, 
-      W = as.integer(factor(transcript_id)) %/% (workers * workers_multiplier)
-    )
+    j = .SD,
+    .SDcols = c(sprintf("ensembl_%s_id", rna_level_name), "cpg_id", "W")
   ]
-  counts_vst <- counts_vst[unique(cis_cpg_gene_pairs[["transcript_id"]]), , drop = FALSE]
+  counts_vst <- counts_vst[unique(cis_cpg_gene_pairs[[sprintf("ensembl_%s_id", rna_level_name)]]), , drop = FALSE]
   beta_matrix <- beta_matrix[unique(cis_cpg_gene_pairs[["cpg_id"]]), , drop = FALSE]
   
   #### eQTM ----------------------------------------------------------------------------------------
@@ -259,11 +261,14 @@ for (rna_level in do_rna_level) {
   ))
   
   ##------ DEBUGGING ------##
-  if (!isFALSE(debug)) cis_cpg_gene_pairs <- cis_cpg_gene_pairs[W %in% 1:debug]
+  if (!isFALSE(debug)) cis_cpg_gene_pairs <- cis_cpg_gene_pairs[W %in% 0:debug]
   ##------    END    ------##
   
   message(sprintf("Time taken for eQTM: %s", bench_time({
-    results <- cis_cpg_gene_pairs[, list(W = unique(W), file = NA_character_), by = "transcript_id"]
+    results <- cis_cpg_gene_pairs[
+      j = list(W = unique(W), file = NA_character_), 
+      by = sprintf("ensembl_%s_id", rna_level_name)
+    ]
     
     progress_steps <- unique(ceiling(c(
       min(cis_cpg_gene_pairs[["W"]]),
@@ -282,14 +287,14 @@ for (rna_level in do_rna_level) {
           data = list(
             as.data.table(
               x = t(rbind(
-                counts_vst[transcript_id, , drop = FALSE],
+                counts_vst[get(sprintf("ensembl_%s_id", rna_level_name)), , drop = FALSE],
                 beta_matrix[cpg_id, , drop = FALSE]
               )), 
-              keep.rownames = "Sample_ID"
+              keep.rownames = "ABOS_ID"
             )
           )
         ),
-        by = "transcript_id"
+        by = sprintf("ensembl_%s_id", rna_level_name)
       ]
       setDTthreads(threads = 1)
       
