@@ -79,8 +79,7 @@ beta_matrix <- fread(
   file = file.path(data_directory, "EPIC", "EPIC_QC_betavalues.csv.gz"), 
   header = TRUE
 )[j = .SD, .SDcols = c("cpg_id", sample_sheet_qc[["epic"]])]
-beta_matrix <- setDF(beta_matrix[, -"cpg_id"], rownames = beta_matrix[["cpg_id"]])
-beta_matrix <- (function(x) as.matrix(log2(x) - log2(1 - x)))(beta_matrix)
+beta_matrix <- (function(x) log2(x) - log2(1 - x))(as.matrix(beta_matrix, "cpg_id"))
 
 
 ### Analyses =======================================================================================

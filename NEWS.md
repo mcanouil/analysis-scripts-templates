@@ -12,17 +12,21 @@
 
 + `R/`
     + `**-****.R`, fix project name to not include file extension. 
-    + `10-ewas.R`, tweak & refactor some code.
+    + `10-ewas.R`, 
+        - tweak & refactor some code.
+        - use as.matrix from `data.table`.
     + `11-twas.R`, 
         - fix #2 (@Ning-L).
         - ensure Ensembl ID does not contain version.
     + `14-mqtl.R`, 
         - fix missing variables.
         - tweak & refactor some code.
+        - use as.matrix from `data.table`.
     + `15-eqtl.R`, fix missing variables.
     + `16-eqtm.R`, 
         - new expression-methylation analysis.
         - tweak & refactor some code.
+        - isoform/transcript or gene level.
     + `16-eqtm_estimated_time.R`, new script to estimate computation time from `16-eqtm.R`'s log.
 
 # analysis_templates 0.2.0

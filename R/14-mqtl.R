@@ -77,10 +77,7 @@ beta_matrix <- fread(
   file = file.path(data_directory, "EPIC", "EPIC_QC_betavalues_SNPs.csv.gz"), 
   header = TRUE
 )
-beta_matrix <- `rownames<-`(
-  (function(x) as.matrix(log2(x) - log2(1 - x)))(beta_matrix[j = -"cpg_id"]),
-  beta_matrix[["cpg_id"]]
-)[, sample_sheet_qc[["Sample_ID"]]]
+beta_matrix <- (function(x) log2(x) - log2(1 - x))(as.matrix(beta_matrix, "cpg_id"))[, sample_sheet_qc[["Sample_ID"]]]
 
 epic_qc_annot <- Locations
 epic_qc_annot <- epic_qc_annot[intersect(rownames(beta_matrix), rownames(epic_qc_annot)), ]
