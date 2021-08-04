@@ -5,7 +5,7 @@ project_name <- sub("(.*)_*\\..*", "\\1", list.files(here(), pattern = ".Rproj$"
 output_directory <- here("outputs", "16-eqtm")
 dir.create(output_directory, recursive = TRUE, showWarnings = FALSE, mode = "0775")
 
-debug <- FALSE # FALSE or number of chunk to run
+debug <- FALSE # FALSE or number of chunks to run
 
 workers <- 40
 workers_multiplier <- 5
@@ -213,28 +213,23 @@ for (rna_level in do_rna_level) {
 
   cis_cpg_gene_pairs_info <- methyl_annot[
     i = rna_annot, 
-    j = list(ID = get(sprintf("%s_id", rna_level_name)), start, cpg_id, position_cpg), 
+    j = list(count_id = get(sprintf("%s_id", rna_level_name)), start, cpg_id, position_cpg), 
     on = list(CHR_hg38 = chr, Start_hg38 >= start_cis_window, Start_hg38 <= end_cis_window), 
     by = .EACHI, 
     nomatch = NULL
   ][
     j = `:=`(
       dist = start - position_cpg,
-      W = as.integer(factor(ID)) %/% (workers * workers_multiplier)
+      W = as.integer(factor(count_id)) %/% (workers * workers_multiplier)
     )
   ][
-    j = setorderv(
-      x = setnames(.SD, "ID", sprintf("ensembl_%s_id", rna_level_name)), 
-      cols = c(sprintf("ensembl_%s_id", rna_level_name), "cpg_id")
-    ),
-    .SDcols = c("ID", "start", "cpg_id", "CHR_hg38", "position_cpg", "dist", "W")
+    i = order(count_id, cpg_id),
+    j = c("count_id", "start", "cpg_id", "CHR_hg38", "position_cpg", "dist", "W")
   ]
 
-  cis_cpg_gene_pairs <- cis_cpg_gene_pairs_info[
-    j = .SD,
-    .SDcols = c(sprintf("ensembl_%s_id", rna_level_name), "cpg_id", "W")
-  ]
-  counts_vst <- counts_vst[unique(cis_cpg_gene_pairs[[sprintf("ensembl_%s_id", rna_level_name)]]), , drop = FALSE]
+  cis_cpg_gene_pairs <- cis_cpg_gene_pairs_info[j = c("count_id", "cpg_id", "W")]
+  
+  counts_vst <- counts_vst[unique(cis_cpg_gene_pairs[["count_id"]]), , drop = FALSE]
   beta_matrix <- beta_matrix[unique(cis_cpg_gene_pairs[["cpg_id"]]), , drop = FALSE]
   
   #### eQTM ----------------------------------------------------------------------------------------
@@ -265,10 +260,7 @@ for (rna_level in do_rna_level) {
   ##------    END    ------##
   
   message(sprintf("Time taken for eQTM: %s", bench_time({
-    results <- cis_cpg_gene_pairs[
-      j = list(W = unique(W), file = NA_character_), 
-      by = sprintf("ensembl_%s_id", rna_level_name)
-    ]
+    results <- cis_cpg_gene_pairs[j = list(W = unique(W), file = NA_character_), by = "count_id"]
     
     progress_steps <- unique(ceiling(c(
       min(cis_cpg_gene_pairs[["W"]]),
@@ -287,14 +279,14 @@ for (rna_level in do_rna_level) {
           data = list(
             as.data.table(
               x = t(rbind(
-                counts_vst[get(sprintf("ensembl_%s_id", rna_level_name)), , drop = FALSE],
+                counts_vst[count_id, , drop = FALSE],
                 beta_matrix[cpg_id, , drop = FALSE]
               )), 
               keep.rownames = "ABOS_ID"
             )
           )
         ),
-        by = sprintf("ensembl_%s_id", rna_level_name)
+        by = "count_id"
       ]
       setDTthreads(threads = 1)
       
@@ -346,7 +338,6 @@ for (rna_level in do_rna_level) {
       }
     }
   })[[2]]))
-  
   
   message(sprintf("Completed at: %.2f %%", results[j = sum(!is.na(file)) / .N * 100]))
 
