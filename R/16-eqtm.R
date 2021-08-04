@@ -303,10 +303,10 @@ for (rna_level in do_rna_level) {
           setDTthreads(threads = 1)
           
           lm_eqtm <- function(formula, data) {
-            tidy(lm(
+            setDT(tidy(lm(
               formula = as.formula(sprintf("%s ~ mvalue + %s", names(data)[[2]], formula)), 
               data = data
-            ))[
+            )))[
               term %in% "mvalue"
             ][
               j = `:=`(response = names(data)[[2]], term = NULL)
