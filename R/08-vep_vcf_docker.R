@@ -25,6 +25,129 @@ suppressPackageStartupMessages({
 })
 
 
+### Functions ======================================================================================
+#' get_symbol_vep
+#' @import data.table
+get_symbol_vep <- function(
+  input = "snps_locations.txt.gz",
+  output_directory = here::here("outputs"),
+  genome_assembly = "GRCh38",
+  ensembl_version = "104",
+  ensembl_species = "homo_sapiens",
+  vep_cache = c(
+    "server" = "/media/Data/ExternalData/vep_data", 
+    "docker" = "/disks/DATA/ExternalData/vep_data"
+  )
+) {
+  data.table::fwrite(
+    x = unique(data.table::rbindlist(lapply(
+      X = list.files(path = input_directory, pattern = "\\.csv.gz$", full.names = TRUE),
+      FUN = data.table::fread, select = c("CHR", "BP", "reference_allele", "other_allele")
+    )))[
+      i = order(CHR, BP),
+      j = list(CHR, start = BP, end = BP, alleles = paste(reference_allele, other_allele, sep = "/"), strand = "+")
+    ], 
+    file = file.path(output_directory, "snps_locations.txt.gz"), 
+    col.names = FALSE, row.names = FALSE, sep = "\t"
+  )
+
+  input_docker <- sub(
+    "/disks/PROJECT",
+    "/media/Datatmp",
+    input
+  )
+  output_docker <- paste0("snps_vep_", ensembl_version, ".0_", genome_assembly, ".txt")
+  
+  if (
+    !file.exists(file.path(
+      vep_cache[["docker"]], "homo_sapiens", paste0(ensembl_version, "_", genome_assembly)
+    ))
+  ) {
+    system(sprintf(
+      paste(
+        "cd %s", 
+        "curl -sO ftp://ftp.ensembl.org/pub/release-%s/variation/vep/%s_vep_%s_%s.tar.gz",
+        "tar xzf %s_vep_%s_%s.tar.gz",
+        "rm %s_vep_%s_%s.tar.gz",
+        sep = " && "
+      ),
+      vep_cache[["docker"]],
+      ensembl_version, ensembl_species, ensembl_version, genome_assembly,
+      ensembl_species, ensembl_version, genome_assembly,
+      ensembl_species, ensembl_version, genome_assembly
+    ))
+  }
+  
+  cat(paste(
+    '#!/bin/bash',
+    '\n\nchmod 777', dirname(input_docker),
+    '\n\ndocker run',
+    '--rm',
+    '--name vep',
+    '--volume', paste0(dirname(input_docker), ':/data_dir'),
+    paste0('--volume ', vep_cache[["server"]], ':/opt/vep/.vep'),
+    paste0('ensemblorg/ensembl-vep:release_', ensembl_version, '.0'),
+    '/bin/bash -c "./vep',
+    '--input_file', file.path("/data_dir", basename(input_docker)),
+    '--cache',
+    '--offline',
+    '--fork 70',
+    '--force_overwrite',
+    '--assembly', genome_assembly, 
+    '--check_existing',
+    '--no_check_alleles',
+    '--symbol',
+    '--output_file', file.path("/data_dir", output_docker),
+    '&& cut -f 1-4,13-14', file.path("/data_dir", output_docker), 
+    '| bgzip --thread 70 -f >', file.path("/data_dir", paste0(output_docker, ".gz")),
+    '"',
+    '\n\nchmod 775', dirname(input_docker),
+    '\n'
+  ), file = file.path(output_directory, "run_docker_vep.sh"))
+
+  file.path(output_directory, output_docker)
+}
+
+#' format_symbol_vep
+#' @import data.table
+format_symbol_vep <- function(file) {
+  default_file <- file
+  file <- paste0(file, ".gz")
+  stopifnot(
+    file.exists(file) && file.mtime(file.path(dirname(file), "run_docker_vep.sh")) < file.mtime(file)
+  )
+  if (file.exists(file)) {
+    on.exit(unlink(c(
+      file.path(dirname(file), "snps_locations.txt.gz"),
+      default_file,
+      paste0(default_file, "_summary.html")
+    )))
+  }
+  vep_annotation <- data.table::fread(file = file,  skip = "#U")[ 
+    j = c("CHR", "POS") := data.table::tstrsplit(Location, ":", fixed = TRUE)
+  ][
+    j = (c("Gene", "Symbol", "rsid")) :=
+      list(
+        paste(unique(Gene), collapse = ";"),
+        data.table::fifelse(
+          test = grepl("SYMBOL=", Extra), 
+          yes = paste(unique(gsub("^.*SYMBOL=([^;]*);.*$", "\\1", Extra)), collapse = ";"),
+          no = NA_character_
+        ),
+        paste(unique(Existing_variation), collapse = ";")
+      ), 
+    by = "#Uploaded_variation"
+  ][j = list(CHR, POS, `#Uploaded_variation`, Gene, Symbol, rsid)]
+  
+   data.table::fwrite(
+    x = data.table::setnames(unique(vep_annotation), "#Uploaded_variation", "chr_pos_ref_alt"), 
+    file = sub(".txt.gz", "_formated.txt.gz", file)
+  )
+   
+  sub(".txt.gz", "_formated.txt.gz", file)
+}
+
+
 ### Compile SNPs List ==============================================================================
 if (!file.exists(file.path(output_directory, "snps_locations.txt.gz"))) {
   cat(
@@ -114,136 +237,20 @@ if (!file.exists(file.path(output_directory, "snps_locations.txt.gz"))) {
 
 
 ### Docker Command =================================================================================
-if (
-  !file.exists(file.path(
-    output_directory, 
-    paste0("snps_vep_v", ensembl_version, ".0_", genome_assembly, ".txt.gz")
-  ))
-) {
-  input_docker <- gsub(
-    pattern = ".*/outputs", 
-    replacement = server_directory, 
-    x = file.path(output_directory, "snps_locations.txt.gz")
-  )
-  output_docker <- paste0("snps_vep_", ensembl_version, ".0_", genome_assembly, ".txt")
-  
-  if (
-    !file.exists(file.path(
-      vep_cache[["docker"]], "homo_sapiens", paste0(ensembl_version, "_", genome_assembly)
-    ))
-  ) {
-    system(paste0(
-      "cd ", vep_cache[["docker"]],
-      paste0(
-        "curl -O ftp://ftp.ensembl.org/pub/release-", ensembl_version, 
-        "/variation/vep/", ensembl_species, "_vep_", ensembl_version, "_", genome_assembly, ".tar.gz",
-      ),
-      paste0("tar xzf", ensembl_species, "_vep_", ensembl_version, "_", genome_assembly, ".tar.gz")
-    ))
-  }
-  
-  cat(paste(
-    '#!/bin/bash',
-    '\n\nchmod 777 -R',  gsub(".*/outputs", server_directory, output_directory),
-    '\n\ndocker run',
-    '--rm',
-    '--name vep',
-    '--volume', paste0(dirname(input_docker), ':/data_dir'),
-    paste0('--volume ', vep_cache[["server"]], ':/opt/vep/.vep'),
-    paste0('ensemblorg/ensembl-vep:release_', ensembl_version, '.0'),
-    '/bin/bash -c "./vep',
-    '--input_file', file.path("/data_dir", basename(input_docker)),
-    '--cache',
-    '--offline',
-    '--fork 100',
-    '--force_overwrite',
-    '--assembly', genome_assembly, 
-    '--check_existing',
-    '--no_check_alleles',
-    '--symbol',
-    '--output_file', file.path("/data_dir", output_docker),
-    '&& cut -f 1-4,13-14', file.path("/data_dir", output_docker), 
-    '| bgzip --thread 100 -f >', file.path("/data_dir", paste0(output_docker, ".gz")),
-    '"',
-    '\n\nchmod 775 -R',  gsub(".*/outputs", server_directory, output_directory),
-    '\n'
-  ), file = file.path(output_directory, "run_docker_vep.sh"))
-} else {
-  unlink(file.path(output_directory, paste0("snps_vep_v", ensembl_version, ".0_", genome_assembly, ".txt")))
-}
-
-
-### VEP ============================================================================================
-if (
-  !file.exists(file.path(
-    output_directory, paste0("snps_vep_v", ensembl_version, ".0_", genome_assembly, "_formated.txt.gz")
-  )) &
-    file.exists(file.path(
-      output_directory, paste0("snps_vep_v", ensembl_version, ".0_", genome_assembly, ".txt.gz")
-    ))
-) {
-  vep_annotation <- fread(
-    file = file.path(
-      output_directory, paste0("snps_vep_v", ensembl_version, ".0_", genome_assembly, ".txt.gz")
-    ), 
-    skip = "#U"
-  )[ 
-    j = c("CHR", "POS") := tstrsplit(Location, ":", fixed = TRUE)
-  ][
-    j = (c("Gene", "Symbol", "rsid")) :=
-      list(
-        paste(unique(Gene), collapse = ";"),
-        fifelse(
-          test = grepl("SYMBOL=", Extra), 
-          yes = paste(unique(gsub("^.*SYMBOL=([^;]*);.*$", "\\1", Extra)), collapse = ";"),
-          no = NA_character_
-        ),
-        paste(unique(Existing_variation), collapse = ";")
-      ), 
-    by = "#Uploaded_variation"
-  ][, .(CHR, POS, `#Uploaded_variation`, Gene, Symbol, rsid)]
-  setnames(vep_annotation, "#Uploaded_variation", "chr_pos_ref_alt")
-  fwrite(
-    x = unique(vep_annotation), 
-    file = file.path(
-      output_directory, 
-      paste0("snps_vep_v", ensembl_version, ".0_", genome_assembly, "_formated.txt.gz")
-    )
-  )
-}
-
-
-### Archive ========================================================================================
-# if (!Sys.getenv("USER") %in% c("root", "") && file.exists("~/.fex/id")) {
-#   local({
-#     owd <- getwd()
-#     setwd(normalizePath(output_directory))
-#     archive_name <- file.path(
-#       normalizePath(output_directory),
-#       paste0(
-#         format(Sys.Date(), format = "%Y%m%d"), "_",
-#         project_name, "_", 
-#         gsub("[0-9]+\\-", "", basename(output_directory)), ".zip"
-#       )
-#     )
-#     zip(archive_name, files = list.files())
-#     fex_out <- system(paste("fexsend", archive_name, "."), intern = TRUE)
-#     unlink(archive_name)
-#     setwd(owd)
-#   })
-# }
-
-
-### Set chmod ======================================================================================
-Sys.chmod(
-  list.files(output_directory, full.names = TRUE),
-  mode = "0775", use_umask = FALSE
+output <- get_symbol_vep(
+  input = file.path(output_directory, "snps_locations.txt.gz"),
+  output_directory = here::here("outputs"),
+  genome_assembly = genome_assembly,
+  ensembl_version = ensembl_version,
+  ensembl_species = ensembl_species,
+  vep_cache = vep_cache
 )
-Sys.chmod(
-  list.files(output_directory, full.names = TRUE, recursive = TRUE, all.files = TRUE),
-  mode = "0775", use_umask = FALSE
-)
-invisible(system(paste("chgrp -R staff", output_directory), intern = TRUE))
+message(sprintf(
+  "Run the following command before: 'nohup bash %s/run_docker_vep.sh > /dev/null &'", 
+  output_directory
+))
+
+format_symbol_vep(output)
 
 
 ### Complete =======================================================================================
