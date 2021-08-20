@@ -1,0 +1,46 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# Mickaël Canouil's Analysis Scripts Templates
+
+<!-- badges: start -->
+[![Lifecycle:
+experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
+[![GitHub
+tag](https://img.shields.io/github/tag/mcanouil/analysis_templates.svg?label=latest%20tag&include_prereleases)](https://github.com/mcanouil/analysis_templates)
+<!-- badges: end -->
+
+Script templates to work with omics datasets.
+
+```{r, echo = FALSE, results = "asis"}
+dt <- data.table::data.table(
+  file = sort(list.files(path = here::here("R"), pattern = ".R", recursive = TRUE))
+)[
+  j = root := data.table::tstrsplit(x = file, "/", keep = 1)
+][
+  j = root := data.table::fifelse(file == root, "R", paste0("R/", root))
+][
+  j = list(
+    list_scripts = c(
+      sprintf("\n%s %s\n", if (grepl("/", root)) "###" else "##", root),
+      sprintf("  * [%s](R/%s)\n", basename(file), file)
+    )
+  ),
+  by = "root"
+]
+
+cat(dt[["list_scripts"]], sep = "")
+```
+
