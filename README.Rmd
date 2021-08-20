@@ -39,6 +39,8 @@ dt <- data.table::data.table(
     )
   ),
   by = "root"
+][
+  order(factor(root, levels = c("R", "R/scripts", "R/targets", "R/functions")))
 ]
 
 cat(dt[["list_scripts"]], sep = "")
