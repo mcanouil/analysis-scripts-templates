@@ -4,14 +4,17 @@
     + `tar_ora.R`, `targets` setup to compute over-representation analysis.
     + `tar_gsea.R`, `targets` setup to compute gene-set enrichment analysis.
     + `tar_methylation.R`, `targets` setup to compute idats (methylation) files quality-control.
-    + `tar-qc_idats`, functions, used in `tar_methylation.R`, to compute idats (methylation) files quality-control.
+    + `tar-qc_idats.R`, functions, used in `tar_methylation.R`, to compute idats (methylation) files quality-control.
     + `tar_genotype.R`, `targets` setup to compute PLINK files quality-control.
-    + `tar-qc_plink`, functions, used in `tar_genotype.R`, to compute PLINK files quality-control.
-    + `tar-pval_trans`, p-value ggplot2 axis transformation.
-    + `tar-sub_chunk`, function to create sub-chunk inside a chunk in RMarkdown.
+    + `tar-qc_plink.R`, functions, used in `tar_genotype.R`, to compute PLINK files quality-control.
+    + `tar-pval_trans.R`, p-value ggplot2 axis transformation.
+    + `tar-sub_chunk.R`, function to create sub-chunk inside a chunk in RMarkdown.
+    + `tar_vep.R`, `targets` setup to compute VEP annotations.
+    + `tar-vep.R`, functions, used in `tar_vep.R`, to prepare Docker command and to format VEP output.
 
 + `R/`
     + `**-****.R`, fix project name to not include file extension. 
+    + `08-vep_vcf_docker.R`, add function to prepare docker command and to format output.
     + `10-ewas.R`, 
         - tweak & refactor some code.
         - use as.matrix from `data.table`.
