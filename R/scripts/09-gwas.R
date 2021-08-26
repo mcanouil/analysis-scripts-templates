@@ -129,14 +129,14 @@ if (length(list.files(output_annot)) != 4 * 22) {
 for (trait in traits) {
   local({
     dir.create(file.path(output_lm, trait), recursive = TRUE, showWarnings = FALSE, mode = "0775")
-    
+
     keep_samples <- sample_sheet_qc[!is.na(get(trait)), c("#IID")]
     fwrite(
       x = keep_samples, 
       file = file.path(output_lm, trait, glue("{trait}.samples")),
       sep = "\t"
     )
-    
+
     fwrite(
       x = sample_sheet_qc[`#IID` %in% keep_samples[[1]], .SD, .SDcols = c("#IID", trait)], 
       file = file.path(output_lm, trait, glue("{trait}.pheno")),
@@ -148,19 +148,19 @@ for (trait in traits) {
       file = file.path(output_lm, trait, glue("{trait}.cov")),
       sep = " "
     )
-  
+
     fwrite(
       x = sample_sheet_qc[`#IID` %in% keep_samples[[1]], .(`#IID`, SEX = sex)],
       file = file.path(output_lm, trait, glue("{trait}.sex")),
       sep = " "
     )
-    
+
     model <- if (length(unique(sample_sheet_qc[`#IID` %in% keep_samples[[1]]][[trait]])) == 2) {
       "logistic"
     } else {
       "linear"
     }
-    
+
     for (ivcf in names(vcfs)) {
       local({
         output_file <- file.path(
@@ -235,10 +235,10 @@ for (trait in traits) {
               P_HWE >= 0.005,
             -c("N_DATA", "frq1", "frq2", "OBS(HOM1/HET/HOM2)", "E(HOM1/HET/HOM2)", "P_HET_DEFICIT", "P_HET_EXCESS")
           ]
-          
+
           multiallele_snp <- trait_res[duplicated(trait_res, by = c("CHR", "POS", "ID")), ID]
-   
-          unique(trait_res[!ID %in% multiallele_snp])[, FDR := p.adjust(P, method = "BH")][]
+
+          unique(trait_res[!ID %in% multiallele_snp])[j = FDR := p.adjust(P, method = "BH")]
         }
       )
     )
@@ -258,7 +258,7 @@ for (trait in traits) {
     ntrait <- names(traits)[traits %in% trait]
     ifile <- any(grepl("linear", list.files(path = output_lmqc, pattern = paste0("_", trait, "_"))))
     model <- if (ifile) "linear" else "logistic"
-    
+
     res_gwas <- fread(file.path(output_lmqc, glue("{project_name}_GWAS_{trait}_{model}.csv.gz")))
     res_gwas[, chr_pos_ref_alt := paste0(CHR, "_", POS, "_", REF, "/", ALT)]
     res_annot <- merge(
@@ -274,7 +274,7 @@ for (trait in traits) {
       fifelse(Gene == "-", NA_character_, Gene),
       fifelse(Symbol == "", NA_character_, Symbol)
     )]
-    
+
     fwrite(
       x = res_annot,
       file = file.path(output_lmqc_annot, glue("{project_name}_GWAS_{trait}_{model}.csv.gz"))
@@ -326,4 +326,3 @@ invisible(system(paste("chgrp -R staff", output_directory), intern = TRUE))
 ### Complete =======================================================================================
 message("Success!", appendLF = TRUE)
 message(timestamp(quiet = TRUE))
-
