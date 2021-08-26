@@ -22,7 +22,16 @@ message(sprintf("Number of workers: %d", future::nbrOfWorkers()))
 tar_setup <- {list( # Setup project
   tar_target(project, gsub("(.*)_.*", "\\1", list.files(here(), pattern = ".Rproj$")), packages = "here"),
   tar_target(author, "Mickaël CANOUIL, *Ph.D.*"),
-  tar_target(output_directory, here::here("outputs"), packages = "here")
+  tar_target(output_directory, here::here("outputs"), packages = "here"),
+  tar_target(genome_assembly, "GRCh38"),
+  tar_target(ensembl_version, "104"),
+  tar_target(ensembl_species, "homo_sapiens"),
+  tar_target(vep_cache,
+    command = c(
+      "server" = "/media/Data/ExternalData/vep_data", 
+      "docker" = "/disks/DATA/ExternalData/vep_data"
+    )
+  )
 )}
 
 
@@ -33,13 +42,10 @@ tar_vep <- {list(
     command = get_symbol_vep(
       input = snps_locations,
       output_directory = output_directory,
-      genome_assembly = "GRCh37",
-      ensembl_version = "104",
-      ensembl_species = "homo_sapiens",
-      vep_cache = c(
-        "server" = "/media/Data/ExternalData/vep_data", 
-        "docker" = "/disks/DATA/ExternalData/vep_data"
-      )
+      genome_assembly = genome_assembly,
+      ensembl_version = ensembl_version,
+      ensembl_species = ensembl_species,
+      vep_cache = vep_cache
     ),
     packages = c("here", "data.table")
   ),
