@@ -132,13 +132,13 @@ for (trait in traits) {
 
     keep_samples <- sample_sheet_qc[!is.na(get(trait)), c("#IID")]
     fwrite(
-      x = keep_samples, 
+      x = keep_samples,
       file = file.path(output_lm, trait, glue("{trait}.samples")),
       sep = "\t"
     )
 
     fwrite(
-      x = sample_sheet_qc[`#IID` %in% keep_samples[[1]], .SD, .SDcols = c("#IID", trait)], 
+      x = sample_sheet_qc[`#IID` %in% keep_samples[[1]], .SD, .SDcols = c("#IID", trait)],
       file = file.path(output_lm, trait, glue("{trait}.pheno")),
       sep = " "
     )
@@ -201,7 +201,7 @@ for (trait in traits) {
         FUN = function(ivcf) {
           plink_res <- setnames(
             x = fread(
-              file = file.path(output_lm, trait, paste0(model, "_", ivcf, ".", trait, ".glm.", model, ".gz")), 
+              file = file.path(output_lm, trait, paste0(model, "_", ivcf, ".", trait, ".glm.", model, ".gz")),
               header = TRUE
             ),
             old = "#CHROM",
