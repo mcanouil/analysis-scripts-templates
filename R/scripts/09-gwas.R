@@ -208,7 +208,7 @@ for (trait in traits) {
             new = "CHR",
             skip_absent = TRUE
           )
-    
+
           plink_annot <- Reduce(
             f = function(x, y) merge(x, y, by = c("CHR", "POS")),
             x = lapply(
@@ -216,22 +216,22 @@ for (trait in traits) {
               FUN = function(.x) setnames(fread(.x), "CHROM", "CHR", skip = TRUE)
             )
           )
-    
+
           trait_res <- merge(
             x = plink_res,
             y = plink_annot,
             by = c("CHR", "POS", "REF", "ALT"),
             all.x = TRUE
-          )[, 
-            (c("REF_FRQ", "ALT_FRQ")) := 
+          )[
+            j = (c("REF_FRQ", "ALT_FRQ")) :=
               list(as.numeric(gsub(".:", "", frq1)), as.numeric(gsub(".:", "", frq2)))
           ][
-            is.finite(ChiSq_HWE) & 
-              !is.na(P) & 
-              TEST == "ADD" & 
-              INFO >= 0.8 & 
-              REF_FRQ >= 0.05 & 
-              ALT_FRQ >= 0.05 & 
+            is.finite(ChiSq_HWE) &
+              !is.na(P) &
+              TEST == "ADD" &
+              INFO >= 0.8 &
+              REF_FRQ >= 0.05 &
+              ALT_FRQ >= 0.05 &
               P_HWE >= 0.005,
             -c("N_DATA", "frq1", "frq2", "OBS(HOM1/HET/HOM2)", "E(HOM1/HET/HOM2)", "P_HET_DEFICIT", "P_HET_EXCESS")
           ]
@@ -262,9 +262,9 @@ for (trait in traits) {
     res_gwas <- fread(file.path(output_lmqc, glue("{project_name}_GWAS_{trait}_{model}.csv.gz")))
     res_gwas[, chr_pos_ref_alt := paste0(CHR, "_", POS, "_", REF, "/", ALT)]
     res_annot <- merge(
-      x = res_gwas, 
-      y = vep_annotation, 
-      by = c("chr_pos_ref_alt", "CHR", "POS"), 
+      x = res_gwas,
+      y = vep_annotation,
+      by = c("chr_pos_ref_alt", "CHR", "POS"),
       all.x = TRUE
     )
     res_annot[(ID != rsid), rsid := fifelse(rsid == "-" | grepl("^rs", ID), ID, rsid)]
@@ -299,7 +299,7 @@ unlink(setdiff(
 #       normalizePath(output_directory),
 #       paste0(
 #         format(Sys.Date(), format = "%Y%m%d"), "_",
-#         project_name, "_", 
+#         project_name, "_",
 #         gsub("[0-9]+\\-", "", basename(output_directory)), ".zip"
 #       )
 #     )

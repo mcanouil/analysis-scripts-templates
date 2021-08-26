@@ -28,7 +28,7 @@ tar_setup <- {list( # Setup project
   tar_target(ensembl_species, "homo_sapiens"),
   tar_target(vep_cache,
     command = c(
-      "server" = "/media/Data/ExternalData/vep_data", 
+      "server" = "/media/Data/ExternalData/vep_data",
       "docker" = "/disks/DATA/ExternalData/vep_data"
     )
   )
@@ -38,7 +38,7 @@ tar_setup <- {list( # Setup project
 ### targets ========================================================================================
 tar_vep <- {list(
   tar_target(snps_locations, "snps_locations.txt.gz", format = "file"), # CHR, START, END, A/C, + tab delimited
-  tar_target(vep_symbol, 
+  tar_target(vep_symbol,
     command = get_symbol_vep(
       input = snps_locations,
       output_directory = output_directory,
