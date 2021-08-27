@@ -1,5 +1,5 @@
 #' do_crossmap
-#' @importFrom future.apply future_lapply
+#' @importFrom future.apply future_lapply future_apply
 do_crossmap <- function(
   path = NULL,
   output_directory = NULL,
