@@ -55,7 +55,7 @@ list(
       if (inherits(mart, "try-error")) {
         mart <- useEnsembl(biomart = "ensembl", dataset = organism[["ensembl"]], version = set_ensembl_version)
       }
-      
+
       ensembl_dt <- setDT(getBM(
         attributes = c(
           "ensembl_gene_id",
@@ -74,7 +74,7 @@ list(
         }),
         by = "ensembl_gene_id"
       ][j = ensembl_version := sprintf("GRCh38-%d", set_ensembl_version)]
-      
+
       entrez_dt <- setDT(getBM(
         attributes = c("ensembl_gene_id", "entrezgene_id"),
         filters = "ensembl_gene_id",
@@ -87,7 +87,7 @@ list(
         }),
         by = "ensembl_gene_id"
       ]
-      
+
       uniprot_dt <- setDT(getBM(
         attributes = c("ensembl_gene_id", "uniprotswissprot"),
         filters = "ensembl_gene_id",
@@ -100,7 +100,7 @@ list(
         }),
         by = "ensembl_gene_id"
       ]
-      
+
       merge(
         x = ensembl_dt,
         y = merge(x = entrez_dt, y = uniprot_dt, by = "ensembl_gene_id", all = TRUE),
@@ -179,14 +179,14 @@ list(
               X = .SD,
               FUN = function(icol) {
                 sapply(
-                  X = icol, 
+                  X = icol,
                   res = results,
                   FUN = function(x, res) {
                     x <- unlist(setdiff(na.exclude(strsplit(x, "/")), c("", "NA")))
                     if (all(grepl("ENSG", x))) {
                       id <- "ensembl_id"
                     } else if (
-                      all(grepl("[[:alpha:]]", substr(x, 1, 1)) & 
+                      all(grepl("[[:alpha:]]", substr(x, 1, 1)) &
                         !grepl("[[:digit:]]", substr(x, 1, 1)))
                     ) {
                       id <- "uniprotswissprot"
@@ -194,9 +194,9 @@ list(
                       id <- "entrezgene_id"
                     }
                     gene_symbols <- unname(setNames(res[["external_gene_name"]], res[[id]])[x])
-                    
+
                     if (length(gene_symbols) == 0) return(NA_character_)
-                    
+
                     paste(gene_symbols, collapse = "/")
                   }
                 )
@@ -223,7 +223,7 @@ list(
       )
       file.path(output_directory, "over_representation.xlsx")
     },
-    packages = c("writexl"), 
+    packages = c("writexl"),
     format = "file"
   )
 )
