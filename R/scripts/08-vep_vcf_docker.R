@@ -10,7 +10,7 @@ dir.create(file.path(output_directory, "vcfs_qc"), recursive = TRUE, showWarning
 input_directory <- file.path("/disks/DATA/Projects", project_name, "QC")
 server_directory <- file.path("/media/Datatmp", project_name)
 vep_cache <- c(
-  "server" = "/media/Data/ExternalData/vep_data", 
+  "server" = "/media/Data/ExternalData/vep_data",
   "docker" = "/disks/DATA/ExternalData/vep_data"
 )
 genome_assembly <- "GRCh38"
@@ -26,7 +26,7 @@ suppressPackageStartupMessages({
 
 
 ### Functions ======================================================================================
-source("functions/tar-vep.R") 
+source("functions/tar-vep.R")
 
 
 ### Compile SNPs List ==============================================================================
@@ -36,14 +36,14 @@ if (!file.exists(file.path(output_directory, "snps_locations.txt.gz"))) {
     file = file.path(output_directory, "samples_to_keep.txt"),
     sep = "\n"
   )
-  
+
   vcfs <- list.files(
     path = file.path(input_directory, "Omni2.5", "vcf_imputed_hg38_ucsc"),
     pattern = "[^X].vcf.gz$",
     full.names = TRUE
   )
   names(vcfs) <- sprintf("chr%02d", as.numeric(gsub(".pbwt_reference_impute.vcf.gz$", "", basename(vcfs))))
-  
+
   unique_snps <- unique(rbindlist(mclapply(
     X = names(vcfs),
     mc.cores = 11,
@@ -62,7 +62,7 @@ if (!file.exists(file.path(output_directory, "snps_locations.txt.gz"))) {
         file = file.path(output_directory, "vcfs_qc", paste0(ivcf, "_lowqual.txt")),
         sep = "\t"
       )
-  
+
       system(paste(
         "vcftools --gzvcf", vcfs[ivcf],
         "--keep", file.path(output_directory, "samples_to_keep.txt"),
@@ -77,7 +77,7 @@ if (!file.exists(file.path(output_directory, "snps_locations.txt.gz"))) {
       ))
       system(paste("bgzip -f", file.path(output_directory, "vcfs_qc", paste0(ivcf, ".recode.vcf"))))
       system(paste("tabix -pvcf -f", file.path(output_directory, "vcfs_qc", paste0(ivcf, ".recode.vcf.gz"))))
-  
+
       system(paste(
         "bcftools annotate",
         "--set-id +'%CHROM:%POS'",
@@ -86,13 +86,13 @@ if (!file.exists(file.path(output_directory, "snps_locations.txt.gz"))) {
         file.path(output_directory, "vcfs_qc", paste0(ivcf, ".recode.vcf.gz"))
       ))
       system(paste("tabix -pvcf -f", file.path(output_directory, "vcfs_qc", paste0(ivcf, "_qc.vcf.gz"))))
-  
+
       unlink(c(
         file.path(output_directory, "vcfs_qc", paste0(ivcf, "_lowqual.txt")),
         file.path(output_directory, "vcfs_qc", paste0(ivcf, ".recode.vcf.gz")),
         file.path(output_directory, "vcfs_qc", paste0(ivcf, ".recode.vcf.gz.tbi"))
       ))
-        
+
       fread(
         cmd = paste(
           "vcftools --gzvcf", vcfs[ivcf],
@@ -108,10 +108,10 @@ if (!file.exists(file.path(output_directory, "snps_locations.txt.gz"))) {
       ]
     }
   )))
-  
+
   fwrite(
-    x = unique_snps, 
-    file = file.path(output_directory, "snps_locations.txt.gz"), 
+    x = unique_snps,
+    file = file.path(output_directory, "snps_locations.txt.gz"),
     col.names = FALSE, row.names = FALSE, sep = "\t"
   )
 }
@@ -127,7 +127,7 @@ output <- get_symbol_vep(
   vep_cache = vep_cache
 )
 message(sprintf(
-  "Run the following command before: 'nohup bash %s/run_docker_vep.sh > /dev/null &'", 
+  "Run the following command before: 'nohup bash %s/run_docker_vep.sh > /dev/null &'",
   output_directory
 ))
 
@@ -137,4 +137,3 @@ format_symbol_vep(output)
 ### Complete =======================================================================================
 message("Success!", appendLF = TRUE)
 message(timestamp(quiet = TRUE))
-
