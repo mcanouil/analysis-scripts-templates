@@ -6,6 +6,7 @@
     + `tar_methylation.R`, `targets` setup to compute idats (methylation) files quality-control.
     + `tar_genotype.R`, `targets` setup to compute PLINK files quality-control.
     + `tar_vep.R`, `targets` setup to compute VEP annotations.
+    + `tar_crossmap.R`, `targets` setup to upgrade or downgrade genome assembly of VCF files.
 
 + `R/functions/`
     + `tar-qc_idats.R`, functions, used in `tar_methylation.R`, to compute idats (methylation) files quality-control.
@@ -13,9 +14,12 @@
     + `tar-vep.R`, functions, used in `tar_vep.R`, to prepare Docker command and to format VEP output.
     + `tar-pval_trans.R`, p-value ggplot2 axis transformation.
     + `tar-sub_chunk.R`, function to create sub-chunk inside a chunk in RMarkdown.
+    + `tar-crossmap.R`, functions, used in `tar_crossmap.R`, to upgrade or downgrade genome assembly of VCF files.
 
 + `R/scripts`
-    + `**-****.R`, fix project name to not include file extension. 
+    + `**-****.R`, 
+        - fix project name to not include file extension. 
+        - trim trailing spaces.
     + `08-vep_vcf_docker.R`, add function to prepare docker command and to format output.
     + `10-ewas.R`, 
         - tweak & refactor some code.
