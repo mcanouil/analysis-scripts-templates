@@ -1,3 +1,87 @@
+#' get_variants
+#' @import data.table
+get_variants <- function(path) {
+  if (length(path) == 1 && dir.exists(path)) {
+    vcf_files <- list.files(path, pattern = "(\\.vcf.gz|\\.vcf)$", full.names = TRUE)
+  } else {
+    vcf_files <- path
+  }
+
+  vcfs <- list.files(path = path, pattern = "[^X].vcf.gz$", full.names = TRUE)
+  names(vcfs) <- sprintf("chr%02d", as.numeric(sub("\\..*\\.vcf\\.gz$", "", basename(vcfs))))
+
+  unique_snps <- unique(rbindlist(mclapply(
+    X = names(vcfs),
+    mc.cores = 11,
+    mc.preschedule = FALSE,
+    FUN = function(ivcf) {
+      fwrite(
+        x = fread(
+          cmd = paste(
+            "vcftools --gzvcf", vcfs[ivcf],
+            "--get-INFO 'INFO'",
+            "--stdout"
+          ),
+          header = TRUE,
+          colClasses = c("INFO" = "numeric")
+        )[INFO < 0.8, c(1, 2)],
+        file = file.path(output_directory, "vcfs_qc", paste0(ivcf, "_lowqual.txt")),
+        sep = "\t"
+      )
+
+      system(paste(
+        "vcftools --gzvcf", vcfs[ivcf],
+        "--keep", file.path(output_directory, "samples_to_keep.txt"),
+        "--exclude-positions", file.path(output_directory, "vcfs_qc", paste0(ivcf, "_lowqual.txt")),
+        "--remove-indels",
+        "--remove-filtered-all",
+        "--recode-INFO-all",
+        "--maf 0.05",
+        "--hwe 0.005",
+        "--recode",
+        "--out", file.path(output_directory, "vcfs_qc", ivcf)
+      ))
+      system(paste("bgzip -f", file.path(output_directory, "vcfs_qc", paste0(ivcf, ".recode.vcf"))))
+      system(paste("tabix -pvcf -f", file.path(output_directory, "vcfs_qc", paste0(ivcf, ".recode.vcf.gz"))))
+
+      system(paste(
+        "bcftools annotate",
+        "--set-id +'%CHROM:%POS'",
+        "--output-type z",
+        "--output", file.path(output_directory, "vcfs_qc", paste0(ivcf, "_qc.vcf.gz")),
+        file.path(output_directory, "vcfs_qc", paste0(ivcf, ".recode.vcf.gz"))
+      ))
+      system(paste("tabix -pvcf -f", file.path(output_directory, "vcfs_qc", paste0(ivcf, "_qc.vcf.gz"))))
+
+      unlink(c(
+        file.path(output_directory, "vcfs_qc", paste0(ivcf, "_lowqual.txt")),
+        file.path(output_directory, "vcfs_qc", paste0(ivcf, ".recode.vcf.gz")),
+        file.path(output_directory, "vcfs_qc", paste0(ivcf, ".recode.vcf.gz.tbi"))
+      ))
+
+      fread(
+        cmd = paste(
+          "vcftools --gzvcf", vcfs[ivcf],
+          "--get-INFO 'INFO'",
+          "--stdout"
+        ),
+        header = TRUE,
+        colClasses = c("INFO" = "numeric")
+      )[INFO >= 0.8][
+        j = (c("REF", "strand")) := list(paste(REF, ALT, sep = "/"), "+")
+      ][
+        j = list(CHR = CHROM, start = POS, end = POS, REF, strand)
+      ]
+    }
+  )))
+
+  fwrite(
+    x = unique_snps,
+    file = file.path(output_directory, "snps_locations.txt.gz"),
+    col.names = FALSE, row.names = FALSE, sep = "\t"
+  )
+}
+
 #' get_symbol_vep
 #' @import data.table
 get_symbol_vep <- function(
