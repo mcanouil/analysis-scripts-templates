@@ -24,15 +24,18 @@ do_crossmap <- function(
   dir.create(path = tmpdir, showWarnings = FALSE)
   on.exit(unlink(tmpdir, recursive = TRUE, force = TRUE))
 
+  chromosomes <- unique(sub("\\..*", "", basename(vcf_files)))
+
   tmp_path_converted <- future.apply::future_lapply(
     X = vcf_files,
     ref_fasta = ref_fasta,
     chain_file = chain_file,
     bin_path = bin_path,
     tmpdir = tmpdir,
+    chromosomes = chromosomes,
     future.globals = FALSE,
-    FUN = function(vcf, ref_fasta, chain_file, bin_path, tmpdir) {
-      output_file <- file.path(tmpdir, basename(vcf))
+    FUN = function(vcf, ref_fasta, chain_file, bin_path, tmpdir, chromosomes) {
+      temp_file <- file.path(tmpdir, basename(vcf))
       system(sprintf(
         paste(
           "%s vcf %s %s %s %s",
@@ -40,51 +43,73 @@ do_crossmap <- function(
           "%s index --force %s",
           sep = " && "
         ),
-        bin_path[["crossmap"]], chain_file, vcf, ref_fasta, output_file,
-        bin_path[["bcftools"]], output_file, output_file,
-        bin_path[["bcftools"]], output_file
+        bin_path[["crossmap"]], chain_file, vcf, ref_fasta, temp_file,
+        bin_path[["bcftools"]], temp_file, temp_file,
+        bin_path[["bcftools"]], temp_file
       ))
-      if (file.exists(output_file)) {
-        output_file
-      } else {
-        NULL
+
+      if (!file.exists(temp_file)) {
+        return(NULL)
       }
+
+      output_files <- sprintf("%s/truechr_%s__%s", tmpdir, chromosomes, basename(vcf))
+      names(output_files) <- chromosomes
+
+      for (chr in chromosomes) {
+        system(sprintf(
+          paste(
+           "%s view %s --regions %s --output-type z --output %s",
+           "%s index --force %s",
+            sep = " && "
+          ),
+          bin_path[["bcftools"]],
+            temp_file,
+            paste(paste0(c("", "chr"), chr), collapse = ","),
+            output_files[[chr]],
+          bin_path[["bcftools"]],
+            output_files[[chr]]
+        ))
+      }
+
+      output_files
     }
   )
 
-  if (length(not_converted <- tmp_path_converted[sapply(tmp_path_converted, is.null)]) > 0) {
+  if (length(not_converted <- vcf_files[sapply(tmp_path_converted, is.null)]) > 0) {
     warning(sprintf(
       "Crossmap for the following VCF files resulted in an error:\n%s",
       paste(paste("  *", not_converted), collapse = "\n")
     ))
   }
 
-  combined_vcf <- file.path(tmpdir, "all_chromosomes.vcf.gz")
-  system(sprintf(
-    paste(
-      "%s concat %s --allow-overlaps",
-      "%s sort --output-type z --output %s",
-      sep = "|"
-    ),
-    bin_path[["bcftools"]], paste(tmp_path_converted[!sapply(tmp_path_converted, is.null)], collapse = " "),
-    bin_path[["bcftools"]], combined_vcf
-  ))
-
-  path_converted <- future.apply::future_lapply(
-    X = vcf_files,
-    vcf_file = combined_vcf,
+  path_converted <- future.apply::future_by(
+    data = unlist(tmp_path_converted),
+    INDEX = sub("__.*", "", unlist(tmp_path_converted)),
     bin_path = bin_path,
     output_directory = output_directory,
     future.globals = FALSE,
-    FUN = function(chr_vcf_file, vcf_file, bin_path, output_directory) {
-      output_file <- file.path(output_directory, basename(chr_vcf_file))
+    FUN = function(vcf_file, bin_path, output_directory) {
+      combined_vcf <- sprintf(
+        "%s/%s.vcf.gz",
+        output_directory,
+        unique(sub("truechr_([^_]+)__.*", "\\1", basename(vcf_file)))
+      )
       system(sprintf(
-        "%s view %s --regions %s --output-type z --output %s",
-        bin_path[["bcftools"]],
-        paste(paste0(c("", "chr"), sub("\\..*", "", chr_vcf_file)), collapse = ","),
-        output_file
+        paste(
+          "%s concat %s --allow-overlaps | %s sort --output-type z --output %s",
+          "%s index --force %s",
+          sep = " && "
+        ),
+        bin_path[["bcftools"]], paste(vcf_file, collapse = " "),
+        bin_path[["bcftools"]], combined_vcf,
+        bin_path[["bcftools"]], combined_vcf
       ))
-      output_file
+
+      if (!file.exists(combined_vcf)) {
+        return(NULL)
+      }
+
+      combined_vcf
     }
   )
 
