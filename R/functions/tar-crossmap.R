@@ -10,6 +10,11 @@ do_crossmap <- function(
     bcftools = "/usr/bin/bcftools"
   )
 ) {
+  if (!dir.exists(output_directory)) {
+    message(sprintf("Directory %s did not exist and was created!", output_directory))
+    dir.create(output_directory, recursive = TRUE)
+  }
+
   if (!all(sapply(bin_path, file.exists))) {
     stop('"bin_path" must contains valid named path to "crossmap" and "bcftools"!')
   }
