@@ -1,5 +1,5 @@
 estimate_eqtm_completion <- function(log, interval = 60) {
-  while(!any(grepl("Success!", log_file <- readLines(log)))) {
+  while (!any(grepl("Success!", log_file <- readLines(log)))) {
     x <- as.numeric(
       sub(".*= (.*) %$", "\\1", tail(log_file[grep("Completion", log_file)], 1))
     )

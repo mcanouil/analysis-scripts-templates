@@ -1,5 +1,4 @@
 #' create_ga_directory
-#'
 create_ga_directory <- function(path) {
   unlink(x = file.path(path, c("tmp", "plink_qc", "vcf_qc")), force = TRUE, recursive = TRUE)
   invisible(
@@ -15,7 +14,6 @@ create_ga_directory <- function(path) {
 }
 
 #' download_plink
-#'
 #' @import utils
 download_plink <- function(
   url = "https://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20210606.zip",
@@ -46,7 +44,6 @@ download_plink <- function(
 }
 
 #' download_perl_preimputation_check
-#'
 #' @import utils
 download_perl_preimputation_check <- function(
   url = "https://www.well.ox.ac.uk/~wrayner/tools/HRC-1000G-check-bim-v4.2.13-NoReadKey.zip",
@@ -77,7 +74,6 @@ download_perl_preimputation_check <- function(
 }
 
 #' make_ga_bed
-#'
 #' @import data.table
 make_ga_bed <- function(input, output, plink) {
   if (length(list.files(dirname(input), pattern = ".bed")) != 0) {
@@ -128,13 +124,11 @@ make_ga_bed <- function(input, output, plink) {
 }
 
 #' count_duplicated_samples
-#'
 count_duplicated_samples <- function(data) {
   sum(table(gsub("[_-][^-_]*$", "", data[["IID"]])) > 1)
 }
 
 #' read_fam
-#'
 #' @import data.table
 read_fam <- function(path, project) {
   data.table::fread(
@@ -150,7 +144,6 @@ read_fam <- function(path, project) {
 }
 
 #' plot_callrate
-#'
 #' @import data.table
 #' @import ggplot2
 #' @import scales
@@ -218,7 +211,6 @@ plot_callrate <- function(data, callrate, max_labels, type) {
 }
 
 #' compute_callrate_ind
-#'
 #' @import data.table
 compute_callrate_ind <- function(bfile, callrate, plink) {
   temp_file <- tempfile(pattern = "crind")
@@ -242,7 +234,6 @@ compute_callrate_ind <- function(bfile, callrate, plink) {
 }
 
 #' compute_snps_maf_leq_geq
-#'
 #' @import data.table
 compute_snps_maf_leq_geq <- function(bfile, maf, callrate, plink) {
   temp_file <- tempfile(pattern = "snps_maf")
@@ -293,7 +284,6 @@ compute_snps_maf_leq_geq <- function(bfile, maf, callrate, plink) {
 }
 
 #' check_genotypic_sex
-#'
 #' @import data.table
 check_genotypic_sex <- function(bfile, callrate_data, fam_data, sex_threshold, plink) {
   temp_file <- tempfile(pattern = "check_sex")
@@ -338,7 +328,6 @@ check_genotypic_sex <- function(bfile, callrate_data, fam_data, sex_threshold, p
 }
 
 #' plot_check_genotypic_sex
-#'
 #' @import data.table
 #' @import ggplot2
 #' @import scales
@@ -434,14 +423,12 @@ plot_check_genotypic_sex <- function(data, callrate, sex_threshold, max_labels) 
 }
 
 #' compute_snps_het_all
-#'
 #' @import data.table
 compute_snps_het_all <- function(...) {
   data.table::rbindlist(list(...), use.names = TRUE)
 }
 
 #' compute_snps_het
-#'
 #' @import data.table
 compute_snps_het <- function(
   bfile,
@@ -520,7 +507,6 @@ compute_snps_het <- function(
 }
 
 #' compute_snps_het_leq_geq
-#'
 #' @import data.table
 compute_snps_het_leq_geq <- function(
   bfile,
@@ -558,7 +544,6 @@ compute_snps_het_leq_geq <- function(
 }
 
 #' plot_het_ind
-#'
 #' @import data.table
 #' @import ggplot2
 #' @import scales
@@ -661,7 +646,6 @@ plot_het_ind <- function(data, heterozygosity_threshold, callrate, maf, max_labe
 }
 
 #' compute_relatedness
-#'
 #' @import data.table
 compute_relatedness <- function(bfile, maf, ibd, plink) {
   temp_file <- tempfile(pattern = "snps_relatedness")
@@ -709,7 +693,6 @@ compute_relatedness <- function(bfile, maf, ibd, plink) {
 }
 
 #' compute_pca_ethnicity
-#'
 #' @import data.table
 #' @import future.apply
 #' @import flashpcaR
@@ -877,7 +860,6 @@ compute_pca_ethnicity <- function(bfile, maf, hwe, ref1kg_genotypes, plink) {
 }
 
 #' compute_ethnicity
-#'
 #' @import data.table
 tidy_pca_ethnicity <- function(data, ref1kg_panel) {
   ref_pop_table <- data.table::fread(
@@ -958,7 +940,6 @@ tidy_pca_ethnicity <- function(data, ref1kg_panel) {
 }
 
 #' compute_ethnicity
-#'
 #' @import data.table
 #' @import ggplot2
 #' @import ggforce
@@ -994,8 +975,8 @@ plot_pca_ethnicty <- function(data, pve, loadings) {
       y = .data[[pca_contrib[["PC02"]]]],
       colour = pop, fill = pop, label = pop
     ) +
-  	ggplot2::geom_hline(yintercept = 0, linetype = 2, size = 0.5, na.rm = TRUE) +
-  	ggplot2::geom_vline(xintercept = 0, linetype = 2, size = 0.5, na.rm = TRUE) +
+    ggplot2::geom_hline(yintercept = 0, linetype = 2, size = 0.5, na.rm = TRUE) +
+    ggplot2::geom_vline(xintercept = 0, linetype = 2, size = 0.5, na.rm = TRUE) +
     ggforce::geom_mark_hull(
       data = ~ .x[cohort %in% "1,000 Genomes"],
       concavity = 2,
@@ -1017,7 +998,7 @@ plot_pca_ethnicty <- function(data, pve, loadings) {
     ) +
     ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = 0.15)) +
     ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = 0.15)) +
-  	ggplot2::scale_colour_viridis_d(na.translate = FALSE, drop = FALSE, begin = 0.10, end = 0.90) +
+    ggplot2::scale_colour_viridis_d(na.translate = FALSE, drop = FALSE, begin = 0.10, end = 0.90) +
     ggplot2::scale_fill_viridis_d(na.translate = FALSE, drop = FALSE, begin = 0.10, end = 0.90) +
     ggplot2::theme(
       plot.title.position = "plot",
@@ -1043,7 +1024,6 @@ plot_pca_ethnicty <- function(data, pve, loadings) {
 }
 
 #' compute_samples_to_exclude
-#'
 #' @import data.table
 compute_samples_to_exclude <- function(
   callrate_data,
@@ -1145,7 +1125,6 @@ compute_samples_to_exclude <- function(
 }
 
 #' compute_bfile_good_samples
-#'
 #' @import data.table
 compute_bed_good_samples <- function(bfile, exclude, temp_directory, plink) {
   temp_file <- sprintf("%s/data_sample_qc", temp_directory)
@@ -1188,7 +1167,6 @@ compute_bed_good_samples <- function(bfile, exclude, temp_directory, plink) {
 }
 
 #' compute_callrate_snp
-#'
 #' @import data.table
 compute_callrate_snp <- function(bfile, callrate, plink) {
   temp_file <- tempfile(pattern = "crsnp")
@@ -1215,7 +1193,6 @@ compute_callrate_snp <- function(bfile, callrate, plink) {
 }
 
 #' plot_callrate_snp
-#'
 #' @import data.table
 #' @import ggplot2
 #' @import scales
@@ -1240,7 +1217,6 @@ plot_callrate_snp <- function(data, callrate, max_labels) {
 }
 
 #' compute_duplicated_snp
-#'
 #' @import data.table
 compute_duplicated_snp <- function(bfile) {
   list_snps <- data.table::fread(
@@ -1255,7 +1231,6 @@ compute_duplicated_snp <- function(bfile) {
 }
 
 #' compute_hwe_snp
-#'
 #' @import data.table
 compute_hwe_snp <- function(bfile, hwe, plink) {
   temp_file <- tempfile(pattern = "hwesnp")
@@ -1280,7 +1255,6 @@ compute_hwe_snp <- function(bfile, hwe, plink) {
 }
 
 #' plot_hwe_snp
-#'
 #' @import data.table
 #' @import ggplot2
 #' @import scales
@@ -1322,7 +1296,6 @@ plot_hwe_snp <- function(data, hwe) {
 }
 
 #' compute_maf_snp
-#'
 #' @import data.table
 compute_maf_snp <- function(bfile, maf, plink) {
   temp_file <- tempfile(pattern = "frqsnp")
@@ -1345,7 +1318,6 @@ compute_maf_snp <- function(bfile, maf, plink) {
 }
 
 #' plot_maf_snp
-#'
 #' @import data.table
 #' @import ggplot2
 #' @import scales
@@ -1373,7 +1345,6 @@ plot_maf_snp <- function(data) {
 }
 
 #' compute_variant_qc
-#'
 #' @import data.table
 compute_bed_good_variants <- function(bfile, exclude, temp_directory, project, plink) {
   temp_file <- tempfile(pattern = "data_sample_variant_qc")
@@ -1446,7 +1417,6 @@ compute_bed_good_variants <- function(bfile, exclude, temp_directory, project, p
 }
 
 #' compute_vcf_imputation
-#'
 #' @import data.table
 compute_vcf_imputation <- function(
   bfile,
@@ -1573,7 +1543,6 @@ compute_vcf_imputation <- function(
 }
 
 #' compute_vcf_dim
-#'
 #' @import data.table
 compute_vcf_dim <- function(vcf) {
   tmp <- data.table::fread(vcf, skip = "#CHROM")
@@ -1612,7 +1581,6 @@ list_imputed_vcf <- function(path) {
 }
 
 #' compute_vcf_imputed_qc
-#'
 #' @import data.table
 #' @import future.apply
 compute_vcf_imputed_qc <- function(vcf, vcftools, uptodate) {
@@ -1679,7 +1647,6 @@ compute_vcf_imputed_qc <- function(vcf, vcftools, uptodate) {
 }
 
 #' compute_vcf_imputed_qc_info
-#'
 #' @import data.table
 #' @import scales
 compute_vcf_imputed_qc_info <- function(data, uptodate) {
@@ -1690,7 +1657,6 @@ compute_vcf_imputed_qc_info <- function(data, uptodate) {
 }
 
 #' compute_vcf_imputed_qc_af
-#'
 #' @import data.table
 #' @import scales
 compute_vcf_imputed_qc_af <- function(data, uptodate) {
@@ -1701,7 +1667,6 @@ compute_vcf_imputed_qc_af <- function(data, uptodate) {
 }
 
 #' save_plot_vcf_imputed_qc
-#'
 #' @import data.table
 #' @import ggplot2
 #' @import patchwork
@@ -1837,7 +1802,6 @@ save_plot_vcf_imputed_qc <- function(data, path, uptodate) {
 }
 
 #' is_vcf_imputed_uptodate
-#'
 #' @import targets
 is_vcf_imputed_uptodate <- function(pre, post) {
   max(tar_timestamp_raw(deparse1(substitute(pre)))) <
@@ -1845,7 +1809,6 @@ is_vcf_imputed_uptodate <- function(pre, post) {
 }
 
 #' compute_related_samples_tab
-#'
 #' @import data.table
 compute_related_samples_tab <- function(relatedness, callrate_samples) {
   samples_bad_callrate <- callrate_samples[!is.na(labs), unique(paste(FID, IID, sep = "_"))]
@@ -1868,7 +1831,6 @@ compute_related_samples_tab <- function(relatedness, callrate_samples) {
 }
 
 #' save_ga_qc_data
-#'
 #' @import data.table
 save_ga_qc_data <- function(from, report, imputation, exclusion_check, relatedness, ethnicity, to) {
   data.table::fwrite(

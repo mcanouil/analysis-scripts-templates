@@ -59,7 +59,7 @@ tar_methylation <- {list( # Methylation Array (ma)
       filter_callrate = TRUE,
       callrate_samples = 0.95,
       callrate_probes = 1,
-      sex_threshold = NULL ,
+      sex_threshold = NULL,
       sex_colname = "sex_offspring",
       norm_background = "oob",
       norm_dye = "RELIC",

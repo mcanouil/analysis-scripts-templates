@@ -38,10 +38,10 @@ if (!file.exists(file.path(output_directory, "all.bim"))) {
   )
 } else {
   compute_pca(
-  	cohort_name = project_name,
-  	input_plink = file.path(output_directory, "all"),
-  	output_directory = output_directory,
-  	ref1kg_population = normalizePath("/disks/DATA/ExternalData/1kg/samples_description/integrated_call_samples_v3.20130502.ALL.panel")
+  cohort_name = project_name,
+    input_plink = file.path(output_directory, "all"),
+    output_directory = output_directory,
+    ref1kg_population = normalizePath("/disks/DATA/ExternalData/1kg/samples_description/integrated_call_samples_v3.20130502.ALL.panel")
   )
 }
 

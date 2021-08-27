@@ -1,5 +1,4 @@
 #' sub_chunk
-#'
 #' @import knitr
 sub_chunk <- function(code, chunk_name = NULL, fig_width = 11.5, fig_height = 5.75) {
   sub_chunk_txt <- paste0(

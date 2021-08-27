@@ -89,7 +89,7 @@ if (file.exists(file.path(output_directory, "Omni2.5", "vcf_imputed"))) {
       pattern = "vcf.gz$",
       full.names = TRUE
     ),
-    FUN = function(ivcf) system(paste("tabix -f -p vcf", ivcf))
+    FUN = function(ivcf) system(paste("bcftools index --force vcf", ivcf))
   )
   identical(
     length(

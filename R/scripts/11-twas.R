@@ -141,8 +141,11 @@ pval_trans <- function(alpha = NULL, md = FALSE, prefix = FALSE, colour = "#ee2c
   scales::trans_new(
     name = "pval",
     domain = c(0, 1),
-    transform = function(x) {x[x < .Machine$double.xmin] <- .Machine$double.xmin; -log(x, 10)},
-    inverse = function(x) {10^-x},
+    transform = function(x) {
+      x[x < .Machine$double.xmin] <- .Machine$double.xmin
+      -log(x, 10)
+    },
+    inverse = function(x) 10^-x,
     breaks = (function(n = 5) {
       function(x) {
         max <- floor(-log(min(c(x, alpha), na.rm = TRUE), base = 10))
@@ -435,8 +438,8 @@ for (rna_level in c("genes", "isoforms")) {
     measure.vars = grep("^PC[0-9]+$", names(pca_dfxy), value = TRUE),
     variable.name = "pc",
     value.name = "values"
-  )[pc %in% sprintf("PC%02d", 1:n_comp)][,
-    {
+  )[pc %in% sprintf("PC%02d", 1:n_comp)][
+    j = {
       m <- model.matrix(
         object = as.formula(
           object = paste0("values ~ ", paste(paste0("`", keep_technical, "`"), collapse = " + "))

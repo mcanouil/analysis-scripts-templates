@@ -1,5 +1,4 @@
 #' Efficiently import idats files mostly using minfi functions.
-#'
 #' @param directory A `character`. Location of IDAT files, default is the current working directory.
 #' @param csv_file A `character`. Path to the sample sheet (csv files) or
 #'     name of the sample sheet in `directory`.
@@ -13,15 +12,11 @@
 #'     i.e., at most how many child processes will be run simultaneously.
 #' @param rgSet A `RGChannelSet` object.
 #' @param echo A `logical`. Should messages be displayed?
-#'
 #' @inheritParams qc_idats
-#'
 #' @import data.table
 #' @import ChAMPdata
-#'
 #' @return A `list`.
 #' @export
-#'
 #' @import data.table
 #' @import ENmix
 #' @import minfi
@@ -274,7 +269,6 @@ read_idats <- function(
 }
 
 #' read_sample_sheet
-#'
 #' @import data.table
 read_sample_sheet <- function(
   directory = ".",
@@ -335,7 +329,6 @@ read_sample_sheet <- function(
 }
 
 #' read_metharray
-#'
 #' @import illuminaio
 #' @import minfi
 #' @import parallel
@@ -384,7 +377,6 @@ read_metharray <- function(files, n_cores) {
 }
 
 #' read_metharray_exp
-#'
 #' @import methods
 #' @import minfi
 read_metharray_exp <- function(
@@ -464,7 +456,6 @@ read_metharray_exp <- function(
 }
 
 #' get_beadcount
-#'
 #' @import minfi
 get_beadcount <- function(x) {
   nb <- minfi::getNBeads(x)
@@ -487,7 +478,6 @@ get_beadcount <- function(x) {
 }
 
 #' qc_idats
-#'
 #' @import data.table
 qc_idats <- function(params) {
   sample_sheet <- data.table::fread(params[["csv_file"]], skip = "Sample_Name")
@@ -545,7 +535,6 @@ qc_idats <- function(params) {
 }
 
 #' estimate_cell_composition
-#'
 #' @import FlowSorted.Blood.EPIC
 #' @import minfi
 #' @import RefFreeEWAS
@@ -687,7 +676,6 @@ estimate_cell_composition <- function(data_rgset, data_mset, cell_tissue, array,
 }
 
 #' compute_sex_threshold
-#'
 #' @import minfi
 #' @import stats
 compute_sex_threshold <- function(data_rgset, sex_threshold) {
@@ -703,7 +691,6 @@ compute_sex_threshold <- function(data_rgset, sex_threshold) {
 }
 
 #' check_sex
-#'
 #' @import data.table
 #' @import minfi
 check_sex <- function(data_rgset, sex_threshold) {
@@ -719,7 +706,6 @@ check_sex <- function(data_rgset, sex_threshold) {
 }
 
 #' compute_phenotypes
-#'
 #'  @import data.table
 compute_phenotypes <- function(data_mset, cell, sex_predicted) {
   raw_phenotypes <- data.table::as.data.table(data_mset@metadata[["phenotypes"]])[
@@ -757,7 +743,6 @@ compute_phenotypes <- function(data_mset, cell, sex_predicted) {
 }
 
 #' normalise_mset
-#'
 #' @import ENmix
 #' @import minfi
 #' @import sva
@@ -784,7 +769,6 @@ normalise_mset <- function(data_mset, phenotypes) {
 }
 
 #' mset_pca_plot
-#'
 #' @import data.table
 #' @import flashpcaR
 #' @import ggplot2
@@ -800,8 +784,8 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
 
   lapply(
     X = list(
-    	"Raw &beta;-values" = `colnames<-`(minfi::getBeta(data$rgset), minfi::pData(data$rgset)[, "Sample_ID"]),
-    	"Normalised &beta;-values" = normalised_mset@metadata[["norm_beta_values"]]
+      "Raw &beta;-values" = `colnames<-`(minfi::getBeta(data$rgset), minfi::pData(data$rgset)[, "Sample_ID"]),
+      "Normalised &beta;-values" = normalised_mset@metadata[["norm_beta_values"]]
     ),
     FUN = function(data_batch) {
       pca_methylation <- data_batch
@@ -1036,7 +1020,6 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
 }
 
 #' plot_callrate_ma
-#'
 #' @import data.table
 #' @import ggplot2
 #' @import scales
@@ -1092,7 +1075,6 @@ plot_callrate_ma <- function(data, callrate, max_labels) {
 }
 
 #' plot_check_methylation_sex
-#'
 #' @import data.table
 #' @import ggplot2
 #' @import scales
@@ -1217,7 +1199,6 @@ plot_check_methylation_sex <- function(data, sex_threshold) {
 }
 
 #' plot_cell_composition
-#'
 #' @import data.table
 #' @import ggplot2
 #' @import scales
@@ -1332,7 +1313,6 @@ create_ma_export_directory <- function(path, project, array) {
 }
 
 #' export_ma_data
-#'
 #' @import data.table
 #' @import readr
 export_ma_data <- function(data_idats, mset, array, output_directory) {
