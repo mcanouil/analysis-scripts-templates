@@ -1,24 +1,23 @@
 #' get_variants
 #' @import data.table
-get_variants <- function(path) {
+#' @importFrom future.apply future_lapply
+get_variants <- function(
+  path = file.path(input_directory, "Omni2.5", "vcf_imputed_hg38_ucsc")
+) {
   if (length(path) == 1 && dir.exists(path)) {
     vcf_files <- list.files(path, pattern = "(\\.vcf.gz|\\.vcf)$", full.names = TRUE)
   } else {
     vcf_files <- path
   }
 
-  vcfs <- list.files(path = path, pattern = "[^X].vcf.gz$", full.names = TRUE)
-  names(vcfs) <- sprintf("chr%02d", as.numeric(sub("\\..*\\.vcf\\.gz$", "", basename(vcfs))))
-
-  unique_snps <- unique(rbindlist(mclapply(
-    X = names(vcfs),
-    mc.cores = 11,
-    mc.preschedule = FALSE,
+  unique_snps <- unique(data.table::rbindlist(future.apply::future_lapply(
+    X = vcf_files,
+    future.globals = FALSE,
     FUN = function(ivcf) {
       fwrite(
         x = fread(
           cmd = paste(
-            "vcftools --gzvcf", vcfs[ivcf],
+            "vcftools --gzvcf", ivcf,
             "--get-INFO 'INFO'",
             "--stdout"
           ),
@@ -30,7 +29,7 @@ get_variants <- function(path) {
       )
 
       system(paste(
-        "vcftools --gzvcf", vcfs[ivcf],
+        "vcftools --gzvcf", ivcf,
         "--keep", file.path(output_directory, "samples_to_keep.txt"),
         "--exclude-positions", file.path(output_directory, "vcfs_qc", paste0(ivcf, "_lowqual.txt")),
         "--remove-indels",
@@ -61,7 +60,7 @@ get_variants <- function(path) {
 
       fread(
         cmd = paste(
-          "vcftools --gzvcf", vcfs[ivcf],
+          "vcftools --gzvcf", ivcf,
           "--get-INFO 'INFO'",
           "--stdout"
         ),
