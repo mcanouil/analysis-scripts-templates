@@ -82,17 +82,17 @@ do_crossmap <- function(
     ))
   }
 
-  path_converted <- future.apply::future_by(
-    data = unlist(tmp_path_converted),
-    INDEX = sub("__.*", "", unlist(tmp_path_converted)),
+  path_converted <- future.apply::future_apply(
+    X = do.call("rbind", tmp_path_converted),
+    MARGIN = 2,
     bin_path = bin_path,
     output_directory = output_directory,
     future.globals = FALSE,
-    FUN = function(vcf_file, bin_path, output_directory) {
-      combined_vcf <- sprintf(
+    FUN = function(chr_vcf_files, bin_path, output_directory) {
+      combined_chr_vcf <- sprintf(
         "%s/%s.vcf.gz",
         output_directory,
-        unique(sub("truechr_([^_]+)__.*", "\\1", basename(vcf_file)))
+        unique(sub("truechr_([^_]+)__.*", "\\1", basename(chr_vcf_files)))
       )
       system(sprintf(
         paste(
@@ -100,16 +100,16 @@ do_crossmap <- function(
           "%s index --force %s",
           sep = " && "
         ),
-        bin_path[["bcftools"]], paste(vcf_file, collapse = " "),
-        bin_path[["bcftools"]], combined_vcf,
-        bin_path[["bcftools"]], combined_vcf
+        bin_path[["bcftools"]], paste(chr_vcf_files, collapse = " "),
+        bin_path[["bcftools"]], combined_chr_vcf,
+        bin_path[["bcftools"]], combined_chr_vcf
       ))
 
-      if (!file.exists(combined_vcf)) {
+      if (!file.exists(combined_chr_vcf)) {
         return(NULL)
       }
 
-      combined_vcf
+      combined_chr_vcf
     }
   )
 
