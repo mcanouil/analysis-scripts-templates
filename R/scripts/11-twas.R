@@ -55,70 +55,70 @@ theme_update(
 
 ### Functions ======================================================================================
 find_tissue <- function(
-  files, 
-  type = "rsem", 
+  files,
+  type = "rsem",
   tpm_threshold = 100,
   url = "https://storage.googleapis.com/gtex_analysis_v8/rna_seq_data/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_median_tpm.gct.gz"
 ) {
   if (type != "rsem" || !all(grepl("genes.results$", files))) {
     stop("Only RSEM gene files are supported!", call. = FALSE)
   }
-  
+
   gtex_raw_data <- data.table::fread(url)[, -c("Description")]
-  
+
   gtex_markers <- data.table::melt(
-    data = gtex_raw_data[j = "Name" := gsub("\\..*$", "", Name)], 
-    id.vars = "Name", 
-    variable.name = "Tissue", 
+    data = gtex_raw_data[j = "Name" := gsub("\\..*$", "", Name)],
+    id.vars = "Name",
+    variable.name = "Tissue",
     value.name = "TPM"
   )[TPM >= tpm_threshold][j = Tissue := as.character(Tissue)]
-  
+
   gtex_markers <- gtex_markers[
     i = gtex_markers[j = .SD[j = data.table::uniqueN(Tissue)], by = "Name"][V1 %in% 1:3],
     j = .SD,
     on = c("Name")
   ]
-  
+
   samples_tissue <- Reduce(
     f = function(x, y) {
       merge(x, y, by = "Tissue", all = TRUE)[
         j =  `:=`(gene_id = sub("\\..*$", "", gene_id))
       ]
-    }, 
+    },
     x = lapply(
       X = files,
       .gtex = gtex_markers,
       FUN = function(.file, .gtex) {
         out <- merge(
-          x = .gtex, 
+          x = .gtex,
           y = data.table::fread(
-            file = .file, 
-            select = c("gene_id", "TPM"), 
+            file = .file,
+            select = c("gene_id", "TPM"),
             col.names = c("Name", "sample_tpm")
-          ), 
-          by = "Name", 
+          ),
+          by = "Name",
           all = FALSE
         )[
-          i = sample_tpm >= tpm_threshold & TPM >= sample_tpm, 
-          j = .N, 
+          i = sample_tpm >= tpm_threshold & TPM >= sample_tpm,
+          j = .N,
           by = "Tissue"
         ]
         data.table::setnames(out, old = "N", new = gsub(".genes.results$", "", basename(.file)))
       }
     )
   )
-  
+
   class(samples_tissue) <- c("tissue", class(samples_tissue))
-  
+
   data.table::setnafill(
-    x = samples_tissue, 
-    fill = 0, 
+    x = samples_tissue,
+    fill = 0,
     cols = setdiff(names(samples_tissue), "Tissue")
   )[
     j = .(
       Tissue = Tissue[order(- rowMeans(.SD) / sum(rowMeans(.SD)))],
       .SD[order(- rowMeans(.SD) / sum(rowMeans(.SD)))]
-    ), 
+    ),
     .SDcols = gsub(".genes.results$", "", basename(files))
   ]
 }
@@ -130,9 +130,9 @@ is.unique <- function(object) {
 summary.tissue <- function(object, ...) {
   object[
     j = data.table::data.table(
-      t(sapply(.SD, function(x) c(best_tissue = Tissue[which.max(x)], n_gene = x[which.max(x)]))), 
+      t(sapply(.SD, function(x) c(best_tissue = Tissue[which.max(x)], n_gene = x[which.max(x)]))),
       keep.rownames = "sample_id"
-    ), 
+    ),
     .SDcols = setdiff(names(object), "Tissue")
   ]
 }
@@ -153,8 +153,8 @@ pval_trans <- function(alpha = NULL, md = FALSE, prefix = FALSE, colour = "#ee2c
       if (md & nchar(system.file(package = "ggtext")) != 0) {
         prefix_text <- if (prefix) "&alpha; = " else ""
         x_fmt <- gsub(
-          "^(.*)e[+]*([-]*)0*(.*)$", 
-          "\\1 &times; 10<sup>\\2\\3</sup>", 
+          "^(.*)e[+]*([-]*)0*(.*)$",
+          "\\1 &times; 10<sup>\\2\\3</sup>",
           format(x, scientific = TRUE)
         )
         x_fmt[x %in% c(0, 1)] <- x[x %in% c(0, 1)]
@@ -165,8 +165,8 @@ pval_trans <- function(alpha = NULL, md = FALSE, prefix = FALSE, colour = "#ee2c
       } else {
         prefix_text <- if (prefix) "alpha == " else ""
         x_fmt <- gsub(
-          "^(.*)e[+]*([-]*)0*(.*)$", 
-          "\\1 %*% 10^\\2\\3", 
+          "^(.*)e[+]*([-]*)0*(.*)$",
+          "\\1 %*% 10^\\2\\3",
           format(x, scientific = TRUE)
         )
         x_fmt[x %in% c(0, 1)] <- x[x %in% c(0, 1)]
@@ -180,22 +180,22 @@ pval_trans <- function(alpha = NULL, md = FALSE, prefix = FALSE, colour = "#ee2c
 }
 
 draw_volcano <- function(
-  data, x, y, 
-  label_x = "Fold-Change (log<sub>2</sub>)", 
+  data, x, y,
+  label_x = "Fold-Change (log<sub>2</sub>)",
   label_y = "P-value",
   label_colour = label_x,
-  alpha = 0.05, 
+  alpha = 0.05,
   max_p = 1
 ) {
   data <- data.table::as.data.table(data)#[, .SD, .SDcols = c(x, y)]
   data.table::setnames(data, y, "pvalue", skip_absent = TRUE)
   if (!"contrast" %in% names(data)) data[j = contrast := "Volcano plot"]
-  
+
   if ("OR" %in% x) {
     label_x <- gsub("Fold Change", "OR", label_x)
     data[j = c(x) := log2(.SD), .SDcols = x]
   }
-  
+
   out <- lapply(unique(data[["contrast"]]), function(.contrast) {
     ggplot2::ggplot(data[contrast %in% .contrast][pvalue <= max_p]) +
       ggplot2::aes(x = .data[[x]], y = .data[["pvalue"]], colour = abs(.data[[x]])) +
@@ -203,7 +203,7 @@ draw_volcano <- function(
       ggplot2::geom_point(size = 0.50) +
       ggrepel::geom_label_repel(
         data = ~ .x[!is.na(external_gene_name) & fdr < 0.05][order(pvalue)][1:10], # max 10
-        mapping = aes(label = .data[["external_gene_name"]]), 
+        mapping = aes(label = .data[["external_gene_name"]]),
         min.segment.length = unit(0, "lines"),
         size = 1.5,
         show.legend = FALSE,
@@ -212,9 +212,9 @@ draw_volcano <- function(
         fontface = "italic",
         segment.colour = "black",
         colour = "black"
-      ) + 
+      ) +
       ggplot2::scale_colour_viridis_c(
-        trans = "sqrt", 
+        trans = "sqrt",
         limits = c(0, data[pvalue <= 0.05, max(abs(.SD)), .SDcols = x])
       ) +
       ggplot2::labs(x = label_x, y = label_y, colour = label_colour) +
@@ -226,8 +226,8 @@ draw_volcano <- function(
       ) +
       ggplot2::geom_hline(yintercept = alpha, linetype = 2, colour = "#ee2c2c") +
       ggplot2::scale_y_continuous(
-        trans = pval_trans(alpha = alpha, md = TRUE, colour = "#ee2c2c"), 
-        expand = ggplot2::expansion(mult = c(0, 0.2)), 
+        trans = pval_trans(alpha = alpha, md = TRUE, colour = "#ee2c2c"),
+        expand = ggplot2::expansion(mult = c(0, 0.2)),
         limits = c(max_p, NA)
       )
   })
@@ -295,9 +295,9 @@ build <- 38
 version <- 103
 
 get_mart <- quote(useEnsembl(
-  biomart = "ensembl", 
-  dataset = species, 
-  version = version, 
+  biomart = "ensembl",
+  dataset = species,
+  version = version,
   GRCh = if (build == 37) build else NULL
 ))
 
@@ -347,7 +347,7 @@ sample_tissue <- "Liver"
 res_tissue <- summary(find_tissue(sample_sheet_qc[["rnaseq_path"]]))
 if (!all(grepl(sample_tissue, unique(res_tissue[["best_tissue"]])))) {
   message(
-    paste0('Tissue found using GTEx does not match "', sample_tissue, '" for all samples!'), 
+    paste0('Tissue found using GTEx does not match "', sample_tissue, '" for all samples!'),
     appendLF = TRUE
   )
   fwrite(
@@ -363,31 +363,31 @@ if (!all(grepl(sample_tissue, unique(res_tissue[["best_tissue"]])))) {
 ### Analysis =======================================================================================
 for (rna_level in c("genes", "isoforms")) {
   rna_level_name <- unname(c("genes" = "gene", "isoforms" = "transcript")[rna_level])
-  
+
   ensembl_id <- sprintf("ensembl_%s_id", rna_level_name)
-  
+
   rsem_files <- setNames(sample_sheet_qc[["rnaseq_path"]], sample_sheet_qc[["Sample_ID"]])
   txi_counts <- tximport(
     files = gsub("\\.genes\\.results$", paste0(".", rna_level, ".results"), rsem_files),
-    type = "rsem", 
-    txIn = rna_level == "isoforms", 
-    txOut = rna_level == "isoforms", 
+    type = "rsem",
+    txIn = rna_level == "isoforms",
+    txOut = rna_level == "isoforms",
     countsFromAbundance = "no"
   )
   txi_counts$length[txi_counts$length == 0] <- 1
-  
+
   ## PCA -------------------------------------------------------------------------------------------
   n_comp <- 3
   fig_n_comp <- 3
   keep_technical <- c("Status" = "status", "Sex" = "sex", "Age" = "age", "BMI" = "bmi")
-  
+
   pca_data <- txi_counts$counts
   pca_phenotypes <- sample_sheet_qc[Sample_ID %in% colnames(pca_data)]
   pca_res <- flashpca(X = t(pca_data), stand = "sd", ndim = n_comp)
   pca_dfxy <- as.data.table(pca_res[["vectors"]], keep.rownames = "Sample_ID")
   setnames(
-    x = pca_dfxy, 
-    old = setdiff(names(pca_dfxy), "Sample_ID"), 
+    x = pca_dfxy,
+    old = setdiff(names(pca_dfxy), "Sample_ID"),
     new = sprintf("PC%02d", as.numeric(gsub("V", "", setdiff(names(pca_dfxy), "Sample_ID"))))
   )
   pca_dfxy <- merge(x = pca_dfxy, y = pca_phenotypes, by = "Sample_ID")
@@ -398,17 +398,17 @@ for (rna_level in c("genes", "isoforms")) {
     )[x %in% sprintf("PC%02d", 1:fig_n_comp)]
   ) +
     aes(
-      x = paste0(x, "<br><i style='font-size:6pt;'>(", percent_format(accuracy = 0.01, suffix = " %")(y), ")</i>"), 
+      x = paste0(x, "<br><i style='font-size:6pt;'>(", percent_format(accuracy = 0.01, suffix = " %")(y), ")</i>"),
       y = y
     ) +
     geom_col(
-      width = 1, 
-      colour = "white", 
-      fill = viridis_pal(begin = 0.5, end = 0.5)(1), 
+      width = 1,
+      colour = "white",
+      fill = viridis_pal(begin = 0.5, end = 0.5)(1),
       na.rm = TRUE
     ) +
     scale_y_continuous(
-      labels = percent_format(accuracy = 0.1, suffix = " %"), 
+      labels = percent_format(accuracy = 0.1, suffix = " %"),
       expand = expansion(mult = c(0, 0.05))
     ) +
     labs(
@@ -429,7 +429,7 @@ for (rna_level in c("genes", "isoforms")) {
       panel.grid.minor = element_blank()
     ) +
     theme(panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())
-  
+
   asso_dt <- melt(
     data = pca_dfxy,
     measure.vars = grep("^PC[0-9]+$", names(pca_dfxy), value = TRUE),
@@ -475,7 +475,7 @@ for (rna_level in c("genes", "isoforms")) {
     },
     by = "pc"
   ]
-  
+
   pca_asso <- ggplot(data = asso_dt) +
     aes(
       x = factor(.data[["pc"]]),
@@ -504,7 +504,7 @@ for (rna_level in c("genes", "isoforms")) {
             x = format(x_fmt[as.numeric(x) < 0.01], digits = 2, nsmall = 2, scientific = TRUE)
           )
           x_fmt[as.numeric(x) >= 0.01] <- format(
-            x = as.numeric(x_fmt[as.numeric(x) >= 0.01]), 
+            x = as.numeric(x_fmt[as.numeric(x) >= 0.01]),
             digits = 2, nsmall = 2
           )
           x_fmt
@@ -604,7 +604,7 @@ for (rna_level in c("genes", "isoforms")) {
 
     agg_png(
       filename = sprintf("%s/pca/gene_pca_planes_%s.png",
-        output_directory, 
+        output_directory,
         tolower(gsub("[.]+$|^[.]+|^X+", "", gsub("[.]+", ".", make.names(ivar))))
       ),
       width = 16, height = 12, units = "cm", res = 300, scaling = 1
@@ -616,12 +616,12 @@ for (rna_level in c("genes", "isoforms")) {
   ## DE --------------------------------------------------------------------------------------------
   ensembl_dt <- setDT(getBM(
     attributes = c(
-      ensembl_id, 
+      ensembl_id,
       "entrezgene_id",
       "uniprotswissprot",
-      "chromosome_name", 
-      "start_position", 
-      "end_position", 
+      "chromosome_name",
+      "start_position",
+      "end_position",
       "external_gene_name"
     ),
     filters = ensembl_id,
@@ -634,11 +634,11 @@ for (rna_level in c("genes", "isoforms")) {
     }),
     by = c(ensembl_id)
   ][j = ensembl_version := ensembl_version]
-  
-  
+
+
   entrez_dt <- setDT(getBM(
     attributes = c(
-      ensembl_id, 
+      ensembl_id,
       "entrezgene_id"
     ),
     filters = ensembl_id,
@@ -651,10 +651,10 @@ for (rna_level in c("genes", "isoforms")) {
     }),
     by = c(ensembl_id)
   ]
-  
+
   uniprot_dt <- setDT(getBM(
     attributes = c(
-      ensembl_id, 
+      ensembl_id,
       "uniprotswissprot"
     ),
     filters = ensembl_id,
@@ -667,14 +667,14 @@ for (rna_level in c("genes", "isoforms")) {
     }),
     by = c(ensembl_id)
   ]
-  
+
   annot_dt <- merge(
-    x = ensembl_dt, 
+    x = ensembl_dt,
     y = merge(x = entrez_dt, y = uniprot_dt, by = ensembl_id, all = TRUE),
     by = ensembl_id,
     all.x = TRUE
   )
-  
+
   if (length(setdiff(rownames(txi_counts[["counts"]]), annot_dt[[ensembl_id]])) != 0) {
     stop(sprintf('Not all "%s" have been found! Please check Ensembl version!', ensembl_id))
   }
@@ -683,39 +683,39 @@ for (rna_level in c("genes", "isoforms")) {
     local({
       trait <- traits[[ntrait]]
       base_form <- as.formula(paste0("~ ", trait))
-      
+
       dds_pheno <- na.exclude(sample_sheet_qc[j = .SD, .SDcols = c("Sample_ID", all.vars(base_form))])
       dds_counts <- lapply(
-        X = txi_counts, 
-        .sample = as.character(dds_pheno[["Sample_ID"]]), 
+        X = txi_counts,
+        .sample = as.character(dds_pheno[["Sample_ID"]]),
         FUN = function(.l, .samples) if (is.matrix(.l)) .l[, .samples] else .l
       )
-    
+
       dds <- DESeqDataSetFromTximport(txi = dds_counts, colData = dds_pheno, design = base_form)
       dds <- dds[rowVars(counts(dds)) != 0 & rowMeans(counts(dds)) > 1 & rowMedians(counts(dds)) > 0, ]
       stats_dds <- replaceOutliers(
-        object = nbinomWaldTest(estimateDispersions(estimateSizeFactors(dds)), maxit = 1000), 
+        object = nbinomWaldTest(estimateDispersions(estimateSizeFactors(dds)), maxit = 1000),
         minReplicates = ncol(dds)
       )
-      
+
       is_issue <- data.table(
         x = rownames(dds),
         converge = mcols(stats_dds)$betaConv
       )
       setnames(x = is_issue, old = "x", new = ensembl_id)
-      
+
       if (is.factor(sample_sheet_qc[[trait]])) {
         results_dt <- rbindlist(apply(
           X = combn(levels(sample_sheet_qc[[trait]]), 2),
-          MARGIN = 2, 
+          MARGIN = 2,
           .trait = trait,
           .dds = stats_dds,
           FUN = function(.contrast, .trait, .dds) {
             results_dds <- results(
-              object = .dds, 
+              object = .dds,
               contrast = c(.trait, .contrast[2], .contrast[1]),
-              pAdjustMethod = "BH", 
-              independentFiltering = FALSE, 
+              pAdjustMethod = "BH",
+              independentFiltering = FALSE,
               cooksCutoff = FALSE
             )
             results_dt <- as.data.table(results_dds, keep.rownames = ensembl_id)
@@ -726,30 +726,30 @@ for (rna_level in c("genes", "isoforms")) {
         ))
       } else {
         results_dds <- results(
-          object = stats_dds, 
-          name = trait, 
-          pAdjustMethod = "BH", 
-          independentFiltering = FALSE, 
+          object = stats_dds,
+          name = trait,
+          pAdjustMethod = "BH",
+          independentFiltering = FALSE,
           cooksCutoff = FALSE
         )
         results_dt <- as.data.table(results_dds, keep.rownames = ensembl_id)
         setnames(results_dt, old = "padj", new = "fdr")
         results_dt[j = contrast := trait]
       }
-      
+
       results_dt[j = Trait := ntrait]
-      
+
       results_annot_dt <- merge(
-        x = merge(x = results_dt, y = is_issue, by = ensembl_id), 
-        y = annot_dt, 
+        x = merge(x = results_dt, y = is_issue, by = ensembl_id),
+        y = annot_dt,
         by = ensembl_id,
         all.x = TRUE
       )
 
       fwrite(
-        x = results_annot_dt, 
+        x = results_annot_dt,
         file = file.path(
-          output_directory, 
+          output_directory,
           paste0(
             paste(
               project_name,
@@ -762,22 +762,22 @@ for (rna_level in c("genes", "isoforms")) {
           )
         )
       )
-      
+
       lvp <- draw_volcano(
-        data = results_annot_dt, x = "log2FoldChange", y = "pvalue", 
-        label_x = "Fold-Change (log<sub>2</sub>)", 
+        data = results_annot_dt, x = "log2FoldChange", y = "pvalue",
+        label_x = "Fold-Change (log<sub>2</sub>)",
         label_y = "P-value",
-        alpha = 0.05, 
+        alpha = 0.05,
         max_p = 1
       )
-      
+
       p_volcano <- wrap_plots(lvp) +
         labs(
           title = paste("Volcano Plot:", unique(results_annot_dt[["Trait"]])),
           subtitle = sprintf("Model: %s", paste(labels(terms(base_form)), collapse = " + ")),
           caption = paste(
             sapply(
-              X = c("pvalue", "fdr"), 
+              X = c("pvalue", "fdr"),
               lp = lvp,
               alpha = 0.05,
               FUN = function(lp, p, alpha) {
@@ -789,21 +789,21 @@ for (rna_level in c("genes", "isoforms")) {
                 )
                 sprintf(
                   fmt = "%s < %s: %s and %s.",
-                  c("pvalue" = "P-value", "fdr" = "FDR")[p], 
+                  c("pvalue" = "P-value", "fdr" = "FDR")[p],
                   0.05,
                   paste(out[-length(out)], collapse = ", "),
                   out[length(out)]
                 )
               }
-            ), 
+            ),
             collapse = "<br>"
           )
         ) +
         theme(plot.caption = element_markdown(face = "italic", size = rel(0.75)))
-      
+
       agg_png(
         filename = file.path(
-          output_directory, 
+          output_directory,
           paste0(
             paste(
               project_name,
@@ -814,7 +814,7 @@ for (rna_level in c("genes", "isoforms")) {
             ),
             ".png"
           )
-        ), 
+        ),
         width = 16, height = 12, units = "cm", res = 300, scaling = 1
       )
         print(p_volcano)
@@ -833,7 +833,7 @@ for (rna_level in c("genes", "isoforms")) {
 #       normalizePath(output_directory),
 #       paste0(
 #         format(Sys.Date(), format = "%Y%m%d"), "_",
-#         project_name, "_", 
+#         project_name, "_",
 #         gsub("[0-9]+\\-", "", basename(output_directory)), ".zip"
 #       )
 #     )

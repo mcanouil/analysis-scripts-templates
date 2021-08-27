@@ -7,7 +7,7 @@ get_symbol_vep <- function(
   ensembl_version = "104",
   ensembl_species = "homo_sapiens",
   vep_cache = c(
-    "server" = "/media/Data/ExternalData/vep_data", 
+    "server" = "/media/Data/ExternalData/vep_data",
     "docker" = "/disks/DATA/ExternalData/vep_data"
   )
 ) {
@@ -18,8 +18,8 @@ get_symbol_vep <- function(
     )))[
       i = order(CHR, BP),
       j = list(CHR, start = BP, end = BP, alleles = paste(reference_allele, other_allele, sep = "/"), strand = "+")
-    ], 
-    file = file.path(output_directory, "snps_locations.txt.gz"), 
+    ],
+    file = file.path(output_directory, "snps_locations.txt.gz"),
     col.names = FALSE, row.names = FALSE, sep = "\t"
   )
 
@@ -29,7 +29,7 @@ get_symbol_vep <- function(
     input
   )
   output_docker <- paste0("snps_vep_", ensembl_version, ".0_", genome_assembly, ".txt")
-  
+
   if (
     !file.exists(file.path(
       vep_cache[["docker"]], "homo_sapiens", paste0(ensembl_version, "_", genome_assembly)
@@ -37,7 +37,7 @@ get_symbol_vep <- function(
   ) {
     system(sprintf(
       paste(
-        "cd %s", 
+        "cd %s",
         "curl -sO ftp://ftp.ensembl.org/pub/release-%s/variation/vep/%s_vep_%s_%s.tar.gz",
         "tar xzf %s_vep_%s_%s.tar.gz",
         "rm %s_vep_%s_%s.tar.gz",
@@ -49,7 +49,7 @@ get_symbol_vep <- function(
       ensembl_species, ensembl_version, genome_assembly
     ))
   }
-  
+
   cat(paste(
     '#!/bin/bash',
     '\n\nchmod 777', dirname(input_docker),
@@ -65,12 +65,12 @@ get_symbol_vep <- function(
     '--offline',
     '--fork 70',
     '--force_overwrite',
-    '--assembly', genome_assembly, 
+    '--assembly', genome_assembly,
     '--check_existing',
     '--no_check_alleles',
     '--symbol',
     '--output_file', file.path("/data_dir", output_docker),
-    '&& cut -f 1-4,13-14', file.path("/data_dir", output_docker), 
+    '&& cut -f 1-4,13-14', file.path("/data_dir", output_docker),
     '| bgzip --thread 70 -f >', file.path("/data_dir", paste0(output_docker, ".gz")),
     '"',
     '\n\nchmod 775', dirname(input_docker),
@@ -95,26 +95,26 @@ format_symbol_vep <- function(file) {
       paste0(default_file, "_summary.html")
     )))
   }
-  vep_annotation <- data.table::fread(file = file,  skip = "#U")[ 
+  vep_annotation <- data.table::fread(file = file,  skip = "#U")[
     j = c("CHR", "POS") := data.table::tstrsplit(Location, ":", fixed = TRUE)
   ][
     j = (c("Gene", "Symbol", "rsid")) :=
       list(
         paste(unique(Gene), collapse = ";"),
         data.table::fifelse(
-          test = grepl("SYMBOL=", Extra), 
+          test = grepl("SYMBOL=", Extra),
           yes = paste(unique(gsub("^.*SYMBOL=([^;]*);.*$", "\\1", Extra)), collapse = ";"),
           no = NA_character_
         ),
         paste(unique(Existing_variation), collapse = ";")
-      ), 
+      ),
     by = "#Uploaded_variation"
   ][j = list(CHR, POS, `#Uploaded_variation`, Gene, Symbol, rsid)]
-  
+
    data.table::fwrite(
-    x = data.table::setnames(unique(vep_annotation), "#Uploaded_variation", "chr_pos_ref_alt"), 
+    x = data.table::setnames(unique(vep_annotation), "#Uploaded_variation", "chr_pos_ref_alt"),
     file = sub(".txt.gz", "_formated.txt.gz", file)
   )
-   
+
   sub(".txt.gz", "_formated.txt.gz", file)
 }

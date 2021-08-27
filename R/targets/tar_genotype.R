@@ -3,21 +3,24 @@ library(targets)
 library(tarchetypes)
 library(here)
 library(data.table)
-
-library(future)
-library(future.callr)
-plan(callr)
+# library(future)
+# library(future.callr)
 
 # tar_option_set(cue = tar_cue(mode = "never"))
-
-# renv::install("gabraham/flashpca/flashpcaR")
 
 # targets::tar_renv(extras = "visNetwork", path = "scripts/_dependencies.R")
 
 
 ### project setup ==================================================================================
-# invisible(sapply(list.files(here("scripts"), pattern = "^tar-.*R$", full.names = TRUE), source, echo = FALSE))
+invisible(sapply(list.files(here("scripts"), pattern = "^tar-.*R$", full.names = TRUE), source, echo = FALSE))
 
+# plan(future.callr::callr, workers = 40)
+# plan(multicore, workers = 40)
+# message(sprintf("Number of workers: %d", future::nbrOfWorkers()))
+# setDTthreads(threads = 1)
+
+
+### targets setup ==================================================================================
 tar_setup <- {list( # Setup project
   tar_target(project, gsub("(.*)_.*", "\\1", list.files(here(), pattern = ".Rproj$")), packages = "here"),
   tar_target(author, "Mickaël CANOUIL, *Ph.D.*"),
@@ -30,7 +33,7 @@ tar_setup <- {list( # Setup project
 ### targets ========================================================================================
 tar_genotype <- {list( # Genotype Array (ga)
   tar_target(ga_imputation_panel,
-    # command = file.path(panel_data, "1kg/hg19/Reference_genome/1000GP_Phase3_combined.legend"), 
+    # command = file.path(panel_data, "1kg/hg19/Reference_genome/1000GP_Phase3_combined.legend"),
     command = file.path(panel_data, "HRC/HRC.r1-1.GRCh37.wgs.mac5.sites.tab"),
     format = "file"
   ),
@@ -74,7 +77,7 @@ tar_genotype <- {list( # Genotype Array (ga)
     ),
     packages = "here"
   ),
-  tar_target(ga_setup, 
+  tar_target(ga_setup,
     command = create_ga_directory(ga_params[["output_directory"]])
   ),
   tar_target(ga_plink,
@@ -82,7 +85,7 @@ tar_genotype <- {list( # Genotype Array (ga)
       url = "https://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20210606.zip",
       output_directory = ga_setup
     ),
-    packages = "utils", 
+    packages = "utils",
     format = "file"
   ),
   tar_target(ga_bcftools,
@@ -93,12 +96,12 @@ tar_genotype <- {list( # Genotype Array (ga)
     command = "/usr/bin/vcftools",
     format = "file"
   ),
-  tar_target(ga_perl_imputation_check, 
+  tar_target(ga_perl_imputation_check,
     command = download_perl_preimputation_check(
       url = ga_params[["check_bim_script"]],
       output_directory = ga_setup
     ),
-    packages = "utils", 
+    packages = "utils",
     format = "file"
   ),
   # tar_target(ga_plink_thread, # multi-threading
@@ -106,8 +109,8 @@ tar_genotype <- {list( # Genotype Array (ga)
   # ),
   tar_target(ga_bed,
     command = make_ga_bed(
-      input = ga_params[["input_files"]], 
-      output = ga_setup, 
+      input = ga_params[["input_files"]],
+      output = ga_setup,
       plink = ga_plink
     ),
     packages = "data.table",
@@ -117,7 +120,7 @@ tar_genotype <- {list( # Genotype Array (ga)
     command = sub("\\.bed$", "", grep("\\.bed$", ga_bed, value = TRUE))
   ),
   tar_target(ga_fam_data,
-    command = read_fam(path = grep("\\.fam$", ga_bed, value = TRUE), project = project), 
+    command = read_fam(path = grep("\\.fam$", ga_bed, value = TRUE), project = project),
     packages = "data.table"
   ),
   tar_target(ga_samples_duplicated,
@@ -125,70 +128,70 @@ tar_genotype <- {list( # Genotype Array (ga)
   ),
   tar_target(ga_callrate_samples,
     command = compute_callrate_ind(
-      bfile = ga_bfile, 
-      callrate = ga_params[["callrate_samples"]], 
+      bfile = ga_bfile,
+      callrate = ga_params[["callrate_samples"]],
       plink = ga_plink
-    ), 
+    ),
     packages = "data.table"
   ),
   tar_target(ga_callrate_samples_plot,
     command = plot_callrate(
-      data = ga_callrate_samples, 
-      callrate = ga_params[["callrate_samples"]], 
+      data = ga_callrate_samples,
+      callrate = ga_params[["callrate_samples"]],
       max_labels = ga_params[["max_labels"]],
       type = "sample"
-    ), 
+    ),
     packages = c("data.table", "ggplot2", "ggrepel", "scales")
   ),
   tar_target(ga_callrate_samples_leq_geq,
     command = compute_snps_maf_leq_geq(
-      bfile = ga_bfile, 
-      maf = ga_params[["maf_threshold"]], 
-      callrate = ga_params[["callrate_samples"]], 
+      bfile = ga_bfile,
+      maf = ga_params[["maf_threshold"]],
+      callrate = ga_params[["callrate_samples"]],
       plink = ga_plink
-    ), 
+    ),
     packages = "data.table"
   ),
   tar_target(ga_check_sex,
     command = check_genotypic_sex(
-      bfile = ga_bfile, 
-      callrate_data = ga_callrate_samples, 
-      fam_data = ga_fam_data, 
+      bfile = ga_bfile,
+      callrate_data = ga_callrate_samples,
+      fam_data = ga_fam_data,
       sex_threshold = ga_params[["sex_threshold"]],
       plink = ga_plink
-    ), 
+    ),
     packages = "data.table"
   ),
   tar_target(ga_check_sex_plot,
     command = plot_check_genotypic_sex(
-      data = ga_check_sex, 
-      callrate = ga_params[["callrate_samples"]], 
-      sex_threshold = ga_params[["sex_threshold"]], 
+      data = ga_check_sex,
+      callrate = ga_params[["callrate_samples"]],
+      sex_threshold = ga_params[["sex_threshold"]],
       max_labels = ga_params[["max_labels"]]
-    ), 
+    ),
     packages = c("data.table", "ggplot2", "ggrepel", "scales")
   ),
   tar_target(ga_het_samples_all,
     command = compute_snps_het(
-      bfile = ga_bfile, 
-      heterozygosity_threshold = ga_params[["heterozygosity_threshold"]], 
-      callrate = ga_params[["callrate_samples"]], 
-      callrate_data = ga_callrate_samples, 
-      plink = ga_plink, 
-      snps = NULL, 
+      bfile = ga_bfile,
+      heterozygosity_threshold = ga_params[["heterozygosity_threshold"]],
+      callrate = ga_params[["callrate_samples"]],
+      callrate_data = ga_callrate_samples,
+      plink = ga_plink,
+      snps = NULL,
       what = NULL
-    ), 
+    ),
     packages = "data.table"
   ),
   tar_target(ga_het_samples_leq_geq,
     command = compute_snps_het_leq_geq(
-      bfile = ga_bfile, 
-      heterozygosity_threshold = ga_params[["heterozygosity_threshold"]], 
+      bfile = ga_bfile,
+      heterozygosity_threshold = ga_params[["heterozygosity_threshold"]],
       maf = ga_params[["maf_threshold"]],
-      callrate = ga_params[["callrate_samples"]], 
-      callrate_data = ga_callrate_samples, 
+      callrate = ga_params[["callrate_samples"]],
+      callrate_data = ga_callrate_samples,
       plink = ga_plink
-    ), 
+    ),
     packages = "data.table"
   ),
   tar_target(ga_het_samples,
@@ -197,9 +200,9 @@ tar_genotype <- {list( # Genotype Array (ga)
   ),
   tar_target(ga_het_samples_plot,
     command = plot_het_ind(
-      data = ga_het_samples, 
+      data = ga_het_samples,
       heterozygosity_threshold = ga_params[["heterozygosity_threshold"]],
-      callrate = ga_params[["callrate_samples"]], 
+      callrate = ga_params[["callrate_samples"]],
       maf = ga_params[["maf_threshold"]],
       max_labels = ga_params[["max_labels"]]
     ),
@@ -207,40 +210,40 @@ tar_genotype <- {list( # Genotype Array (ga)
   ),
   tar_target(ga_relatedness,
     command = compute_relatedness(
-      bfile = ga_bfile, 
-      maf = ga_params[["maf_threshold"]], 
-      ibd = ga_params[["ibd_threshold"]], 
+      bfile = ga_bfile,
+      maf = ga_params[["maf_threshold"]],
+      ibd = ga_params[["ibd_threshold"]],
       plink = ga_plink
     ),
     packages = "data.table"
   ),
   tar_target(ga_related_samples,
     command = compute_related_samples_tab(
-      relatedness = ga_relatedness, 
+      relatedness = ga_relatedness,
       callrate_samples = ga_callrate_samples
     ),
     packages = "data.table"
   ),
   tar_target(ga_pca_ethnicity,
     command = compute_pca_ethnicity(
-      bfile = ga_bfile, 
-      maf = ga_params[["maf_threshold"]], 
-      hwe = ga_params[["hwe_pvalue"]], 
-      ref1kg_genotypes = ga_params[["ref1kg_genotypes"]], 
+      bfile = ga_bfile,
+      maf = ga_params[["maf_threshold"]],
+      hwe = ga_params[["hwe_pvalue"]],
+      ref1kg_genotypes = ga_params[["ref1kg_genotypes"]],
       plink = ga_plink
     ),
     packages = c("data.table", "future", "future.apply", "flashpcaR")
   ),
   tar_target(ga_pca_ethnicity_tidy,
     command = tidy_pca_ethnicity(
-      data = ga_pca_ethnicity[["vectors"]], 
+      data = ga_pca_ethnicity[["vectors"]],
       ref1kg_panel = ga_params[["ref1kg_panel"]]
     ) ,
     packages = "data.table"
   ),
   tar_target(ga_pca_ethnicity_tidy_plot,
     command = plot_pca_ethnicty(
-      data = ga_pca_ethnicity_tidy, 
+      data = ga_pca_ethnicity_tidy,
       pve = ga_pca_ethnicity[["pve"]],
       loadings = ga_pca_ethnicity[["loadings"]]
     ),
@@ -257,12 +260,12 @@ tar_genotype <- {list( # Genotype Array (ga)
   ),
   tar_target(ga_bed_good_samples,
     command = compute_bed_good_samples(
-      bfile = ga_bfile, 
-      exclude = ga_samples_exclude[Status %in% "Exclude"], 
-      temp_directory = ga_setup, 
+      bfile = ga_bfile,
+      exclude = ga_samples_exclude[Status %in% "Exclude"],
+      temp_directory = ga_setup,
       plink = ga_plink
     ),
-    packages = "data.table", 
+    packages = "data.table",
     format = "file"
   ),
   tar_target(ga_bfile_good_samples,
@@ -270,19 +273,19 @@ tar_genotype <- {list( # Genotype Array (ga)
   ),
   tar_target(ga_callrate_snp,
     command = compute_callrate_snp(
-      bfile = ga_bfile_good_samples, 
-      callrate = ga_params[["callrate_snps"]], 
+      bfile = ga_bfile_good_samples,
+      callrate = ga_params[["callrate_snps"]],
       plink = ga_plink
-    ), 
+    ),
     packages = "data.table"
   ),
   tar_target(ga_callrate_snp_plot,
     command = plot_callrate(
-      data = ga_callrate_snp, 
-      callrate = ga_params[["callrate_snps"]], 
+      data = ga_callrate_snp,
+      callrate = ga_params[["callrate_snps"]],
       max_labels = ga_params[["max_labels"]],
       type = "snp"
-    ), 
+    ),
     packages = c("data.table", "ggplot2", "ggrepel", "scales")
   ),
   tar_target(ga_duplicated_snps,
@@ -293,23 +296,23 @@ tar_genotype <- {list( # Genotype Array (ga)
   ),
   tar_target(ga_hwe_snp,
     command = compute_hwe_snp(
-      bfile = ga_bfile_good_samples, 
-      hwe = ga_params[["hwe_pvalue"]], 
+      bfile = ga_bfile_good_samples,
+      hwe = ga_params[["hwe_pvalue"]],
       plink = ga_plink
     ),
     packages = "data.table"
   ),
   tar_target(ga_hwe_snp_plot,
     command = plot_hwe_snp(
-      data = ga_hwe_snp, 
+      data = ga_hwe_snp,
       hwe = ga_params[["hwe_pvalue"]]
     ),
     packages = c("data.table", "ggplot2", "scales")
   ),
   tar_target(ga_maf_snp,
     command = compute_maf_snp(
-      bfile = ga_bfile_good_samples, 
-      maf = ga_params[["maf_threshold"]], 
+      bfile = ga_bfile_good_samples,
+      maf = ga_params[["maf_threshold"]],
       plink = ga_plink
     ),
     packages = "data.table"
@@ -338,14 +341,14 @@ tar_genotype <- {list( # Genotype Array (ga)
   ),
   tar_target(ga_vcf_imputation,
     command = compute_vcf_imputation(
-      bfile = ga_bfile_good_samples_variants, 
-      ref = ga_params[["imputation_ref"]], 
-      ref_panel = ga_params[["imputation_panel"]], 
+      bfile = ga_bfile_good_samples_variants,
+      ref = ga_params[["imputation_ref"]],
+      ref_panel = ga_params[["imputation_panel"]],
       ref1kg_fasta = ga_params[["ref1kg_fasta"]],
-      perl_script = ga_perl_imputation_check, 
-      temp_directory = ga_setup, 
-      project = project, 
-      plink = ga_plink, 
+      perl_script = ga_perl_imputation_check,
+      temp_directory = ga_setup,
+      project = project,
+      plink = ga_plink,
       bcftools = ga_bcftools
     ),
     packages = "data.table",
@@ -357,8 +360,8 @@ tar_genotype <- {list( # Genotype Array (ga)
   ),
   tar_target(ga_export_directory,
     command = create_ga_export_directory(
-      path = qc_data_path, 
-      project = project, 
+      path = qc_data_path,
+      project = project,
       array = sub(".* ", "", ga_params[["array"]])
     )
   ),
@@ -374,40 +377,40 @@ tar_genotype <- {list( # Genotype Array (ga)
   ),
   tar_target(ga_vcf_imputed_qc,
     command = compute_vcf_imputed_qc(
-      vcf = ga_imputed_vcf, 
+      vcf = ga_imputed_vcf,
       vcftools = ga_vcftools,
       uptodate = ga_vcf_imputed_uptodate
     ),
-    packages = c("data.table", "future.apply"), 
+    packages = c("data.table", "future.apply"),
     error = "continue"
   ),
   tar_target(ga_vcf_imputed_qc_info,
     command = compute_vcf_imputed_qc_info(
-      data = ga_vcf_imputed_qc, 
+      data = ga_vcf_imputed_qc,
       uptodate = ga_vcf_imputed_uptodate
     ),
-    packages = c("data.table", "scales"), 
+    packages = c("data.table", "scales"),
     error = "continue"
   ),
   tar_target(ga_vcf_imputed_qc_af,
     command = compute_vcf_imputed_qc_af(
-      data = ga_vcf_imputed_qc, 
+      data = ga_vcf_imputed_qc,
       uptodate = ga_vcf_imputed_uptodate
     ),
-    packages = c("data.table", "scales"), 
+    packages = c("data.table", "scales"),
     error = "continue"
   ),
   tar_target(ga_vcf_imputed_qc_plot_export,
     command = save_plot_vcf_imputed_qc(
-      data = ga_vcf_imputed_qc, 
-      path = ga_setup, 
+      data = ga_vcf_imputed_qc,
+      path = ga_setup,
       uptodate = ga_vcf_imputed_uptodate
     ),
     packages = c(
-      "data.table", "ggplot2", "patchwork", "scales", 
+      "data.table", "ggplot2", "patchwork", "scales",
       "utils", "ragg"
     ),
-    format = "file", 
+    format = "file",
     error = "continue"
   ),
   tar_render(ga_qc_report,
@@ -416,8 +419,8 @@ tar_genotype <- {list( # Genotype Array (ga)
     params = ga_params,
     packages = c(
       "xaringan",
-      "here", "knitr", "ragg", "ggplot2", "ggtext", 
-      "patchwork", "data.table", "gt", "scales", 
+      "here", "knitr", "ragg", "ggplot2", "ggtext",
+      "patchwork", "data.table", "gt", "scales",
       "targets"
     )
   ),

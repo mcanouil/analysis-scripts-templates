@@ -1,8 +1,10 @@
 ### global libraries ===============================================================================
 library(targets)
-# library(tarchetypes)
-# library(here)
-# library(data.table)
+library(tarchetypes)
+library(here)
+library(data.table)
+# library(future)
+# library(future.callr)
 
 # tar_option_set(cue = tar_cue(mode = "never"))
 
@@ -10,6 +12,15 @@ library(targets)
 
 
 ### project setup ==================================================================================
+invisible(sapply(list.files(here("scripts"), pattern = "^tar-.*R$", full.names = TRUE), source, echo = FALSE))
+
+# plan(future.callr::callr, workers = 40)
+# plan(multicore, workers = 40)
+# message(sprintf("Number of workers: %d", future::nbrOfWorkers()))
+# setDTthreads(threads = 1)
+
+
+### targets setup ==================================================================================
 output_directory <- here("outputs", "gsea")
 dir.create(output_directory, mode = "0775", showWarnings = FALSE)
 
@@ -56,7 +67,7 @@ list(
       if (inherits(mart, "try-error")) {
         mart <- useEnsembl(biomart = "ensembl", dataset = organism[["ensembl"]], version = set_ensembl_version)
       }
-      
+
       ensembl_dt <- setDT(getBM(
         attributes = c(
           "ensembl_gene_id",
@@ -75,7 +86,7 @@ list(
         }),
         by = "ensembl_gene_id"
       ][j = ensembl_version := sprintf("GRCh38-%d", set_ensembl_version)]
-      
+
       entrez_dt <- setDT(getBM(
         attributes = c("ensembl_gene_id", "entrezgene_id"),
         filters = "ensembl_gene_id",
@@ -88,7 +99,7 @@ list(
         }),
         by = "ensembl_gene_id"
       ]
-      
+
       uniprot_dt <- setDT(getBM(
         attributes = c("ensembl_gene_id", "uniprotswissprot"),
         filters = "ensembl_gene_id",
@@ -101,7 +112,7 @@ list(
         }),
         by = "ensembl_gene_id"
       ]
-      
+
       merge(
         x = ensembl_dt,
         y = merge(x = entrez_dt, y = uniprot_dt, by = "ensembl_gene_id", all = TRUE),
@@ -139,9 +150,9 @@ list(
           ]
           genes_list[duplicated(genes_list)] <- genes_list[duplicated(genes_list)] - .Machine$double.eps
           gsePathway(
-            geneList = genes_list, 
+            geneList = genes_list,
             organism = organism[["reactome"]],
-            pvalueCutoff = threshold_pathway_gsea, 
+            pvalueCutoff = threshold_pathway_gsea,
             pAdjustMethod = "BH"
           )
         },
@@ -214,9 +225,9 @@ list(
           genes_list[duplicated(genes_list)] <- genes_list[duplicated(genes_list)] - .Machine$double.eps
           gseKEGG(
             geneList = genes_list,
-            organism = organism[["kegg"]], 
-            keyType = "uniprot", 
-            pvalueCutoff = threshold_pathway_gsea, 
+            organism = organism[["kegg"]],
+            keyType = "uniprot",
+            pvalueCutoff = threshold_pathway_gsea,
             pAdjustMethod = "BH"
           )
         }
@@ -231,11 +242,11 @@ list(
         x = setNames(lapply(gsea, FUN = function(.enrich) {
           if (is.null(.enrich) || nrow(.enrich@result) == 0) return(data.frame())
           merge(
-            x = setDT(.enrich@result), 
+            x = setDT(.enrich@result),
             y = setnames(as.data.table(
               x = sapply(.enrich@geneSets, function(.l) {
                 paste(sort(intersect(.l, names(.enrich@geneList))), collapse = "/")
-              }), 
+              }),
               keep.rownames = TRUE
             ), c("ID", "genes_set")),
             by = "ID"
@@ -257,14 +268,14 @@ list(
               X = .SD,
               FUN = function(icol) {
                 sapply(
-                  X = icol, 
+                  X = icol,
                   res = results,
                   FUN = function(x, res) {
                     x <- unlist(setdiff(na.exclude(strsplit(x, "/")), c("", "NA")))
                     if (all(grepl("ENSG", x))) {
                       id <- "ensembl_gene_id"
                     } else if (
-                      all(grepl("[[:alpha:]]", substr(x, 1, 1)) & 
+                      all(grepl("[[:alpha:]]", substr(x, 1, 1)) &
                         !grepl("[[:digit:]]", substr(x, 1, 1)))
                     ) {
                       id <- "uniprotswissprot"
@@ -272,9 +283,9 @@ list(
                       id <- "entrezgene_id"
                     }
                     gene_symbols <- unname(setNames(res[["external_gene_name"]], res[[id]])[x])
-                    
+
                     if (length(gene_symbols) == 0) return(NA_character_)
-                    
+
                     paste(gene_symbols, collapse = "/")
                   }
                 )
@@ -282,12 +293,12 @@ list(
             ),
             .SDcols = c("core_enrichment", "genes_set", "peripheral_enrichment")
           ]
-        }), gsub("Gene Ontology", "GO", names(gsea))), 
+        }), gsub("Gene Ontology", "GO", names(gsea))),
         path = file.path(output_directory, "gene_set_enrichment.xlsx")
       )
       file.path(output_directory, "gene_set_enrichment.xlsx")
     },
-    packages = c("writexl"), 
+    packages = c("writexl"),
     format = "file"
   )
 )

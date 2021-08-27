@@ -47,7 +47,7 @@ epic_phenotype <- fread(
   colClasses = c("Sample_ID" = "character")
 )
 sample_sheet_qc <- merge(
-  x = sample_sheet_qc, 
+  x = sample_sheet_qc,
   y = epic_phenotype[j = .SD, .SDcols = grep("^CellT|^Sample_ID|^Sentrix_", names(epic_phenotype))],
   by.x = "#IID",
   by.y = "Sample_ID"
@@ -74,7 +74,7 @@ names(vcfs) <- gsub("_qc.vcf.gz$", "", basename(vcfs))
 
 ### EPIC data ======================================================================================
 beta_matrix <- fread(
-  file = file.path(data_directory, "EPIC", "EPIC_QC_betavalues_SNPs.csv.gz"), 
+  file = file.path(data_directory, "EPIC", "EPIC_QC_betavalues_SNPs.csv.gz"),
   header = TRUE
 )
 beta_matrix <- (function(x) log2(x) - log2(1 - x))(as.matrix(beta_matrix, "cpg_id"))[, sample_sheet_qc[["Sample_ID"]]]
@@ -87,8 +87,8 @@ epic_qc_annot[["chr"]] <- as.numeric(gsub("chr", "", epic_qc_annot[["chr"]]))
 epic_qc <- beta_matrix[rownames(epic_qc_annot), as.character(sample_sheet_qc[["Sample_ID"]])]
 colnames(epic_qc) <- sample_sheet_qc[["vcf_id"]]
 epic_qc <- merge(
-  x = as.data.table(epic_qc, keep.rownames = "CpG"), 
-  y = as.data.table(epic_qc_annot, keep.rownames = "CpG"), 
+  x = as.data.table(epic_qc, keep.rownames = "CpG"),
+  y = as.data.table(epic_qc_annot, keep.rownames = "CpG"),
   by = "CpG"
 )
 epic_qc[j = (c("#Chr", "start", "end", "grp")) := list(chr, pos, pos, chr)]
@@ -101,7 +101,7 @@ epic_qc[
     system(paste("bgzip -f", file.path(output_epic, sprintf("chr%02d.bed", unique(y)))))
     system(paste("tabix -p bed -f", file.path(output_epic, sprintf("chr%02d.bed.gz", unique(y)))))
     return(TRUE)
-  })(.SD, `#Chr`), 
+  })(.SD, `#Chr`),
   by = grp
 ]
 
@@ -144,30 +144,30 @@ for (ichr in sprintf("chr%02d", 1:22)) {
           "--out", file.path(output_fastqtl, sprintf("%s_%s_%03d.txt.gz", ianalysis, ichr, ichunk))
         ))
       })
-  
+
       system(paste(
         "zcat",
         file.path(tempdir(), sprintf("%s_header.txt.gz", ianalysis)),
         file.path(output_fastqtl, sprintf("%s_%s_*.txt.gz", ianalysis, ichr)),
         "| bgzip -c >", file.path(output_fastqtl, sprintf("%s_%s_%s.txt.gz", project_name, ianalysis, ichr))
       ))
-  
+
       unlink(list.files(
         path = output_fastqtl,
         pattern = sprintf("%s_%s_[0-9]*.txt.gz", ianalysis, ichr),
         full.names = TRUE
       ))
-      
+
       fwrite(
         x = Reduce(
-          f = function(x, y) merge(x, y, by = "cpg_id", all.x = TRUE), 
+          f = function(x, y) merge(x, y, by = "cpg_id", all.x = TRUE),
           x = list(
             fread(file.path(output_fastqtl, sprintf("%s_%s_%s.txt.gz", project_name, ianalysis, ichr))),
             as.data.table(epic_qc_annot, keep.rownames = "cpg_id"),
             as.data.table(Other, keep.rownames = "cpg_id")[
               j = list(
                 UCSC_RefGene_Name = paste(unique(tstrsplit(UCSC_RefGene_Name, split = ";")), collapse = ";")
-              ), 
+              ),
               by = "cpg_id"
             ]
           )
@@ -185,7 +185,7 @@ for (ianalysis in c("nominal", "permutation")) {
     fwrite(
       x = rbindlist(mclapply(
         X = sprintf("chr%02d", 1:22),
-        mc.cores = 11, 
+        mc.cores = 11,
         mc.preschedule = FALSE,
         FUN = function(ichr) {
           fread(file.path(output_fastqtl_annotated, sprintf("%s_%s_%s.txt.gz", project_name, ianalysis, ichr)))
@@ -217,7 +217,7 @@ unlink(setdiff(
 #       normalizePath(output_directory),
 #       paste0(
 #         format(Sys.Date(), format = "%Y%m%d"), "_",
-#         project_name, "_", 
+#         project_name, "_",
 #         gsub("[0-9]+\\-", "", basename(output_directory)), ".zip"
 #       )
 #     )

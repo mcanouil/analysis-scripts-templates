@@ -44,7 +44,7 @@ epic_phenotype <- fread(
   colClasses = c("Sample_ID" = "character")
 )
 sample_sheet_qc <- merge(
-  x = sample_sheet_qc, 
+  x = sample_sheet_qc,
   y = epic_phenotype[j = .SD, .SDcols = grep("^CellT|^Sample_ID|^Sentrix_", names(epic_phenotype))],
   by.x = "#IID",
   by.y = "Sample_ID"
@@ -76,7 +76,7 @@ cells <- list(
 
 ### EPIC data ======================================================================================
 beta_matrix <- fread(
-  file = file.path(data_directory, "EPIC", "EPIC_QC_betavalues.csv.gz"), 
+  file = file.path(data_directory, "EPIC", "EPIC_QC_betavalues.csv.gz"),
   header = TRUE
 )[j = .SD, .SDcols = c("cpg_id", sample_sheet_qc[["epic"]])]
 beta_matrix <- (function(x) log2(x) - log2(1 - x))(as.matrix(beta_matrix, "cpg_id"))
@@ -96,7 +96,7 @@ for (trait in traits) {
       pheno <- na.exclude(sample_sheet_qc[, .SD, .SDcols = c("ABOS_ID", "epic", all.vars(form))])
 
       limma_fit1 <- lmFit(
-        object = beta_matrix[, as.character(pheno[["epic"]])], 
+        object = beta_matrix[, as.character(pheno[["epic"]])],
         design = model.matrix(object = form, data = pheno)
       )
 
@@ -203,13 +203,13 @@ for (trait in traits) {
         }
       }
       setnames(
-        x = limma_top, 
-        old = c("logFC", "AveExpr", "t", "P.Value"), 
+        x = limma_top,
+        old = c("logFC", "AveExpr", "t", "P.Value"),
         new = c("estimate", "avgmvalue_meth", "t_statistic", "pvalue")
       )
 
       limma_annot <- Reduce(
-        f = function(x, y) merge(x, y, by = "CpG", all.x = TRUE), 
+        f = function(x, y) merge(x, y, by = "CpG", all.x = TRUE),
         x = list(
           limma_top,
           as.data.table(`names<-`(Locations, paste0("cpg_", names(Locations))), keep.rownames = "CpG"),
@@ -219,12 +219,12 @@ for (trait in traits) {
           ]
         )
       )
-      
+
       fwrite(
         x = limma_annot,
         file = file.path(output_directory, trait, glue("{project_name}_EWAS_DMP_{trait}{imodel}.csv.gz"))
       )
-      
+
       # dmr_object <- cpg.annotate(
       #   datatype = "array",
       #   object = beta_matrix[, as.character(pheno[["epic"]])],
@@ -232,7 +232,7 @@ for (trait in traits) {
       #   arraytype = "EPIC",
       #   analysis.type = "differential",
       #   design = model.matrix(object = form, data = pheno),
-      #   coef = 2, 
+      #   coef = 2,
       #   fdr = 0.05
       # )
       # any_dmr_cpg <- any(dmr_object@ranges@elementMetadata@listData$is.sig)
@@ -243,7 +243,7 @@ for (trait in traits) {
       #       pcutoff = if (any_dmr_cpg) 0.05 else 1,
       #       lambda = 1000, # default
       #       C = NULL, # default
-      #       min.cpgs = 5 # default 2 
+      #       min.cpgs = 5 # default 2
       #     ),
       #     genome = "hg19"
       #   )
@@ -251,7 +251,7 @@ for (trait in traits) {
       # fwrite(
       #   x = dmr,
       #   file = file.path(
-      #     output_directory, trait, 
+      #     output_directory, trait,
       #     glue("{project_name}_EWAS_DMR_{trait}{imodel}_{if (any_dmr_cpg) 'fdr005' else 'fdr100'}.csv.gz")
       #   )
       # )
@@ -269,7 +269,7 @@ for (trait in traits) {
 #       normalizePath(output_directory),
 #       paste0(
 #         format(Sys.Date(), format = "%Y%m%d"), "_",
-#         project_name, "_", 
+#         project_name, "_",
 #         gsub("[0-9]+\\-", "", basename(output_directory)), ".zip"
 #       )
 #     )

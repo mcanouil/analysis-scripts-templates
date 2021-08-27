@@ -17,8 +17,8 @@ pval_trans <- function(alpha = NULL, md = FALSE, prefix = FALSE, colour = "#b222
       if (md & nchar(system.file(package = "ggtext")) != 0) {
         prefix_text <- if (prefix) "&alpha; = " else ""
         x_fmt <- gsub(
-          "^(.*)e[+]*([-]*)0*(.*)$", 
-          "\\1 &times; 10<sup>\\2\\3</sup>", 
+          "^(.*)e[+]*([-]*)0*(.*)$",
+          "\\1 &times; 10<sup>\\2\\3</sup>",
           format(x, scientific = TRUE)
         )
         x_fmt[x %in% c(0, 1)] <- x[x %in% c(0, 1)]
@@ -29,8 +29,8 @@ pval_trans <- function(alpha = NULL, md = FALSE, prefix = FALSE, colour = "#b222
       } else {
         prefix_text <- if (prefix) "alpha == " else ""
         x_fmt <- gsub(
-          "^(.*)e[+]*([-]*)0*(.*)$", 
-          "\\1 %*% 10^\\2\\3", 
+          "^(.*)e[+]*([-]*)0*(.*)$",
+          "\\1 %*% 10^\\2\\3",
           format(x, scientific = TRUE)
         )
         x_fmt[x %in% c(0, 1)] <- x[x %in% c(0, 1)]

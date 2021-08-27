@@ -42,12 +42,12 @@ output:
     theme: simplex
     toc: true
     toc_depth: 3
-    toc_float: 
+    toc_float:
       collapsed: false
     fig_width: 6.3
     fig_height: 4.7
     number_sections: true
     self_contained: true
 ---
-  
+
 <!-- https://github.com/umr1283/dgapaq -->

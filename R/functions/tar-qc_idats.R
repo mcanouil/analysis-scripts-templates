@@ -21,7 +21,7 @@
 #'
 #' @return A `list`.
 #' @export
-#' 
+#'
 #' @import data.table
 #' @import ENmix
 #' @import minfi
@@ -487,7 +487,7 @@ get_beadcount <- function(x) {
 }
 
 #' qc_idats
-#' 
+#'
 #' @import data.table
 qc_idats <- function(params) {
   sample_sheet <- data.table::fread(params[["csv_file"]], skip = "Sample_Name")
@@ -545,7 +545,7 @@ qc_idats <- function(params) {
 }
 
 #' estimate_cell_composition
-#' 
+#'
 #' @import FlowSorted.Blood.EPIC
 #' @import minfi
 #' @import RefFreeEWAS
@@ -628,11 +628,11 @@ estimate_cell_composition <- function(data_rgset, data_mset, cell_tissue, array,
             if (Ktest == 0) {
               tmpRminLU <- mc_Rmat
             } else {
-              tmpRminLU <- mc_Rmat - mc_svdRmat$u[, 1:Ktest] %*% 
+              tmpRminLU <- mc_Rmat - mc_svdRmat$u[, 1:Ktest] %*%
                 (mc_svdRmat$d[1:Ktest] * t(mc_svdRmat$v[, 1:Ktest]))
             }
             tmpSigSq <- rowSums(tmpRminLU * tmpRminLU) / N2
-  
+
             c(
               K = Ktest,
               AIC = 2 * (N1 + Ktest * (N1 + N2)) +
@@ -643,7 +643,7 @@ estimate_cell_composition <- function(data_rgset, data_mset, cell_tissue, array,
                 N2 * sum(log(tmpSigSq))
             )
         }))
-  
+
         list(
           icTable = tmp,
           best = tmp[c(AIC = which.min(tmp[, "AIC"]), BIC = which.min(tmp[, "BIC"])), "K"],
@@ -653,7 +653,7 @@ estimate_cell_composition <- function(data_rgset, data_mset, cell_tissue, array,
           ), "K"]
         )
       }
-      
+
       beta_matrix <- stats::na.exclude(minfi::getBeta(data_mset))
       max_k <- min(ncol(beta_matrix), 25)
       k_estimated <- min(estimate_k_cluster(
@@ -669,7 +669,7 @@ estimate_cell_composition <- function(data_rgset, data_mset, cell_tissue, array,
         largeOK = TRUE,
         dist.method = "euclidean"
       )
-  
+
       RefFreeCellMixObj <- RefFreeEWAS::RefFreeCellMix(
         Y = beta_matrix,
         mu0 = mu0,
@@ -678,7 +678,7 @@ estimate_cell_composition <- function(data_rgset, data_mset, cell_tissue, array,
         Yfinal = NULL,
         verbose = FALSE
       )
-  
+
       out <- RefFreeCellMixObj[["Omega"]]
       colnames(out) <- paste0("CellT_", 1:ncol(out))
       out
@@ -698,12 +698,12 @@ compute_sex_threshold <- function(data_rgset, sex_threshold) {
     min_diff_xy <- min_diff_xy[which.min(sex_density$y[min_diff_xy])]
     sex_threshold <- round(x = sex_density$x[min_diff_xy], digits = 3)
   }
-  
+
   sex_threshold
 }
 
 #' check_sex
-#' 
+#'
 #' @import data.table
 #' @import minfi
 check_sex <- function(data_rgset, sex_threshold) {
@@ -712,14 +712,14 @@ check_sex <- function(data_rgset, sex_threshold) {
   )[j = Sample_ID := minfi::sampleNames(data_rgset)]
   data.table::setnames(
     x = sex_predicted,
-    old = c("xMed", "yMed", "predictedSex"), 
+    old = c("xMed", "yMed", "predictedSex"),
     new = paste0("qc_", c("xmedian", "ymedian", "predicted_sex"))
   )
   sex_predicted
 }
 
 #' compute_phenotypes
-#' 
+#'
 #'  @import data.table
 compute_phenotypes <- function(data_mset, cell, sex_predicted) {
   raw_phenotypes <- data.table::as.data.table(data_mset@metadata[["phenotypes"]])[
@@ -733,7 +733,7 @@ compute_phenotypes <- function(data_mset, cell, sex_predicted) {
       by = "Sample_ID"
     )
   }
-  
+
   if (inherits(sex_predicted, c("data.table", "data.frame", "matrix"))) {
     raw_phenotypes <- merge(
       x = raw_phenotypes,
@@ -742,22 +742,22 @@ compute_phenotypes <- function(data_mset, cell, sex_predicted) {
           as.character(Sample_ID),
           c("M" = 1, "F" = 2)[qc_predicted_sex]
         )
-      ], 
+      ],
       by = "Sample_ID"
     )[j = qc_sex_discrepancy := is.na(qc_observed_sex) | qc_observed_sex != qc_predicted_sex]
-    
+
     raw_phenotypes[
-      j = c("qc_predicted_sex", "qc_observed_sex") := 
-        lapply(.SD, factor, levels = c(1, 2), labels = c("Male", "Female")), 
+      j = c("qc_predicted_sex", "qc_observed_sex") :=
+        lapply(.SD, factor, levels = c(1, 2), labels = c("Male", "Female")),
       .SDcols = c("qc_predicted_sex", "qc_observed_sex")
     ]
   }
-  
+
   raw_phenotypes
 }
 
 #' normalise_mset
-#' 
+#'
 #' @import ENmix
 #' @import minfi
 #' @import sva
@@ -779,12 +779,12 @@ normalise_mset <- function(data_mset, phenotypes) {
   data_mset@metadata[grep("_values", names(data_mset@metadata))] <- NULL
   data_mset@metadata[["norm_beta_values"]] <- norm_beta
   data_mset@metadata[["phenotypes"]] <- phenotypes
-  
+
   data_mset
 }
 
 #' mset_pca_plot
-#' 
+#'
 #' @import data.table
 #' @import flashpcaR
 #' @import ggplot2
@@ -807,17 +807,17 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
       pca_methylation <- data_batch
       pca_methylation <- pca_methylation[rowSums(is.na(pca_methylation)) == 0, ]
       pca_phenotypes <- phenotypes[Sample_ID %in% colnames(pca_methylation)]
-      
+
       n_comp <- min(10, ncol(pca_methylation))
       fig_n_comp <- min(3, ncol(pca_methylation))
-      
-      keep_technical <- names(which(sapply(pca_phenotypes[ 
+
+      keep_technical <- names(which(sapply(pca_phenotypes[
         j = lapply(.SD, function(x) {
           (data.table::uniqueN(x) > 1 & data.table::uniqueN(x) < length(x)) | is.numeric(x)
-        }), 
+        }),
         .SDcols = pca_vars
       ], isTRUE)))
-      
+
       variables_excluded <- setdiff(pca_vars, keep_technical)
       if (length(variables_excluded) != 0) {
         message(paste(
@@ -828,17 +828,17 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
         ))
       }
       if (length(keep_technical) == 0) return(NULL)
-    
+
       pca_res <- flashpcaR::flashpca(X = t(pca_methylation), stand = "sd", ndim = n_comp)
-    
+
       pca_dfxy <- data.table::as.data.table(pca_res[["vectors"]], keep.rownames = "Sample_ID")
       data.table::setnames(
-        x = pca_dfxy, 
-        old = setdiff(names(pca_dfxy), "Sample_ID"), 
+        x = pca_dfxy,
+        old = setdiff(names(pca_dfxy), "Sample_ID"),
         new = sprintf("PC%02d", as.numeric(gsub("V", "", setdiff(names(pca_dfxy), "Sample_ID"))))
       )
       pca_dfxy <- merge(x = pca_dfxy, y = pca_phenotypes, by = "Sample_ID")
-    
+
       p_inertia <- ggplot2::ggplot(
         data = data.table::data.table(
           y = pca_res[["pve"]],
@@ -847,28 +847,28 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
       ) +
         ggplot2::aes(
           x = paste0(
-            x, 
+            x,
             "<br><i style='font-size:8pt;'>(",
-            scales::percent_format(accuracy = 0.01, suffix = " %")(y), 
+            scales::percent_format(accuracy = 0.01, suffix = " %")(y),
             ")</i>"
-          ), 
+          ),
           y = y
         ) +
         ggplot2::geom_col(
-          width = 1, 
-          colour = "white", 
-          fill = scales::viridis_pal(begin = 0.5, end = 0.5)(1), 
+          width = 1,
+          colour = "white",
+          fill = scales::viridis_pal(begin = 0.5, end = 0.5)(1),
           na.rm = TRUE
         ) +
         ggplot2::scale_y_continuous(
-          labels = scales::percent_format(accuracy = 0.1, suffix = " %"), 
+          labels = scales::percent_format(accuracy = 0.1, suffix = " %"),
           expand = ggplot2::expansion(mult = c(0, 0.05))
         ) +
         ggplot2::labs(
           x = "Principal Components",
           y = "Variance Explained"
         )
-    
+
       asso_dt <- data.table::melt(
         data = pca_dfxy,
         measure.vars = grep("^PC[0-9]+$", names(pca_dfxy), value = TRUE),
@@ -882,7 +882,7 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
             ),
             data = .SD
           )
-    
+
           if (qr(m)$rank == ncol(m)) {
             out <- data.table::as.data.table(
               stats::anova(
@@ -914,19 +914,19 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
         },
         by = "pc"
       ]
-      
+
       p_association <- ggplot2::ggplot(data = asso_dt) +
         ggplot2::aes(
-          x = factor(.data[["pc"]]), 
+          x = factor(.data[["pc"]]),
           y = factor(
-            x = .data[["term"]], 
+            x = .data[["term"]],
             levels = data.table::setorderv(
               x = data.table::dcast(
-                data = asso_dt[j = list(pc, term, `Pr(>F)` = data.table::fifelse(`Pr(>F)` <= 0.1, `Pr(>F)`, NA_real_))], 
-                formula = term ~ pc, 
+                data = asso_dt[j = list(pc, term, `Pr(>F)` = data.table::fifelse(`Pr(>F)` <= 0.1, `Pr(>F)`, NA_real_))],
+                formula = term ~ pc,
                 value.var = "Pr(>F)"
-              ), 
-              cols = levels(asso_dt[["pc"]])[1:n_comp], 
+              ),
+              cols = levels(asso_dt[["pc"]])[1:n_comp],
               order = -1
             )[["term"]]
           ),
@@ -953,7 +953,7 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
           expand = c(0, 0),
           labels = function(x) {
             paste0(
-              x, 
+              x,
               "<br><i style='font-size:8pt;'>(",
               format(
                 x = pca_res[["pve"]][as.numeric(gsub("PC", "", x))] * 100,
@@ -979,7 +979,7 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
           ),
           fill = "P-Value"
         )
-    
+
         c(
           p_association = list(p_association),
           lapply(stats::setNames(keep_technical, keep_technical), function(ivar) {
@@ -1007,7 +1007,7 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
                             ggplot2::scale_colour_viridis_d(
                               name = NULL,
                               begin = if (pca_dfxy[j = data.table::uniqueN(.SD), .SDcols = ivar] == 2) 0.25 else 0,
-                              end = 0.75, 
+                              end = 0.75,
                               guide = ggplot2::guide_legend(override.aes = list(size = 4))
                             ),
                             if (length(unique(pca_dfxy[[ivar]])) > 10) {
@@ -1019,14 +1019,14 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
                         }
                       }
                   }
-                ), 
+                ),
                 list(p_inertia)
-              ), 
+              ),
               guides = "collect"
-            ) + 
+            ) +
               patchwork::plot_annotation(
                 title = paste0("Structure Detection For: '<i>", ivar, "</i>'"),
-                tag_levels = "A", 
+                tag_levels = "A",
                 theme = ggplot2::theme(plot.title = ggtext::element_markdown())
               )
           })
@@ -1036,7 +1036,7 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
 }
 
 #' plot_callrate_ma
-#' 
+#'
 #' @import data.table
 #' @import ggplot2
 #' @import scales
@@ -1049,8 +1049,8 @@ plot_callrate_ma <- function(data, callrate, max_labels) {
   ) +
     ggplot2::aes(x = seq_along(call_rate), y = call_rate) +
     ggplot2::geom_point(
-      colour = scales::viridis_pal(begin = 0.5, end = 0.5)(1), 
-      shape = 1, 
+      colour = scales::viridis_pal(begin = 0.5, end = 0.5)(1),
+      shape = 1,
       na.rm = TRUE,
       size = 3
     ) +
@@ -1058,16 +1058,16 @@ plot_callrate_ma <- function(data, callrate, max_labels) {
       data = ~ .x[j = labs := if (sum(!is.na(labs)) > max_labels) NA else labs],
       mapping = ggplot2::aes(label = labs),
       min.segment.length = ggplot2::unit(0, "lines"),
-      force = 10, 
+      force = 10,
       fill = "white",
-      colour  = "#b22222", 
-      segment.colour = "#b22222", 
-      size = 5, 
+      colour  = "#b22222",
+      segment.colour = "#b22222",
+      size = 5,
       na.rm = TRUE
     ) +
     ggplot2::geom_hline(
       mapping = ggplot2::aes(yintercept = callrate),
-      colour = "#b22222", 
+      colour = "#b22222",
       linetype = 2
     ) +
     ggplot2::scale_x_continuous(labels = scales::comma_format(accuracy = 1), trans = "log10") +
@@ -1077,12 +1077,12 @@ plot_callrate_ma <- function(data, callrate, max_labels) {
       },
       labels = function(x) {
         ifelse(
-          x == callrate, 
+          x == callrate,
           paste0(
-            "<b style='color:#b22222;'>", 
-            scales::percent_format(accuracy = 0.01, suffix = " %")(x), 
+            "<b style='color:#b22222;'>",
+            scales::percent_format(accuracy = 0.01, suffix = " %")(x),
             "</b>"
-          ), 
+          ),
           scales::percent_format(accuracy = 0.01, suffix = " %")(x)
         )
       },
@@ -1092,7 +1092,7 @@ plot_callrate_ma <- function(data, callrate, max_labels) {
 }
 
 #' plot_check_methylation_sex
-#' 
+#'
 #' @import data.table
 #' @import ggplot2
 #' @import scales
@@ -1100,14 +1100,14 @@ plot_callrate_ma <- function(data, callrate, max_labels) {
 #' @import patchwork
 plot_check_methylation_sex <- function(data, sex_threshold) {
   axis_limits <- range(data[j = c("qc_xmedian", "qc_ymedian")], na.rm = TRUE)
-  
-  p0 <- ggplot2::ggplot(data = data) + 
+
+  p0 <- ggplot2::ggplot(data = data) +
     ggplot2::aes(x = qc_ymedian - qc_xmedian) +
     ggplot2::geom_density(na.rm = TRUE) +
     ggplot2::geom_vline(
-      xintercept = sex_threshold, 
-      linetype = 2, 
-      colour = "#b22222", 
+      xintercept = sex_threshold,
+      linetype = 2,
+      colour = "#b22222",
       na.rm = TRUE
     ) +
     ggplot2::scale_x_continuous(
@@ -1121,24 +1121,24 @@ plot_check_methylation_sex <- function(data, sex_threshold) {
     ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0, 0.05))) +
     ggplot2::labs(
       x = paste0(
-        "Y Chromosome Median Total Intensity (log<sub>2</sub>)<br>", 
+        "Y Chromosome Median Total Intensity (log<sub>2</sub>)<br>",
         "- X Chromosome Median Total Intensity (log<sub>2</sub>)"
       ),
       y = "Density"#,
       # title = "Sex Threshold Detection"
     ) +
     ggplot2::theme(
-      text = ggplot2::element_text(size = ggplot2::calc_element(element = "text", ggplot2::theme_get())$size / 3), 
-      panel.grid = ggplot2::element_blank(), 
+      text = ggplot2::element_text(size = ggplot2::calc_element(element = "text", ggplot2::theme_get())$size / 3),
+      panel.grid = ggplot2::element_blank(),
       axis.ticks = ggplot2::element_blank(),
       axis.text.x = ggplot2::element_blank(),
-      axis.text.y = ggplot2::element_blank(), 
-      plot.background = ggplot2::element_rect(fill = NA, colour = NA), 
-      panel.background = ggplot2::element_rect(fill = NA, colour = NA), 
-      axis.ticks.length = ggplot2::unit(0, "pt"), 
+      axis.text.y = ggplot2::element_blank(),
+      plot.background = ggplot2::element_rect(fill = NA, colour = NA),
+      panel.background = ggplot2::element_rect(fill = NA, colour = NA),
+      axis.ticks.length = ggplot2::unit(0, "pt"),
       plot.margin = ggplot2::margin(10, 5.5, 5.5, 5.5, unit = "pt")
     )
-  
+
   p <- ggplot2::ggplot(data = data) +
     ggplot2::aes(
       x = qc_xmedian,
@@ -1212,12 +1212,12 @@ plot_check_methylation_sex <- function(data, sex_threshold) {
       legend.spacing.y = ggplot2::unit(5.5, "pt")
     ) +
     ggplot2::coord_cartesian(xlim = axis_limits, ylim = axis_limits)
-  
+
   p + patchwork::inset_element(p0, 0.80, 0, 1, 0.25, align = "full")
 }
 
 #' plot_cell_composition
-#' 
+#'
 #' @import data.table
 #' @import ggplot2
 #' @import scales
@@ -1229,23 +1229,23 @@ plot_cell_composition <- function(data, max_labels) {
   cell_cols <- grep("^CellT_", names(data), value = TRUE)
   dd_row <- stats::as.dendrogram(
     stats::hclust(
-      d = stats::dist(data[j = ..cell_cols], method = "euclidean"), 
+      d = stats::dist(data[j = ..cell_cols], method = "euclidean"),
       method = "ward.D2"
     )
   )
   dd_col <- stats::as.dendrogram(
     stats::hclust(
-      d = stats::dist(data.table::transpose(data[j = ..cell_cols]), method = "euclidean"), 
+      d = stats::dist(data.table::transpose(data[j = ..cell_cols]), method = "euclidean"),
       method = "ward.D2"
     )
   )
   p_heatmap <- list(
     ggplot2::ggplot(
       data = data.table::melt(
-        data[j = .SD, .SDcols = c("Sample_ID", cell_cols)], 
+        data[j = .SD, .SDcols = c("Sample_ID", cell_cols)],
         measure.vars = grep("^CellT_", names(data), value = TRUE)
-      )[ 
-        j = c("Sample_ID", "variable") := 
+      )[
+        j = c("Sample_ID", "variable") :=
           list(
             factor(Sample_ID, levels = data[stats::order.dendrogram(dd_row), Sample_ID]),
             factor(variable, levels = cell_cols[stats::order.dendrogram(dd_col)])
@@ -1253,26 +1253,26 @@ plot_cell_composition <- function(data, max_labels) {
       ]
     ) +
       ggplot2::aes(
-        x = variable, 
-        y = Sample_ID, 
+        x = variable,
+        y = Sample_ID,
         fill = scales::rescale(value, to = c(0, 1))
       ) +
       ggplot2::geom_tile() +
       ggplot2::scale_x_discrete(
-        expand = c(0, 0), 
-        labels = function(x) gsub("CellT_", "", x), 
+        expand = c(0, 0),
+        labels = function(x) gsub("CellT_", "", x),
         position = "top"
       ) +
       ggplot2::scale_y_discrete(position = "right", expand = c(0, 0)) +
       ggplot2::scale_fill_viridis_c(
-        limits = c(0, 1), 
+        limits = c(0, 1),
         breaks = c(0, 0.5, 1),
-        labels = scales::percent_format(accuracy = 1, suffix = " %"), 
+        labels = scales::percent_format(accuracy = 1, suffix = " %"),
         guide = ggplot2::guide_colourbar(
-          title = "Composition", 
-          title.position = "top", 
+          title = "Composition",
+          title.position = "top",
           title.hjust = 0.5,
-          direction = "horizontal", 
+          direction = "horizontal",
           barwidth = ggplot2::unit(8, units = "lines"),
           raster = TRUE
         )
@@ -1285,7 +1285,7 @@ plot_cell_composition <- function(data, max_labels) {
         axis.ticks.length = ggplot2::unit(x = 0.1, units = "line")
       ) +
       ggplot2::labs(x = "Cell Type", y = "Sample"),
-    
+
     ggplot2::ggplot() +
       ggplot2::geom_segment(
         data = ggdendro::segment(ggdendro::dendro_data(dd_col, type = "rectangle")),
@@ -1295,7 +1295,7 @@ plot_cell_composition <- function(data, max_labels) {
       ggplot2::theme_void() +
       ggplot2::scale_x_continuous(expand = ggplot2::expansion(add = c(0.5, 0.5))) +
       ggplot2::scale_y_continuous(expand = ggplot2::expansion(c(0, 0.1))),
-    
+
     ggplot2::ggplot() +
       ggplot2::geom_segment(
         data = ggdendro::segment(ggdendro::dendro_data(dd_row, type = "rectangle")),
@@ -1305,10 +1305,10 @@ plot_cell_composition <- function(data, max_labels) {
       ggplot2::theme_void() +
       ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = c(0, 0.1))) +
       ggplot2::scale_y_continuous(expand = ggplot2::expansion(add = c(0.5, 0.5))),
-    
+
     patchwork::guide_area()
   )
-  
+
   patchwork::wrap_plots(
     p_heatmap, design = "BD\nAC", guides = "collect", widths = c(2/3, 1/3), heights = c(1/3, 2/3)
   ) +
@@ -1318,14 +1318,14 @@ plot_cell_composition <- function(data, max_labels) {
 }
 
 #' create_ma_export_directory
-#' 
+#'
 create_ma_export_directory <- function(path, project, array) {
   array_directory <- file.path(path, project, array)
   # unlink(x = array_directory, force = TRUE, recursive = TRUE)
   dir.create(
-    path = array_directory, 
-    showWarnings = FALSE, 
-    recursive = TRUE, 
+    path = array_directory,
+    showWarnings = FALSE,
+    recursive = TRUE,
     mode = "0775"
   )
   array_directory
@@ -1352,9 +1352,9 @@ export_ma_data <- function(data_idats, mset, array, output_directory) {
     x = data.table::as.data.table(mset@metadata[["phenotypes"]]),
     file = file.path(output_directory, paste0(array, "_QC_phenotypes.csv"))
   )
-  
+
   file.path(
-    output_directory, 
+    output_directory,
     paste0(array, c("_idats.rds", "_QC_mset.rds", "_QC_betavalues.csv.gz", "_QC_phenotypes.csv"))
   )
 }
@@ -1364,15 +1364,15 @@ export_ma_data <- function(data_idats, mset, array, output_directory) {
 save_ma_qc_data <- function(from, report, to) {
   all(c(
     file.copy(
-      from = from, 
-      to = to, 
-      overwrite = TRUE, 
+      from = from,
+      to = to,
+      overwrite = TRUE,
       copy.date = TRUE
     ),
     file.copy(
-      from = report, 
-      to = file.path(to, "quality-control-report.html"), 
-      overwrite = TRUE, 
+      from = report,
+      to = file.path(to, "quality-control-report.html"),
+      overwrite = TRUE,
       copy.date = TRUE
     )
   ))

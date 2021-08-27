@@ -73,10 +73,10 @@ enrich_sets <- lapply(
     results <- fread(.file)[order(pvalue)]
     enrich_sets <- list(
       "Reactome" = enrichPathway(
-        gene = unique(na.exclude(unlist(strsplit(results[pvalue < pvalue_gene][["entrezgene_id"]], ";")))), 
+        gene = unique(na.exclude(unlist(strsplit(results[pvalue < pvalue_gene][["entrezgene_id"]], ";")))),
         universe = unique(na.exclude(unlist(strsplit(results[["entrezgene_id"]], ";")))),
         organism = organism[["reactome"]],
-        pvalueCutoff = fdr_pathway, 
+        pvalueCutoff = fdr_pathway,
         pAdjustMethod = "BH",
         readable = TRUE
       ),
@@ -124,14 +124,14 @@ enrich_sets <- lapply(
             X = .SD,
             FUN = function(icol) {
               sapply(
-                X = icol, 
+                X = icol,
                 res = results,
                 FUN = function(x, res) {
                   x <- unlist(setdiff(na.exclude(strsplit(x, "/")), c("", "NA")))
                   if (all(grepl("ENSG", x))) {
                     id <- "ensembl_id"
                   } else if (
-                    all(grepl("[[:alpha:]]", substr(x, 1, 1)) & 
+                    all(grepl("[[:alpha:]]", substr(x, 1, 1)) &
                       !grepl("[[:digit:]]", substr(x, 1, 1)))
                   ) {
                     id <- "uniprotswissprot"
@@ -139,9 +139,9 @@ enrich_sets <- lapply(
                     id <- "entrezgene_id"
                   }
                   gene_symbols <- unname(setNames(res[["external_gene_name"]], res[[id]])[x])
-                  
+
                   if (length(gene_symbols) == 0) return(NA_character_)
-                  
+
                   paste(gene_symbols, collapse = "/")
                 }
               )
@@ -153,15 +153,15 @@ enrich_sets <- lapply(
         kegg_res
       }
     )
-    
+
     write_xlsx(
       x = setNames(lapply(enrich_sets, FUN = function(.enrich) {
         if (is.null(.enrich)) return(data.frame())
         .enrich@result
-      }), gsub("Gene Ontology", "GO", names(enrich_sets))), 
+      }), gsub("Gene Ontology", "GO", names(enrich_sets))),
       path = file.path(output_directory, "over_representation.xlsx")
     )
-    
+
     enrich_sets
   }
 )
@@ -170,18 +170,18 @@ enrich_sets <- lapply(
 #   X = enrich_sets,
 #   FUN = function(.enrich_sets) {
 #     .enrich_sets <- .enrich_sets[!sapply(.enrich_sets, is.null)]
-#     
+#
 #     if (
 #       all(
 #         sapply(
-#           X = .enrich_sets, 
+#           X = .enrich_sets,
 #           FUN = function(.enrich) nrow(setDT(.enrich@result)[p.adjust < fdr_pathway])
 #         ) == 0
 #       )
 #     ) {
 #       return(NULL)
 #     }
-#     
+#
 #     plot_scales <- rbindlist(lapply(.enrich_sets, FUN = function(.enrich) {
 #       setDT(.enrich@result)[
 #         p.adjust < fdr_pathway
@@ -192,7 +192,7 @@ enrich_sets <- lapply(
 #         )
 #       ]
 #     }))[j = lapply(.SD, max)] + 1
-#     
+#
 #     enrich_plots <- lapply(.enrich_sets, FUN = function(.enrich) {
 #       .dt <- setDT(.enrich@result)[
 #         p.adjust < fdr_pathway
@@ -203,25 +203,25 @@ enrich_sets <- lapply(
 #       ][
 #         j = Description := factor(Description, levels = unique(Description))
 #       ]
-#       
+#
 #       if (nrow(.dt) == 0) {
 #         return(
 #           ggplot() +
 #             annotate(geom = "text", x = 1, y = 1, label = paste0("No enriched terms found\n(FDR < ", fdr_pathway, ").")) +
 #             theme(
-#               axis.text.x = element_blank(), 
-#               axis.text.y = element_blank(), 
-#               axis.title.x = element_blank(), 
+#               axis.text.x = element_blank(),
+#               axis.text.y = element_blank(),
+#               axis.title.x = element_blank(),
 #               axis.title.y = element_blank(),
 #               panel.grid = element_blank()
 #             )
 #         )
 #       }
-#       
+#
 #       is_too_big <- nrow(.dt) > 25
-#       
+#
 #       if (is_too_big) .dt <- head(.dt[order(pvalue)], 25)
-#       
+#
 #       ggplot(data = .dt) +
 #         aes(x = GeneRatio, y = Description, colour = -log10(p.adjust), size = Count) +
 #         geom_point() +
@@ -238,8 +238,8 @@ enrich_sets <- lapply(
 #         scale_colour_continuous(limits = c(-log10(fdr_pathway), plot_scales[["p.adjust"]])) +
 #         scale_size_continuous(limits = c(1, plot_scales[["Count"]]), range = c(0.1, 3)) +
 #         labs(
-#           x = if (is_too_big) "Gene Ratio (Top 25)" else "Gene Ratio", 
-#           y = NULL, 
+#           x = if (is_too_big) "Gene Ratio (Top 25)" else "Gene Ratio",
+#           y = NULL,
 #           colour = "-log<sub>10</sub>(FDR)<br>(Benjamini-Hochberg)",
 #           size = "Number of Genes"
 #         ) +
@@ -259,25 +259,25 @@ enrich_sets <- lapply(
 #         ) +
 #         guides(
 #           colour = guide_colourbar(
-#             title.position = "top", 
-#             title.hjust = 0.5, 
-#             barwidth = unit(10, units = "char"), 
-#             direction = "horizontal", 
+#             title.position = "top",
+#             title.hjust = 0.5,
+#             barwidth = unit(10, units = "char"),
+#             direction = "horizontal",
 #             order = 2
 #           ),
 #           size = guide_legend(
-#             title.position = "top", 
-#             title.hjust = 0.5, 
-#             direction = "horizontal", 
+#             title.position = "top",
+#             title.hjust = 0.5,
+#             direction = "horizontal",
 #             order = 1
 #           )
 #         )
 #     })
-#     
+#
 #     caption_plots <- sapply(.enrich_sets, FUN = function(.enrich) {
 #       sprintf(
-#         fmt = "%s (p-value < %s) and %s (all)", 
-#         format(length(.enrich@gene), digits = 0, big.mark = ","), 
+#         fmt = "%s (p-value < %s) and %s (all)",
+#         format(length(.enrich@gene), digits = 0, big.mark = ","),
 #         pvalue_gene,
 #         format(length(.enrich@universe), digits = 0, big.mark = ",")
 #       )
@@ -286,12 +286,12 @@ enrich_sets <- lapply(
 #       LETTERS[seq_along(caption_plots)],
 #       caption_plots
 #     )
-#     
+#
 #     subtitle_plots <- sprintf(fmt = "<b>%s</b>) %s",
-#       LETTERS[seq_along(enrich_plots)], 
+#       LETTERS[seq_along(enrich_plots)],
 #       names(enrich_plots)
 #     )
-# 
+#
 #     agg_png(
 #       filename = file.path(output_directory, "gene_set_enrichment.png"),
 #       width = 16, height = 16, units = "cm", res = 300, scaling = 0.60
@@ -338,7 +338,7 @@ enrich_sets <- lapply(
 #       normalizePath(output_directory),
 #       paste0(
 #         format(Sys.Date(), format = "%Y%m%d"), "_",
-#         project_name, "_", 
+#         project_name, "_",
 #         gsub("[0-9]+\\-", "", basename(output_directory)), ".zip"
 #       )
 #     )

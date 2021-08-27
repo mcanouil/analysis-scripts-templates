@@ -38,9 +38,9 @@ build <- 38
 version <- 103
 
 get_mart <- quote(useEnsembl(
-  biomart = "ensembl", 
-  dataset = species, 
-  version = version, 
+  biomart = "ensembl",
+  dataset = species,
+  version = version,
   GRCh = if (build == 37) build else NULL
 ))
 
@@ -50,19 +50,19 @@ ensembl_version <- sprintf("GRCh%d-%d", build, version)
 
 
 ### Analysis =======================================================================================
-for (rna_level in c("genes", "isoforms")) { 
+for (rna_level in c("genes", "isoforms")) {
   local({
     rna_level_name <- unname(c("genes" = "gene", "isoforms" = "transcript")[rna_level])
-    
+
     output_directory <- here("outputs", "14-eqtl", rna_level)
     dir.create(output_directory, recursive = TRUE, showWarnings = FALSE, mode = "0775")
-    
+
     invisible(sapply(c("rnaseq", "covariates", "fastqtl", "fastqtl_annotated", "fastqtl_combined"), function(x) {
       assign(x = paste0("output_", x), value = file.path(output_directory, x), envir = .GlobalEnv)
       dir.create(file.path(output_directory, x), recursive = TRUE, showWarnings = FALSE, mode = "0775")
     }))
-    
-    
+
+
     ### Get QCed Phenotypes ============================================================================
     sample_sheet_qc <- merge(
       x = setDT(read_excel(phenotype)),
@@ -78,23 +78,23 @@ for (rna_level in c("genes", "isoforms")) {
       "bmi" = bmi,
       "rnaseq_path" = file.path(run_directory, "...")
     )]
-    
+
     relatedness <- setDT(read_excel(exclusion, 2))[gsub("_.*", "", IID1) != gsub("_.*", "", IID2)]
     relatedness[j = paste0("vcf_id", 1:2) := list(paste0(FID1, "_", IID1), paste0(FID2, "_", IID2))]
-    
+
     sample_sheet_qc <- sample_sheet_qc[ # not related
       !vcf_id %in% unique(unlist(relatedness[j = c("vcf_id1", "vcf_id2")], use.names = FALSE))
     ][ # European descent
       super_pop_closest %in% "EUR"
     ]
-    
+
     fwrite(
       x = transpose(sample_sheet_qc[j = c("vcf_id", "sex", "age", "bmi", "t2d", "PC01", "PC02")], keep.names = "row"),
       file = file.path(output_covariates, "covariates.txt.gz"),
       quote = FALSE, col.names = FALSE, sep = "\t"
     )
-    
-    
+
+
 ### Omni2.5 data ===================================================================================
     vcfs <- list.files(
       path = file.path(vep_directory, "vcfs_qc"),
@@ -102,27 +102,27 @@ for (rna_level in c("genes", "isoforms")) {
       full.names = TRUE
     )
     names(vcfs) <- gsub("_qc.vcf.gz$", "", basename(vcfs))
-    
-    
+
+
 ### RNAseq data ====================================================================================
     rsem_files <- setNames(sample_sheet_qc[["rsem_file"]], sample_sheet_qc[["vcf_id"]])
     txi_counts <- tximport(
-      files = rsem_files, 
-      type = "rsem", 
-      txIn = rna_level == "isoforms", 
-      txOut = rna_level == "isoforms", 
+      files = rsem_files,
+      type = "rsem",
+      txIn = rna_level == "isoforms",
+      txOut = rna_level == "isoforms",
       countsFromAbundance = "no"
     )
     txi_counts$length[txi_counts$length == 0] <- 1
     txi_counts[["counts"]] <- round(txi_counts[["counts"]], digits = 0)
     class(txi_counts[["counts"]]) <- "integer"
     gene_matrix <- txi_counts[["counts"]][
-      rowVars(txi_counts[["counts"]]) != 0 & 
-        rowMeans(txi_counts[["counts"]]) > 1 & 
-        rowMedians(txi_counts[["counts"]]) > 0, 
+      rowVars(txi_counts[["counts"]]) != 0 &
+        rowMeans(txi_counts[["counts"]]) > 1 &
+        rowMedians(txi_counts[["counts"]]) > 0,
     ]
     gene_matrix <- as.data.table(vst(gene_matrix))[j = ensembl_id := rownames(gene_matrix)]
-    
+
     if (file.exists(file.path(output_rnaseq, "rnaseq_qc_map.csv.gz"))) {
       rnaseq_qc_map <- fread(file.path(output_rnaseq, "rnaseq_qc_map.csv.gz"))
     } else {
@@ -140,10 +140,10 @@ for (rna_level in c("genes", "isoforms")) {
       ][j = ensembl_version := ensembl_version]
       fwrite(rnaseq_qc_map, file = file.path(output_rnaseq, "rnaseq_qc_map.csv.gz"))
     }
-    
+
     rnaseq_qc <- merge(
-      x = gene_matrix, 
-      y = rnaseq_qc_map[j = -"external_gene_name"], 
+      x = gene_matrix,
+      y = rnaseq_qc_map[j = -"external_gene_name"],
       by.x = "ensembl_id",
       by.y = glue("ensembl_{rna_level_name}_id")
     )[
@@ -159,18 +159,18 @@ for (rna_level in c("genes", "isoforms")) {
       j = .SD,
       .SDcols = c("grp", "#Chr", "start", "end", "ensembl_id", setdiff(colnames(gene_matrix), "ensembl_id"))
     ][order(grp, start)]
-    
+
     rnaseq_qc[
       j = (function(x, y) {
         fwrite(x, file = file.path(output_rnaseq, sprintf("chr%02d.bed", unique(y))), quote = FALSE, sep = "\t")
         system(paste("bgzip -f", file.path(output_rnaseq, sprintf("chr%02d.bed", unique(y)))))
         system(paste("tabix -p bed -f", file.path(output_rnaseq, sprintf("chr%02d.bed.gz", unique(y)))))
         return(TRUE)
-      })(.SD, `#Chr`), 
+      })(.SD, `#Chr`),
       by = grp
     ]
-    
-    
+
+
 ### eQTL analysis (fastQTL) ========================================================================
     file_con <- gzfile(file.path(tempdir(), "nominal_header.txt.gz"), "w")
     cat(
@@ -179,7 +179,7 @@ for (rna_level in c("genes", "isoforms")) {
       file = file_con
     )
     close(file_con)
-    
+
     file_con <- gzfile(file.path(tempdir(), "permutation_header.txt.gz"))
     cat(
       c(
@@ -191,7 +191,7 @@ for (rna_level in c("genes", "isoforms")) {
       file = file_con
     )
     close(file_con)
-    
+
     for (ichr in sprintf("chr%02d", 1:22)) {
       local({
         for (ianalysis in c("nominal", "permutation")) {
@@ -209,7 +209,7 @@ for (rna_level in c("genes", "isoforms")) {
               "--out", file.path(output_fastqtl, sprintf("%s_%s_%03d.txt.gz", ianalysis, ichr, ichunk))
             ))
           })
-      
+
           system(paste(
             "zcat",
             file.path(tempdir(), sprintf("%s_header.txt.gz", ianalysis)),
@@ -244,7 +244,7 @@ for (rna_level in c("genes", "isoforms")) {
         fwrite(
           x = rbindlist(mclapply(
             X = sprintf("chr%02d", 1:22),
-            mc.cores = 11, 
+            mc.cores = 11,
             mc.preschedule = FALSE,
             FUN = function(ichr) {
               fread(file.path(output_fastqtl_annotated, sprintf("%s_%s_%s.txt.gz", project_name, ianalysis, ichr)))
@@ -278,7 +278,7 @@ for (rna_level in c("genes", "isoforms")) {
 #       normalizePath(output_directory),
 #       paste0(
 #         format(Sys.Date(), format = "%Y%m%d"), "_",
-#         project_name, "_", 
+#         project_name, "_",
 #         gsub("[0-9]+\\-", "", basename(output_directory)), ".zip"
 #       )
 #     )

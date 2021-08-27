@@ -39,7 +39,7 @@ convert_assembly(
 #       normalizePath(output_directory),
 #       paste0(
 #         format(Sys.Date(), format = "%Y%m%d"), "_",
-#         project_name, "_", 
+#         project_name, "_",
 #         gsub("[0-9]+\\-", "", basename(output_directory)), ".zip"
 #       )
 #     )
@@ -66,4 +66,3 @@ invisible(system(paste("chgrp -R staff", output_directory), intern = TRUE))
 ### Complete =======================================================================================
 message("Success!", appendLF = TRUE)
 message(timestamp(quiet = TRUE))
-

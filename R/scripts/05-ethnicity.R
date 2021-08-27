@@ -38,9 +38,9 @@ if (!file.exists(file.path(output_directory, "all.bim"))) {
   )
 } else {
   compute_pca(
-  	cohort_name = project_name, 
-  	input_plink = file.path(output_directory, "all"), 
-  	output_directory = output_directory, 
+  	cohort_name = project_name,
+  	input_plink = file.path(output_directory, "all"),
+  	output_directory = output_directory,
   	ref1kg_population = normalizePath("/disks/DATA/ExternalData/1kg/samples_description/integrated_call_samples_v3.20130502.ALL.panel")
   )
 }
@@ -55,7 +55,7 @@ if (!file.exists(file.path(output_directory, "all.bim"))) {
 #       normalizePath(output_directory),
 #       paste0(
 #         format(Sys.Date(), format = "%Y%m%d"), "_",
-#         project_name, "_", 
+#         project_name, "_",
 #         gsub("[0-9]+\\-", "", basename(output_directory)), ".zip"
 #       )
 #     )

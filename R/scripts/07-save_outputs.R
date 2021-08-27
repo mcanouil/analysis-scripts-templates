@@ -78,15 +78,15 @@ file.copy(
 if (file.exists(file.path(output_directory, "Omni2.5", "vcf_imputed"))) {
   unlink(
     list.files(
-      path = file.path(output_directory, "Omni2.5", "vcf_imputed"), 
-      pattern = "csi$|tbi$", 
+      path = file.path(output_directory, "Omni2.5", "vcf_imputed"),
+      pattern = "csi$|tbi$",
       full.names = TRUE
     )
   )
   sapply(
     X = list.files(
-      path = file.path(output_directory, "Omni2.5", "vcf_imputed"), 
-      pattern = "vcf.gz$", 
+      path = file.path(output_directory, "Omni2.5", "vcf_imputed"),
+      pattern = "vcf.gz$",
       full.names = TRUE
     ),
     FUN = function(ivcf) system(paste("tabix -f -p vcf", ivcf))
@@ -94,15 +94,15 @@ if (file.exists(file.path(output_directory, "Omni2.5", "vcf_imputed"))) {
   identical(
     length(
       list.files(
-        path = file.path(output_directory, "Omni2.5", "vcf_imputed"), 
-        pattern = "vcf.gz$", 
+        path = file.path(output_directory, "Omni2.5", "vcf_imputed"),
+        pattern = "vcf.gz$",
         full.names = TRUE
       )
     ),
     length(
       list.files(
-        path = file.path(output_directory, "Omni2.5", "vcf_imputed"), 
-        pattern = "tbi$", 
+        path = file.path(output_directory, "Omni2.5", "vcf_imputed"),
+        pattern = "tbi$",
         full.names = TRUE
       )
     )
@@ -137,15 +137,15 @@ file.copy(
 if (file.exists(file.path(output_directory, "Omni2.5", "vcf_imputed_hg38_ucsc"))) {
   unlink(
     list.files(
-      path = file.path(output_directory, "Omni2.5", "vcf_imputed_hg38_ucsc"), 
-      pattern = "csi$|tbi$", 
+      path = file.path(output_directory, "Omni2.5", "vcf_imputed_hg38_ucsc"),
+      pattern = "csi$|tbi$",
       full.names = TRUE
     )
   )
   sapply(
     X = list.files(
-      path = file.path(output_directory, "Omni2.5", "vcf_imputed_hg38_ucsc"), 
-      pattern = "vcf.gz$", 
+      path = file.path(output_directory, "Omni2.5", "vcf_imputed_hg38_ucsc"),
+      pattern = "vcf.gz$",
       full.names = TRUE
     ),
     FUN = function(ivcf) system(paste("tabix -f -p vcf", ivcf))
@@ -153,15 +153,15 @@ if (file.exists(file.path(output_directory, "Omni2.5", "vcf_imputed_hg38_ucsc"))
   identical(
     length(
       list.files(
-        path = file.path(output_directory, "Omni2.5", "vcf_imputed_hg38_ucsc"), 
-        pattern = "vcf.gz$", 
+        path = file.path(output_directory, "Omni2.5", "vcf_imputed_hg38_ucsc"),
+        pattern = "vcf.gz$",
         full.names = TRUE
       )
     ),
     length(
       list.files(
-        path = file.path(output_directory, "Omni2.5", "vcf_imputed_hg38_ucsc"), 
-        pattern = "tbi$", 
+        path = file.path(output_directory, "Omni2.5", "vcf_imputed_hg38_ucsc"),
+        pattern = "tbi$",
         full.names = TRUE
       )
     )
@@ -178,7 +178,7 @@ if (file.exists(file.path(output_directory, "Omni2.5", "vcf_imputed_hg38_ucsc"))
 #       normalizePath(output_directory),
 #       paste0(
 #         format(Sys.Date(), format = "%Y%m%d"), "_",
-#         project_name, "_", 
+#         project_name, "_",
 #         gsub("[0-9]+\\-", "", basename(output_directory)), ".zip"
 #       )
 #     )
@@ -192,7 +192,7 @@ if (file.exists(file.path(output_directory, "Omni2.5", "vcf_imputed_hg38_ucsc"))
 
 ### Set chmod ======================================================================================
 Sys.chmod(
-  list.files(output_directory, full.names = TRUE, recursive = TRUE, all.files = TRUE), 
+  list.files(output_directory, full.names = TRUE, recursive = TRUE, all.files = TRUE),
   mode = "0555", use_umask = FALSE
 )
 

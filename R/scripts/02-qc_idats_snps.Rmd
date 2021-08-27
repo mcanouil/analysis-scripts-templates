@@ -22,11 +22,11 @@ params:
   filter_callrate: TRUE
   callrate_samples: 0.99
   callrate_probes: 1
-  sex_threshold: NULL 
+  sex_threshold: NULL
   sex_colname: "sexe"
   norm_background: "oob"
   norm_dye: "RELIC"
-  norm_quantile: "quantile1" 
+  norm_quantile: "quantile1"
   cell_tissue: "blood"
   pca: TRUE
   pca_vars: !r c("Sample_Plate", "Sentrix_ID")
@@ -43,7 +43,7 @@ output:
     theme: simplex
     toc: true
     toc_depth: 3
-    toc_float: 
+    toc_float:
       collapsed: false
     fig_width: 6.3
     fig_height: 4.7

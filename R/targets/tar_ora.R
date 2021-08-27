@@ -1,14 +1,26 @@
 ### global libraries ===============================================================================
 library(targets)
-# library(tarchetypes)
-# library(here)
-# library(data.table)
+library(tarchetypes)
+library(here)
+library(data.table)
+# library(future)
+# library(future.callr)
+
+# tar_option_set(cue = tar_cue(mode = "never"))
 
 # targets::tar_renv(extras = "visNetwork", path = "scripts/_dependencies.R")
-tar_option_set(cue = tar_cue(mode = "never"))
 
 
 ### project setup ==================================================================================
+invisible(sapply(list.files(here("scripts"), pattern = "^tar-.*R$", full.names = TRUE), source, echo = FALSE))
+
+# plan(future.callr::callr, workers = 40)
+# plan(multicore, workers = 40)
+# message(sprintf("Number of workers: %d", future::nbrOfWorkers()))
+# setDTthreads(threads = 1)
+
+
+### targets setup ==================================================================================
 output_directory <- here("outputs", "ora")
 dir.create(output_directory, mode = "0775", showWarnings = FALSE)
 
