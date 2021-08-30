@@ -1,9 +1,7 @@
 #' get_variants
 #' @import data.table
 #' @importFrom future.apply future_lapply
-get_variants <- function(
-  path = file.path(input_directory, "Omni2.5", "vcf_imputed_hg38_ucsc")
-) {
+get_variants <- function(path, output_directory = tempdir(), bin_path = list(bcftools = "/usr/bin/bcftools")) {
   if (length(path) == 1 && dir.exists(path)) {
     vcf_files <- list.files(path, pattern = "(\\.vcf.gz|\\.vcf)$", full.names = TRUE)
   } else {
@@ -14,71 +12,30 @@ get_variants <- function(
     X = vcf_files,
     future.globals = FALSE,
     FUN = function(ivcf) {
-      fwrite(
-        x = fread(
-          cmd = paste(
-            "vcftools --gzvcf", ivcf,
-            "--get-INFO 'INFO'",
-            "--stdout"
+      xx <- data.table::fread(
+        cmd = sprintf(
+          paste(
+            "%s view %s --min-af 0.05 --exclude 'INFO/INFO < 0.8' --min-alleles 2 --max-alleles 2 --types snps",
+            "%s query --format '%%CHROM\t%%POS\t%%REF\t%%ALT\n' --print-header",
+            sep = " | "
           ),
-          header = TRUE,
-          colClasses = c("INFO" = "numeric")
-        )[INFO < 0.8, c(1, 2)],
-        file = file.path(output_directory, "vcfs_qc", paste0(ivcf, "_lowqual.txt")),
-        sep = "\t"
-      )
-
-      system(paste(
-        "vcftools --gzvcf", ivcf,
-        "--keep", file.path(output_directory, "samples_to_keep.txt"),
-        "--exclude-positions", file.path(output_directory, "vcfs_qc", paste0(ivcf, "_lowqual.txt")),
-        "--remove-indels",
-        "--remove-filtered-all",
-        "--recode-INFO-all",
-        "--maf 0.05",
-        "--hwe 0.005",
-        "--recode",
-        "--out", file.path(output_directory, "vcfs_qc", ivcf)
-      ))
-      system(paste("bgzip -f", file.path(output_directory, "vcfs_qc", paste0(ivcf, ".recode.vcf"))))
-      system(paste("tabix -pvcf -f", file.path(output_directory, "vcfs_qc", paste0(ivcf, ".recode.vcf.gz"))))
-
-      system(paste(
-        "bcftools annotate",
-        "--set-id +'%CHROM:%POS'",
-        "--output-type z",
-        "--output", file.path(output_directory, "vcfs_qc", paste0(ivcf, "_qc.vcf.gz")),
-        file.path(output_directory, "vcfs_qc", paste0(ivcf, ".recode.vcf.gz"))
-      ))
-      system(paste("tabix -pvcf -f", file.path(output_directory, "vcfs_qc", paste0(ivcf, "_qc.vcf.gz"))))
-
-      unlink(c(
-        file.path(output_directory, "vcfs_qc", paste0(ivcf, "_lowqual.txt")),
-        file.path(output_directory, "vcfs_qc", paste0(ivcf, ".recode.vcf.gz")),
-        file.path(output_directory, "vcfs_qc", paste0(ivcf, ".recode.vcf.gz.tbi"))
-      ))
-
-      fread(
-        cmd = paste(
-          "vcftools --gzvcf", ivcf,
-          "--get-INFO 'INFO'",
-          "--stdout"
+          bin_path[["bcftools"]], ivcf, bin_path[["bcftools"]]
         ),
-        header = TRUE,
-        colClasses = c("INFO" = "numeric")
-      )[INFO >= 0.8][
-        j = (c("REF", "strand")) := list(paste(REF, ALT, sep = "/"), "+")
-      ][
-        j = list(CHR = CHROM, start = POS, end = POS, REF, strand)
+        col.names = c("CHR", "POS", "REF", "ALT")
+      )[
+        j = list(CHR, start = POS, end = POS, REF = paste(REF, ALT, sep = "/"), strand = "+")
       ]
     }
   )))
 
+  output_file <- file.path(output_directory, "snps_locations.txt.gz")
   fwrite(
     x = unique_snps,
-    file = file.path(output_directory, "snps_locations.txt.gz"),
+    file = output_file,
     col.names = FALSE, row.names = FALSE, sep = "\t"
   )
+
+  output_file
 }
 
 #' get_symbol_vep
@@ -94,23 +51,7 @@ get_symbol_vep <- function(
     "docker" = "/disks/DATA/ExternalData/vep_data"
   )
 ) {
-  data.table::fwrite(
-    x = unique(data.table::rbindlist(lapply(
-      X = list.files(path = input_directory, pattern = "\\.csv.gz$", full.names = TRUE),
-      FUN = data.table::fread, select = c("CHR", "BP", "reference_allele", "other_allele")
-    )))[
-      i = order(CHR, BP),
-      j = list(CHR, start = BP, end = BP, alleles = paste(reference_allele, other_allele, sep = "/"), strand = "+")
-    ],
-    file = file.path(output_directory, "snps_locations.txt.gz"),
-    col.names = FALSE, row.names = FALSE, sep = "\t"
-  )
-
-  input_docker <- sub(
-    "/disks/PROJECT",
-    "/media/Datatmp",
-    input
-  )
+  input_docker <- sub("/disks/PROJECT", "/media/Datatmp", input)
   output_docker <- paste0("snps_vep_", ensembl_version, ".0_", genome_assembly, ".txt")
 
   if (
@@ -173,7 +114,6 @@ format_symbol_vep <- function(file) {
   )
   if (file.exists(file)) {
     on.exit(unlink(c(
-      file.path(dirname(file), "snps_locations.txt.gz"),
       default_file,
       paste0(default_file, "_summary.html")
     )))

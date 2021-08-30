@@ -31,16 +31,20 @@ tar_setup <- {list( # Setup project
       "server" = "/media/Data/ExternalData/vep_data",
       "docker" = "/disks/DATA/ExternalData/vep_data"
     )
-  )
+  ),
+  tar_target(bcftools, "/usr/bin/bcftools", format = "file")
 )}
 
 
 ### targets ========================================================================================
 tar_vep <- {list(
-  tar_target(snps_locations, "snps_locations.txt.gz", format = "file"), # CHR, START, END, A/C, + tab delimited
   tar_target(vep_symbol,
     command = get_symbol_vep(
-      input = snps_locations,
+      input = get_variants(
+        path = "file.vcf",
+        output_directory = tempdir(),
+        bin_path = list(bcftools = bcftools)
+      ),
       output_directory = output_directory,
       genome_assembly = genome_assembly,
       ensembl_version = ensembl_version,
