@@ -125,5 +125,5 @@ do_crossmap <- function(
     ))
   }
 
-  path_converted
+  unname(path_converted)
 }

@@ -38,14 +38,19 @@ tar_setup <- list(
 
 ### targets ========================================================================================
 tar_crossmap <- {list(
-  tar_target(ga_imputed_vcf_grch38,
-    command = crossmap(
-      path = ga_imputed_vcf, # path to directory or chr VCF files
-      output_directory = NULL,
-      ref_fasta = reference_fasta,
-      chain_file = chain_file,
-      bin_path = bin_path
-    ),
+  tar_target(ga_imputed_vcf_crossmap,
+    command = {
+      if (ga_save_qc) {
+        do_crossmap(
+          path = ga_imputed_vcf, # path to directory or chr VCF files
+          output_directory = file.path(ga_export_directory, "vcf_imputed_grch38"),
+          ref_fasta = reference_fasta,
+          chain_file = chain_file,
+          bin_path = bin_path
+        )
+      }
+    },
+    packages = "future.apply",
     format = "file"
   )
 )}
