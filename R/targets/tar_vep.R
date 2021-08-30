@@ -41,8 +41,8 @@ tar_vep <- {list(
   tar_target(vep_symbol,
     command = get_symbol_vep(
       input = get_variants(
-        path = "file.vcf",
-        output_directory = tempdir(),
+        path = "file.vcf.gz",
+        output_directory = output_directory,
         bin_path = list(bcftools = bcftools)
       ),
       output_directory = output_directory,

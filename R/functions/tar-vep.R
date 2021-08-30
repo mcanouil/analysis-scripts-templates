@@ -42,7 +42,7 @@ get_variants <- function(path, output_directory = tempdir(), bin_path = list(bcf
 #' @import data.table
 get_symbol_vep <- function(
   input = "snps_locations.txt.gz",
-  output_directory = here::here("outputs"),
+  output_directory = here::here("outputs", "vep"),
   genome_assembly = "GRCh38",
   ensembl_version = "104",
   ensembl_species = "homo_sapiens",
@@ -51,6 +51,9 @@ get_symbol_vep <- function(
     "docker" = "/disks/DATA/ExternalData/vep_data"
   )
 ) {
+  if (!dir.exists(output_directory)) {
+    dir.create(output_directory, recursive = TRUE, mode = "0777")
+  }
   input_docker <- sub("/disks/PROJECT", "/media/Datatmp", input)
   output_docker <- paste0("snps_vep_", ensembl_version, ".0_", genome_assembly, ".txt")
 
@@ -114,6 +117,7 @@ format_symbol_vep <- function(file) {
   )
   if (file.exists(file)) {
     on.exit(unlink(c(
+      file.path(dirname(file), "snps_locations.txt.gz"),
       default_file,
       paste0(default_file, "_summary.html")
     )))
