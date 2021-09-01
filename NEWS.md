@@ -16,6 +16,7 @@
     + `tar-sub_chunk.R`, function to create sub-chunk inside a chunk in RMarkdown.
     + `tar-crossmap.R`, functions, used in `tar_crossmap.R`, to upgrade or downgrade genome assembly of VCF files.
     + `tar-plink2.R`n function to download PLINK2 binary.
+    + `tar-qc_sample_sheet.R`, function (to customise) to compute a clean phenotype table prior to analyses.
 
 + `R/scripts`
     + `**-****.R`,
