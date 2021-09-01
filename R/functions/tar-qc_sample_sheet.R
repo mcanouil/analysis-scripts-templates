@@ -37,7 +37,7 @@ qc_sample_sheet <- function(phenotype, relatedness, ethnicity, methylation) {
 
   dt <- merge(
     x = dt,
-    y = data.table::fread(file = ethnicity)[j = -c("cohort")] # Add genetics PCs,
+    y = data.table::fread(file = ethnicity)[j = -c("cohort")], # Add genetics PCs,
     by.x = "vcf_id",
     by.y = "iid",
     all.x = TRUE
