@@ -15,24 +15,25 @@
     + `tar-pval_trans.R`, p-value ggplot2 axis transformation.
     + `tar-sub_chunk.R`, function to create sub-chunk inside a chunk in RMarkdown.
     + `tar-crossmap.R`, functions, used in `tar_crossmap.R`, to upgrade or downgrade genome assembly of VCF files.
+    + `tar-plink2.R`n function to download PLINK2 binary.
 
 + `R/scripts`
-    + `**-****.R`, 
-        - fix project name to not include file extension. 
+    + `**-****.R`,
+        - fix project name to not include file extension.
         - trim trailing spaces.
     + `08-vep_vcf_docker.R`, add function to prepare docker command and to format output.
-    + `10-ewas.R`, 
+    + `10-ewas.R`,
         - tweak & refactor some code.
         - use as.matrix from `data.table`.
-    + `11-twas.R`, 
+    + `11-twas.R`,
         - fix #2 (@Ning-L).
         - ensure Ensembl ID does not contain version.
-    + `14-mqtl.R`, 
+    + `14-mqtl.R`,
         - fix missing variables.
         - tweak & refactor some code.
         - use as.matrix from `data.table`.
     + `15-eqtl.R`, fix missing variables.
-    + `16-eqtm.R`, 
+    + `16-eqtm.R`,
         - new expression-methylation analysis.
         - tweak & refactor some code.
         - isoform/transcript or gene level.
@@ -40,14 +41,14 @@
 
 # analysis_templates 0.2.0
 
-+ `R/14-mqtl.R`, 
++ `R/14-mqtl.R`,
     + Skeleton R script to perform mQTL analysis (methylation Vs. genotypes).
-+ `R/15-eqtl.R`, 
++ `R/15-eqtl.R`,
     + Skeleton R script to perform eQTL analysis (expression Vs. genotypes).
-+ `R/12-ora.R` and `R/tar_ora.R`, 
++ `R/12-ora.R` and `R/tar_ora.R`,
     + Add gene symbols for KEGG.
     + Add ORA as a simple R script or `targets` setup.
-+ `R/13-gsea.R` and `R/tar_gsea.R`, 
++ `R/13-gsea.R` and `R/tar_gsea.R`,
     + Add genes set and peripheral sets (genes set - core set).
     + Add gene symbols in addition to Ensembl, Uniprot or Entrez gene IDs.
     + Fix ties using pvalue as secondary parameter in sorting and removing `.Machine$double.eps` for the second value.
