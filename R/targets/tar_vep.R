@@ -32,7 +32,9 @@ tar_setup <- {list( # Setup project
       "docker" = "/disks/DATA/ExternalData/vep_data"
     )
   ),
-  tar_target(bcftools, "/usr/bin/bcftools", format = "file")
+  tar_target(bcftools, "/usr/bin/bcftools", format = "file"),
+  tar_target(tabix, "/usr/bin/tabix", format = "file"),
+  tar_target(bgzip, "/usr/bin/bgzip", format = "file")
 )}
 
 
@@ -54,7 +56,10 @@ tar_vep <- {list(
     packages = c("here", "data.table")
   ),
   tar_target(veb_symbol_file,
-    command = format_symbol_vep(vep_symbol),
+    command = format_symbol_vep(
+      file = vep_symbol,
+      bin_path = list(tabix = tabix, bgzip = bgzip)
+    ),
     format = "file"
   )
 )}

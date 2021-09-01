@@ -109,7 +109,10 @@ get_symbol_vep <- function(
 
 #' format_symbol_vep
 #' @import data.table
-format_symbol_vep <- function(file) {
+format_symbol_vep <- function(file, bin_path = list(
+    tabix = "/usr/bin/tabix",
+    bgzip = "/usr/bin/bgzip"
+)) {
   default_file <- file
   file <- paste0(file, ".gz")
   stopifnot(
@@ -147,8 +150,13 @@ format_symbol_vep <- function(file) {
 
   data.table::fwrite(
     x = unique(vep_annotation),
-    file = sub(".txt.gz", "_formatted.txt.gz", file)
+    file = sub(".txt.gz", "_formatted.txt", file)
   )
+  system(paste(
+    bin_path[["bgzip"]], "--force 1", sub(".txt.gz", "_formatted.txt", file),
+    "&&",
+    bin_path[["tabix"]], "--sequence 1 --begin 2 --end 2", sub(".txt.gz", "_formatted.txt.gz", file)
+  ))
 
   sub(".txt.gz", "_formatted.txt.gz", file)
 }
