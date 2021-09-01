@@ -122,26 +122,33 @@ format_symbol_vep <- function(file) {
       paste0(default_file, "_summary.html")
     )))
   }
-  vep_annotation <- data.table::fread(file = file,  skip = "#U")[
+  vep_annotation <- unique(data.table::fread(file = file,  skip = "#U"))[
+    j = Symbol := data.table::fifelse(
+      test = grepl("SYMBOL=", Extra),
+      yes = sub("^.*SYMBOL=([^;=]*).*$", "\\1", Extra),
+      no = NA_character_
+    )
+  ][
+    j = lapply(.SD, function(x) {
+      unique_x <- na.exclude(setdiff(unique(x), ""))
+      switch(EXPR = as.character(length(unique_x)),
+        "0" = NA_character_,
+        "1" = unique_x,
+        paste(unique_x, collapse = ";")
+      )
+    }),
+    by = "Location",
+    .SDcols = c("Gene", "Existing_variation", "Symbol")
+  ][
     j = c("CHR", "POS") := data.table::tstrsplit(Location, ":", fixed = TRUE)
   ][
-    j = (c("Gene", "Symbol", "rsid")) :=
-      list(
-        paste(unique(Gene), collapse = ";"),
-        data.table::fifelse(
-          test = grepl("SYMBOL=", Extra),
-          yes = paste(unique(gsub("^.*SYMBOL=([^;]*);.*$", "\\1", Extra)), collapse = ";"),
-          no = NA_character_
-        ),
-        paste(unique(Existing_variation), collapse = ";")
-      ),
-    by = "#Uploaded_variation"
-  ][j = list(CHR, POS, `#Uploaded_variation`, Gene, Symbol, rsid)]
+    j = list(CHROM = CHR, POS, Gene, Symbol, rsid = Existing_variation)
+  ]
 
-   data.table::fwrite(
-    x = data.table::setnames(unique(vep_annotation), "#Uploaded_variation", "chr_pos_ref_alt"),
-    file = sub(".txt.gz", "_formated.txt.gz", file)
+  data.table::fwrite(
+    x = unique(vep_annotation),
+    file = sub(".txt.gz", "_formatted.txt.gz", file)
   )
 
-  sub(".txt.gz", "_formated.txt.gz", file)
+  sub(".txt.gz", "_formatted.txt.gz", file)
 }
