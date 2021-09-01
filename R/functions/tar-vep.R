@@ -77,6 +77,15 @@ get_symbol_vep <- function(
     ))
   }
 
+  writeLines(
+    text = sprintf(c(
+      '##INFO=<ID=Gene,Number=1,Type=String,Description="Ensembl ID gene from VEP %s">',
+      '##INFO=<ID=Symbol,Number=1,Type=String,Description="Symbol from VEP %s">',
+      '##INFO=<ID=rsid,Number=1,Type=String,Description="RS ID from VEP %s">'
+    ), ensembl_version),
+    con = file.path(output_directory, sub("\\.txt", ".header", output_docker))
+  )
+
   cat(paste(
     "#!/bin/bash",
     "\n\nchmod 777", dirname(input_docker),
