@@ -1,6 +1,11 @@
 #' qc_sample_sheet
 #' @import data.table
-qc_sample_sheet <- function(phenotype, relatedness, ethnicity, methylation) {
+qc_sample_sheet <- function(phenotype, exclusion, relatedness, ethnicity, methylation) {
+  exclusion <- data.table::fread(file = exclusion)[
+    i = Sex_Discrepancy == 1 | Sample_Call_Rate == 1 | Sex_Missing == 1 | Heterozygosity_Check == 1
+    j = Status := "Exclude"
+  ]
+
   relatedness <- data.table::fread(file = relatedness)
 
   bad_duplicated_samples <- relatedness[
@@ -46,7 +51,7 @@ qc_sample_sheet <- function(phenotype, relatedness, ethnicity, methylation) {
   methylation_sample_sheet <- data.table::fread(methylation)
 
   merge(# Include methylation sample sheet
-    x = dt,
+    x = merge(x = dt, y = exclusion[j = list(vcf_id = IID, Status)], by = "vcf_id", all.x = TRUE)
     y = methylation_sample_sheet[
       j = .SD,
       .SDcols = grep(
