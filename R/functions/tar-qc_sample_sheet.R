@@ -2,7 +2,7 @@
 #' @import data.table
 qc_sample_sheet <- function(phenotype, exclusion, relatedness, ethnicity, methylation) {
   exclusion <- data.table::fread(file = exclusion)[
-    i = Sex_Discrepancy == 1 | Sample_Call_Rate == 1 | Sex_Missing == 1 | Heterozygosity_Check == 1
+    i = Sex_Discrepancy == 1 | Sample_Call_Rate == 1 | Sex_Missing == 1 | Heterozygosity_Check == 1,
     j = Status := "Exclude"
   ]
 
