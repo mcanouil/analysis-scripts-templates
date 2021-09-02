@@ -159,13 +159,14 @@ format_symbol_vep <- function(file, bin_path = list(
 
   data.table::fwrite(
     x = unique(vep_annotation),
-    file = sub(".txt.gz", "_formatted.txt", file)
+    file = sub(".txt.gz", "_formatted.tsv", file),
+    sep = "\t"
   )
   system(paste(
-    bin_path[["bgzip"]], "--force 1", sub(".txt.gz", "_formatted.txt", file),
+    bin_path[["bgzip"]], "--force", sub(".txt.gz", "_formatted.tsv", file),
     "&&",
-    bin_path[["tabix"]], "--sequence 1 --begin 2 --end 2", sub(".txt.gz", "_formatted.txt.gz", file)
+    bin_path[["tabix"]], "--sequence 1 --begin 2 --end 2", sub(".txt.gz", "_formatted.tsv.gz", file)
   ))
 
-  sub(".txt.gz", "_formatted.txt.gz", file)
+  sub(".txt.gz", "_formatted.tsv.gz", file)
 }
