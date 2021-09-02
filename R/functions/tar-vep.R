@@ -118,10 +118,13 @@ get_symbol_vep <- function(
 
 #' format_symbol_vep
 #' @import data.table
-format_symbol_vep <- function(file, bin_path = list(
+format_symbol_vep <- function(
+  file,
+  bin_path = list(
     tabix = "/usr/bin/tabix",
     bgzip = "/usr/bin/bgzip"
-)) {
+  )
+) {
   default_file <- file
   file <- paste0(file, ".gz")
   stopifnot(
@@ -154,7 +157,7 @@ format_symbol_vep <- function(file, bin_path = list(
   ][
     j = c("CHR", "POS") := data.table::tstrsplit(Location, ":", fixed = TRUE)
   ][
-    j = list(CHROM = CHR, POS, Gene, Symbol, rsid = Existing_variation)
+    j = list(`#CHROM` = CHR, POS, Gene, Symbol, rsid = Existing_variation)
   ]
 
   data.table::fwrite(
