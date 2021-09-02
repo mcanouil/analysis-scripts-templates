@@ -7,6 +7,8 @@
     + `tar_genotype.R`, `targets` setup to compute PLINK files quality-control.
     + `tar_vep.R`, `targets` setup to compute VEP annotations.
     + `tar_crossmap.R`, `targets` setup to upgrade or downgrade genome assembly of VCF files.
+    + `tar_sample_sheet_qc.R`, `targets` setup to clean phenotype sample sheet from `tar_methylation.R` and `tar_genotype.R` prior to analyses such as `tar_gwas.R`.
+    + `tar_gwas.R`, `targets` setup to perform multiple GWAS using PLINK2 software.
 
 + `R/functions/`
     + `tar-qc_idats.R`, functions, used in `tar_methylation.R`, to compute idats (methylation) files quality-control.
@@ -16,7 +18,8 @@
     + `tar-sub_chunk.R`, function to create sub-chunk inside a chunk in RMarkdown.
     + `tar-crossmap.R`, functions, used in `tar_crossmap.R`, to upgrade or downgrade genome assembly of VCF files.
     + `tar-plink2.R`n function to download PLINK2 binary.
-    + `tar-qc_sample_sheet.R`, function (to customise) to compute a clean phenotype table prior to analyses.
+    + `tar-qc_sample_sheet.R`, function (to customise), used in `tar_sample_sheet_qc.R`, to compute a clean phenotype table prior to analyses.
+    + `tar-gwas.R`, function, used in `tar_gwas.R`, to perform multiple GWAS using PLINK2 software.
 
 + `R/scripts`
     + `**-****.R`,
