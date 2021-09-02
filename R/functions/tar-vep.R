@@ -149,7 +149,7 @@ format_symbol_vep <- function(
       switch(EXPR = as.character(length(unique_x)),
         "0" = NA_character_,
         "1" = unique_x,
-        paste(unique_x, collapse = ";")
+        paste(unique_x, collapse = "&")
       )
     }),
     by = "Location",
