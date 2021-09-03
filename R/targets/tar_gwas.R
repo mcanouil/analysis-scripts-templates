@@ -52,7 +52,7 @@ tar_sample_sheet_qc <- list({
 tar_gwas <- {list(
   tar_target(gwas_models,
     command = tar_group(dplyr::group_by(
-      as.data.frame.Date()(
+      data.frame(
         pretty_trait = c("Control/Case"),
         raw_trait = c("group"),
         covariates = c(
@@ -81,7 +81,7 @@ tar_gwas <- {list(
     ),
     pattern = map(gwas_models),
     iteration = "list",
-    packages = c("here", "data.table", "stats"),
+    packages = c("here", "data.table", "stats", "future.apply"),
     format = "file"
   )
 )}

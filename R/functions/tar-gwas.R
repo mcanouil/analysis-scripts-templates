@@ -1,6 +1,7 @@
 #' do_gwas
 #' @import data.table
 #' @import stats
+#' @import future.apply future_lapply
 do_gwas <- function(
   data,
   model,
@@ -73,11 +74,13 @@ do_gwas <- function(
 
   message("Formatting VCFs and performing PLINK2 regression ...")
 
-  list_results <- lapply(
+  list_results <- future.apply::future_lapply(
     X = vcfs,
     basename_file = basename_file,
     vep_file = vep,
     bin_path = bin_path,
+    future.globals = FALSE,
+    future.packages = "data.table",
     FUN = function(vcf, basename_file, vep_file, bin_path) {
       vcf_file <- sprintf("%s__%s", basename_file, basename(vcf))
       results_file <- sub("\\.vcf.gz", "", vcf_file)
@@ -119,62 +122,70 @@ do_gwas <- function(
         "--pheno", sprintf("%s.pheno", basename_file),
         "--covar", sprintf("%s.cov", basename_file),
         "--covar-variance-standardize",
+        "--silent",
         "--out", results_file
       ))
 
-      annot <- data.table::setnames(
-        x = data.table::fread(
-          cmd = paste(bin_path[["bcftools"]], "view --drop-genotypes", vcf_file),
-          skip = "#CHROM"
-        )[
-          j = list(
-            .SD,
-            data.table::rbindlist(
-              l = lapply(
-                X = strsplit(INFO, ";"),
-                FUN = function(x) {
-                  all_fields <- strsplit(x, "=")
-                  out <- data.table::transpose(all_fields[sapply(all_fields, length) > 1])
-                  data.table::setnames(
-                    x = data.table::as.data.table(do.call("rbind", out[-1])),
-                    old = out[[1]]
-                  )
-                }
-              ),
-              use.names = TRUE,
-              fill = TRUE
-            )[
-              j = lapply(.SD, function(x) {
-                xout <- as.character(x)
-                data.table::fifelse(
-                  test = xout %in% c(".", "-"),
-                  yes = NA_character_,
-                  no = xout
+      annot <- data.table::fread(
+        cmd = paste(bin_path[["bcftools"]], "view --drop-genotypes", vcf_file),
+        skip = "#CHROM"
+      )
+      annot <- annot[
+        j = list(
+          .SD,
+          data.table::rbindlist(
+            l = lapply(
+              X = strsplit(INFO, ";"),
+              FUN = function(x) {
+                all_fields <- strsplit(x, "=")
+                out <- data.table::transpose(all_fields[sapply(all_fields, length) > 1])
+                data.table::setnames(
+                  x = data.table::as.data.table(do.call("rbind", out[-1])),
+                  old = out[[1]]
                 )
-              })
-            ]
-          ),
-          .SDcols = !c("INFO", "QUAL", "FILTER")
-        ],
+              }
+            ),
+            use.names = TRUE,
+            fill = TRUE
+          )[
+            j = lapply(.SD, function(x) {
+              xout <- as.character(x)
+              data.table::fifelse(
+                test = xout %in% c(".", "-"),
+                yes = NA_character_,
+                no = xout
+              )
+            })
+          ]
+        ),
+        .SDcols = !c("INFO", "QUAL", "FILTER")
+      ]
+      data.table::setnames(
+        x = annot,
         old = function(x) sub("^\\.SD\\.\\.*", "", x)
       )
 
       results <- data.table::setnames(
-        x = fread(
+        x = data.table::fread(
           file = list.files(
             path = dirname(results_file),
-            pattern = sprintf("%s.*\\.glm\\..*", basename(results_file)),
+            pattern = sprintf("%s\\..*\\.glm\\..*", basename(results_file)),
             full.names = TRUE
           )
         ),
         old = function(x) sub("^#", "", x)
       )
 
-      merge.data.table(
-        x = results[TEST %in% "ADD" & !is.na(P), -c("TEST")],
-        y = annot,
-        by = c("CHROM", "POS", "ID", "REF", "ALT"), # intersect(names(results), names(annot))
-      )[MAF >= 0.05]
+      data.table::fwrite(
+        x = data.table::merge.data.table(
+          x = results[TEST %in% "ADD" & !is.na(P), -c("TEST")],
+          y = annot,
+          by = c("CHROM", "POS", "ID", "REF", "ALT"), # intersect(names(results), names(annot))
+        )[MAF >= 0.05, .SDcols = !c("QUAL", "FILTER")],
+        file = sprintf("%s.results.gz", results_file)
+      )
+
+      sprintf("%s.results.gz", results_file)
     }
   )
 
@@ -190,7 +201,7 @@ do_gwas <- function(
 
   data.table::fwrite(
     x = data.table::setcolorder(
-      x = data.table::rbindlist(list_results)[
+      x = data.table::rbindlist(lapply(list_results, data.table::fread))[
         j = `:=`(
           FDR = stats::p.adjust(P, method = "BH"),
           Bonferroni = stats::p.adjust(P, method = "bonferroni"),
