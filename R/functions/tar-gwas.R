@@ -201,7 +201,7 @@ do_gwas <- function(
 
   data.table::fwrite(
     x = data.table::setcolorder(
-      x = data.table::rbindlist(lapply(list_results, data.table::fread))[
+      x = data.table::rbindlist(lapply(list_results, data.table::fread), use.names = TRUE)[
         j = `:=`(
           FDR = stats::p.adjust(P, method = "BH"),
           Bonferroni = stats::p.adjust(P, method = "bonferroni"),
