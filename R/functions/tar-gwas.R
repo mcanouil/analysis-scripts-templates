@@ -71,6 +71,8 @@ do_gwas <- function(
     sep = " "
   )
 
+  message("Formatting VCFs and performing PLINK2 regression ...")
+
   list_results <- future.apply::future_lapply(
     X = vcfs,
     basename_file = basename_file,
@@ -121,7 +123,6 @@ do_gwas <- function(
         "--out", results_file
       ))
 
-
       annot <- data.table::setnames(
         x = data.table::fread(
           cmd = paste(bin_path[["bcftools"]], "view --drop-genotypes", vcf_file),
@@ -154,7 +155,7 @@ do_gwas <- function(
               })
             ]
           ),
-          .SDcols = !c("INFO")
+          .SDcols = !c("INFO", "QUAL", "FILTER")
         ],
         old = function(x) sub("^\\.SD\\.\\.*", "", x)
       )
@@ -172,7 +173,7 @@ do_gwas <- function(
 
       merge.data.table(
         x = results[TEST %in% "ADD" & !is.na(P), -c("TEST")],
-        y = annot[j = -c("QUAL", "FILTER")],
+        y = annot,
         by = c("CHROM", "POS", "ID", "REF", "ALT"), # intersect(names(results), names(annot))
       )[MAF >= 0.05]
     }
@@ -185,6 +186,8 @@ do_gwas <- function(
     mode = "0755",
     showWarnings = FALSE
   )
+
+  message("Aggregating PLINK2 results ...")
 
   data.table::fwrite(
     x = data.table::setcolorder(
@@ -200,6 +203,8 @@ do_gwas <- function(
     ),
     file = results_file
   )
+
+  message(sprintf('Writing results to "%s"!', results_file))
 
   results_file
 }
