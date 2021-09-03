@@ -208,7 +208,7 @@ do_gwas <- function(
           trait = model[["pretty_trait"]],
           covariates = model[["covariates"]]
         )
-      ][order(P, decreasing = TRUE)],
+      ][order(P)],
       neworder = c("trait", "covariates")
     ),
     file = results_file
@@ -217,4 +217,62 @@ do_gwas <- function(
   message(sprintf('Writing results to "%s"!', results_file))
 
   results_file
+}
+
+#' plot_manhattan_gwas
+#' @import ggplot2
+#' @import ggtext
+#' @import data.table
+#' @import ggrepel
+plot_manhattan_gwas <- function(file, model) {
+  dt <- data.table::fread(file)[
+    i = P <= 0.05 / .N,
+    j = gene_label := data.table::fifelse(Symbol == "", NA_character_, Symbol)
+  ][
+    j = gene_label_min := data.table::fifelse(
+      test = P == min(P, na.rm = TRUE),
+      yes = gsub(",", ";", gene_label),
+      no = NA_character_
+    ),
+    by = "gene_label"
+  ][
+    i = P > 0.05,
+    j = P := NA_real_
+  ][
+    j = file := basename(file)
+  ][
+    j = c("CHROM", "POS", "P", "gene_label_min", "gene_label")
+  ]
+
+  draw_manhattan(
+    data = dt,
+    x = "POS",
+    y = "P",
+    chr = "CHROM",
+    label_y = "P-value",
+    alpha = 0.05 / nrow(dt)
+  ) +
+    ggrepel::geom_label_repel(
+      mapping = ggplot2::aes(label = gene_label_min),
+      stat = "manhattan",
+      show.legend = FALSE,
+      min.segment.length = 0,
+      # direction = "x",
+      size = 1.75
+    ) +
+    ggplot2::labs(
+      title = model[["pretty_trait"]],
+      subtitle = toupper(paste(model[["group"]], "= ", model[["covariates"]]))
+    ) +
+    ggplot2::theme_minimal(base_family = "Verdana") +
+    ggplot2::theme(
+      plot.title.position = "plot",
+      plot.caption.position = "plot",
+      plot.title = ggtext::element_markdown(),
+      plot.subtitle = ggtext::element_markdown(face = "italic"),
+      axis.text.y = ggtext::element_markdown(),
+      panel.grid.major.x = ggplot2::element_blank(),
+      panel.grid.minor.x = ggplot2::element_blank(),
+      legend.position = "none"
+    )
 }

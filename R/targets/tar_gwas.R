@@ -83,6 +83,12 @@ tar_gwas <- {list(
     iteration = "list",
     packages = c("here", "data.table", "stats", "future.apply"),
     format = "file"
+  ),
+  tar_target(gwas_results_ggplot,
+    command = plot_manhattan(file = gwas_results_file, model = gwas_models),
+    pattern = map(gwas_models, gwas_results_file),
+    iteration = "list",
+    packages = c("ggplot2", "ggtext", "data.table", "ggrepel", "scales")
   )
 )}
 
