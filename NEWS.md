@@ -14,7 +14,8 @@
     + `tar-qc_idats.R`, functions, used in `tar_methylation.R`, to compute idats (methylation) files quality-control.
     + `tar-qc_plink.R`, functions, used in `tar_genotype.R`, to compute PLINK files quality-control.
     + `tar-vep.R`, functions, used in `tar_vep.R`, to prepare Docker command and to format VEP output.
-    + `tar-pval_trans.R`, p-value ggplot2 axis transformation.
+    + `tar-pval_trans.R`, p-value `ggplot2` axis transformation.
+    + `tar-manhattan.R`, functions to draw Manhattan plot using `ggplot2`.
     + `tar-sub_chunk.R`, function to create sub-chunk inside a chunk in RMarkdown.
     + `tar-crossmap.R`, functions, used in `tar_crossmap.R`, to upgrade or downgrade genome assembly of VCF files.
     + `tar-plink2.R`n function to download PLINK2 binary.
