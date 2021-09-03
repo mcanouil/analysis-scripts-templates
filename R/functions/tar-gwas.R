@@ -73,12 +73,11 @@ do_gwas <- function(
 
   message("Formatting VCFs and performing PLINK2 regression ...")
 
-  list_results <- future.apply::future_lapply(
+  list_results <- lapply(
     X = vcfs,
     basename_file = basename_file,
     vep_file = vep,
     bin_path = bin_path,
-    future.globals = FALSE,
     FUN = function(vcf, basename_file, vep_file, bin_path) {
       vcf_file <- sprintf("%s__%s", basename_file, basename(vcf))
       results_file <- sub("\\.vcf.gz", "", vcf_file)
