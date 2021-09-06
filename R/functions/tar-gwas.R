@@ -262,7 +262,7 @@ plot_manhattan_gwas <- function(file, model) {
     ) +
     ggplot2::labs(
       title = model[["pretty_trait"]],
-      subtitle = toupper(paste(model[["group"]], "= ", model[["covariates"]]))
+      subtitle = toupper(paste(model[["raw_trait"]], "= ", model[["covariates"]]))
     ) +
     ggplot2::theme_minimal(base_family = "Verdana") +
     ggplot2::theme(
@@ -274,5 +274,53 @@ plot_manhattan_gwas <- function(file, model) {
       panel.grid.major.x = ggplot2::element_blank(),
       panel.grid.minor.x = ggplot2::element_blank(),
       legend.position = "none"
+    )
+}
+
+#' plot_pp_gwas
+#' @import data.table
+#' @import ggplot2
+#' @import ggtext
+plot_pp_gwas <- function(file, model) {
+  dt <- data.table::fread(file)[
+    order(P)
+  ][
+    j = c("exppval", "labels") := list(
+      (1:.N - 0.5) / .N,
+      paste0(
+        "&lambda;<sub>gc</sub> = ",
+        format(median(qnorm(P / 2)^2, na.rm = TRUE) / qchisq(0.5, df = 1), digits = 3, nsmall = 3)
+      )
+    )
+  ]
+  alpha <- 0.05 / nrow(dt)
+
+  ggplot2::ggplot(data = dt) +
+    ggplot2::aes(x = .data[["exppval"]], y = .data[["P"]], colour = .data[["labels"]], shape = .data[["labels"]]) +
+    ggplot2::geom_abline(intercept = 0, slope = 1, colour = "black", linetype = 2) +
+    ggplot2::geom_point(size = 0.60) +
+    ggplot2::scale_x_continuous(trans = "pval", expand = ggplot2::expansion(c(0, 0.2)), limits = c(1, NA)) +
+    ggplot2::scale_colour_viridis_d(begin = 0.5, end = 0.5) +
+    ggplot2::scale_shape_discrete(solid = TRUE) +
+    ggplot2::labs(x = "Expected P-value", y = "Observed P-value", colour = NULL, shape = NULL) +
+    ggplot2::theme(
+      legend.position = c(0.99, 0.01),
+      legend.justification = c("right", "bottom"),
+      legend.box.just = "right",
+      legend.text = ggtext::element_markdown(),
+      legend.margin = ggplot2::margin(1.5, 1.5, 1.5, 1.5),
+      legend.spacing.x = ggplot2::unit(0, "pt"),
+      legend.spacing.y = ggplot2::unit(0, "pt")
+    ) +
+    ggplot2::geom_hline(yintercept = alpha, linetype = 2, colour = "#b22222") +
+    ggplot2::scale_y_continuous(
+      trans = pval_trans(alpha = alpha, md = TRUE, colour = "#b22222"),
+      expand = ggplot2::expansion(mult = c(0, 0.2)),
+      limits = c(1, NA)
+    ) +
+    ggplot2::guides(shape = ggplot2::guide_legend(override.aes = list(size = 2))) +
+    ggplot2::labs(
+      title = model[["pretty_trait"]],
+      subtitle = toupper(paste(model[["raw_trait"]], "= ", model[["covariates"]]))
     )
 }
