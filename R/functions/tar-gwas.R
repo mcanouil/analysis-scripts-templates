@@ -264,7 +264,7 @@ plot_manhattan_gwas <- function(file, model) {
       title = model[["pretty_trait"]],
       subtitle = toupper(paste(model[["raw_trait"]], "= ", model[["covariates"]]))
     ) +
-    ggplot2::theme_minimal(base_family = "Verdana") +
+    # ggplot2::theme_minimal(base_family = "Verdana") +
     ggplot2::theme(
       plot.title.position = "plot",
       plot.caption.position = "plot",
@@ -304,6 +304,11 @@ plot_pp_gwas <- function(file, model) {
     ggplot2::scale_shape_discrete(solid = TRUE) +
     ggplot2::labs(x = "Expected P-value", y = "Observed P-value", colour = NULL, shape = NULL) +
     ggplot2::theme(
+      plot.title.position = "plot",
+      plot.caption.position = "plot",
+      plot.title = ggtext::element_markdown(),
+      plot.subtitle = ggtext::element_markdown(face = "italic"),
+      axis.text.y = ggtext::element_markdown(),
       legend.position = c(0.99, 0.01),
       legend.justification = c("right", "bottom"),
       legend.box.just = "right",
