@@ -15,7 +15,7 @@ pval_trans <- function(alpha = NULL, md = FALSE, prefix = FALSE, colour = "#b222
         if (max == 0) 1 else sort(unique(c(10^-seq(0, max, by = floor(max / n) + 1), alpha)))
       }
     })(),
-    format = (function(x) {
+    format = (function(x, digits = 2) {
       if (md & nchar(system.file(package = "ggtext")) != 0) {
         prefix_text <- if (prefix) "&alpha; = " else ""
         x_fmt <- gsub(
@@ -25,7 +25,8 @@ pval_trans <- function(alpha = NULL, md = FALSE, prefix = FALSE, colour = "#b222
         )
         x_fmt[x %in% c(0, 1)] <- x[x %in% c(0, 1)]
         x_fmt <- gsub("^1 &times; ", "", x_fmt)
-        alpha_idx <- format(x, scientific = TRUE) == format(alpha, scientific = TRUE)
+        alpha_idx <- format(x, scientific = TRUE, digits = digits) ==
+          format(alpha, scientific = TRUE, digits = digits)
         x_fmt[alpha_idx] <- paste0("<b style='color:", colour, ";'>", prefix_text, x_fmt[alpha_idx], "</b>")
         x_fmt
       } else {
@@ -37,7 +38,8 @@ pval_trans <- function(alpha = NULL, md = FALSE, prefix = FALSE, colour = "#b222
         )
         x_fmt[x %in% c(0, 1)] <- x[x %in% c(0, 1)]
         x_fmt <- gsub("^1 \\%\\*\\% ", "", x_fmt)
-        alpha_idx <- format(x, scientific = TRUE) == format(alpha, scientific = TRUE)
+        alpha_idx <- format(x, scientific = TRUE, digits = digits) ==
+          format(alpha, scientific = TRUE, digits = digits)
         x_fmt[alpha_idx] <- paste0(prefix_text, x_fmt[alpha_idx])
         parse(text = x_fmt)
       }
