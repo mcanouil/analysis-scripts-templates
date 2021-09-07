@@ -189,7 +189,7 @@ do_gwas <- function(
     }
   )
 
-  results_file <- sprintf("%s/gwas_%s.csv.gz", path, model[["raw_trait"]])
+  results_file <- sprintf("%s/gwas_%s_%s.csv.gz", path, model[["raw_trait"]], model[["tar_group"]])
   dir.create(
     path = dirname(results_file),
     recursive = TRUE,
@@ -256,7 +256,8 @@ plot_manhattan_gwas <- function(file, model) {
     ggplot2::annotate(
       geom = "rect",
       xmin = -Inf, xmax = Inf, ymin = 1, ymax = alpha,
-      fill = "#b22222", alpha = 0.2, colour = NA
+      fill = "#b22222", alpha = 0.2, colour = NA,
+      na.rm = TRUE
     ) +
     ggplot2::geom_hline(yintercept = alpha, linetype = 2, colour = "#b22222") +
     ggplot2::scale_x_continuous(
@@ -276,7 +277,8 @@ plot_manhattan_gwas <- function(file, model) {
       show.legend = FALSE,
       min.segment.length = 0,
       # direction = "x",
-      size = 1.75
+      size = 1.75,
+      na.rm = TRUE
     ) +
     ggplot2::labs(
       x = "Chromosome",
