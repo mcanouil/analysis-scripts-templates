@@ -244,16 +244,34 @@ plot_manhattan_gwas <- function(file, model) {
     j = c("CHROM", "POS", "P", "gene_label_min", "gene_label")
   ]
 
-  draw_manhattan(
-    data = dt,
-    x = "POS",
-    y = "P",
-    chr = "CHROM",
-    label_y = "P-value",
-    alpha = 0.05 / nrow(dt)
-  ) +
+  if (is.numeric(dt[["CHROM"]])) {
+    dt[j = "CHROM" := lapply(.SD, as.character), .SDcols = "CHROM"]
+  }
+
+  alpha <- 0.05 / nrow(dt)
+
+  ggplot2::ggplot(data = dt) +
+    ggplot2::aes(x = .data[["POS"]], y = .data[["P"]], colour = .data[["CHROM"]]) +
+    ggplot2::geom_point(stat = "manhattan", size = 0.60, na.rm = TRUE) +
+    ggplot2::annotate(
+      geom = "rect",
+      xmin = -Inf, xmax = Inf, ymin = 1, ymax = alpha,
+      fill = "#b22222", alpha = 0.2, colour = NA
+    ) +
+    ggplot2::geom_hline(yintercept = alpha, linetype = 2, colour = "#b22222") +
+    ggplot2::scale_x_continuous(
+      breaks = 1:24,
+      labels = c(1:22, "X", "Y"),
+      expand = ggplot2::expansion(add = 0.25)
+    ) +
+    ggplot2::scale_y_continuous(
+      trans = "pval",
+      expand = ggplot2::expansion(mult = c(0, 0.2)),
+      limits = c(0.05, NA)
+    ) +
+    ggplot2::scale_colour_manual(values = rep(scales::viridis_pal(begin = 1/4, end = 3/4)(2), 12)) +
     ggrepel::geom_label_repel(
-      mapping = ggplot2::aes(label = gene_label_min),
+      mapping = ggplot2::aes(label = .data[["gene_label_min"]]),
       stat = "manhattan",
       show.legend = FALSE,
       min.segment.length = 0,
@@ -261,10 +279,12 @@ plot_manhattan_gwas <- function(file, model) {
       size = 1.75
     ) +
     ggplot2::labs(
+      x = "Chromosome",
+      y = "P-value",
+      colour = "Chromosome",
       title = model[["pretty_trait"]],
       subtitle = toupper(paste(model[["raw_trait"]], "= ", model[["covariates"]]))
     ) +
-    # ggplot2::theme_minimal(base_family = "Verdana") +
     ggplot2::theme(
       plot.title.position = "plot",
       plot.caption.position = "plot",
@@ -293,16 +313,35 @@ plot_pp_gwas <- function(file, model) {
       )
     )
   ]
+
   alpha <- 0.05 / nrow(dt)
 
   ggplot2::ggplot(data = dt) +
     ggplot2::aes(x = .data[["exppval"]], y = .data[["P"]], colour = .data[["labels"]], shape = .data[["labels"]]) +
     ggplot2::geom_abline(intercept = 0, slope = 1, colour = "black", linetype = 2) +
     ggplot2::geom_point(size = 0.60) +
-    ggplot2::scale_x_continuous(trans = "pval", expand = ggplot2::expansion(c(0, 0.2)), limits = c(1, NA)) +
+    ggplot2::geom_hline(yintercept = alpha, linetype = 2, colour = "#b22222") +
+    ggplot2::scale_x_continuous(
+      trans = "pval",
+      expand = ggplot2::expansion(c(0, 0.2)),
+      limits = c(1, NA)
+    ) +
+    ggplot2::scale_y_continuous(
+      trans = pval_trans(alpha = NULL, md = TRUE, colour = "#b22222"),
+      expand = ggplot2::expansion(mult = c(0, 0.2)),
+      limits = c(1, NA)
+    ) +
     ggplot2::scale_colour_viridis_d(begin = 0.5, end = 0.5) +
     ggplot2::scale_shape_discrete(solid = TRUE) +
-    ggplot2::labs(x = "Expected P-value", y = "Observed P-value", colour = NULL, shape = NULL) +
+    ggplot2::guides(shape = ggplot2::guide_legend(override.aes = list(size = 2))) +
+    ggplot2::labs(
+      x = "Expected P-value",
+      y = "Observed P-value",
+      colour = NULL,
+      shape = NULL,
+      title = model[["pretty_trait"]],
+      subtitle = toupper(paste(model[["raw_trait"]], "= ", model[["covariates"]]))
+    ) +
     ggplot2::theme(
       plot.title.position = "plot",
       plot.caption.position = "plot",
@@ -316,16 +355,5 @@ plot_pp_gwas <- function(file, model) {
       legend.margin = ggplot2::margin(1.5, 1.5, 1.5, 1.5),
       legend.spacing.x = ggplot2::unit(0, "pt"),
       legend.spacing.y = ggplot2::unit(0, "pt")
-    ) +
-    ggplot2::geom_hline(yintercept = alpha, linetype = 2, colour = "#b22222") +
-    ggplot2::scale_y_continuous(
-      trans = pval_trans(alpha = alpha, md = TRUE, colour = "#b22222"),
-      expand = ggplot2::expansion(mult = c(0, 0.2)),
-      limits = c(1, NA)
-    ) +
-    ggplot2::guides(shape = ggplot2::guide_legend(override.aes = list(size = 2))) +
-    ggplot2::labs(
-      title = model[["pretty_trait"]],
-      subtitle = toupper(paste(model[["raw_trait"]], "= ", model[["covariates"]]))
     )
 }
