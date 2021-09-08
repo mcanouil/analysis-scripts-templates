@@ -361,7 +361,7 @@ plot_pp_gwas <- function(file, model) {
       legend.box.just = "right",
       legend.text = ggtext::element_markdown(),
       legend.margin = ggplot2::margin(1.5, 1.5, 1.5, 1.5),
-      legend.spacing.x = ggplot2::unit(0, "pt"),
-      legend.spacing.y = ggplot2::unit(0, "pt")
+      legend.spacing.x = ggplot2::unit(1.5, "pt"),
+      legend.spacing.y = ggplot2::unit(1.5, "pt")
     )
 }
