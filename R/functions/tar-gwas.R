@@ -320,7 +320,12 @@ plot_pp_gwas <- function(file, model) {
   alpha <- 0.05 / nrow(dt)
 
   ggplot2::ggplot(data = dt) +
-    ggplot2::aes(x = .data[["exppval"]], y = .data[["P"]], colour = .data[["labels"]], shape = .data[["labels"]]) +
+    ggplot2::aes(
+      x = .data[["exppval"]],
+      y = .data[["P"]],
+      colour = .data[["labels"]],
+      shape = .data[["labels"]]
+    ) +
     ggplot2::geom_abline(intercept = 0, slope = 1, colour = "black", linetype = 2) +
     ggplot2::geom_point(size = 0.60) +
     ggplot2::geom_hline(yintercept = alpha, linetype = 2, colour = "#b22222") +
@@ -330,8 +335,8 @@ plot_pp_gwas <- function(file, model) {
       limits = c(1, NA)
     ) +
     ggplot2::scale_y_continuous(
-      trans = pval_trans(alpha = NULL, md = TRUE, colour = "#b22222"),
-      expand = ggplot2::expansion(mult = c(0, 0.2)),
+      trans = "pval",
+      expand = ggplot2::expansion(c(0, 0.2)),
       limits = c(1, NA)
     ) +
     ggplot2::scale_colour_viridis_d(begin = 0.5, end = 0.5) +
