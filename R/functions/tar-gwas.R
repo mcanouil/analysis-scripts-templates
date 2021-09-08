@@ -303,15 +303,16 @@ plot_manhattan_gwas <- function(file, model) {
 #' @import data.table
 #' @import ggplot2
 #' @import ggtext
+#' @import stats
 plot_pp_gwas <- function(file, model) {
   dt <- data.table::fread(file)[
     order(P)
   ][
-    j = c("exppval", "labels") := list(
-      (1:.N - 0.5) / .N,
-      paste0(
+    j = `:=`(
+      "exppval" = (1:.N - 0.5) / .N,
+      "labels" = paste0(
         "&lambda;<sub>gc</sub> = ",
-        format(median(qnorm(P / 2)^2, na.rm = TRUE) / qchisq(0.5, df = 1), digits = 3, nsmall = 3)
+        format(stats::median(stats::qnorm(P / 2)^2, na.rm = TRUE) / stats::qchisq(0.5, df = 1), digits = 3, nsmall = 3)
       )
     )
   ]
