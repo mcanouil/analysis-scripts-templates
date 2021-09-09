@@ -53,13 +53,12 @@ tar_gwas <- {list(
   tar_target(gwas_models,
     command = tar_group(dplyr::group_by(
       data.frame(
-        pretty_trait = c("Control/Case"),
+        pretty_trait = c("Case/Control"),
         raw_trait = c("group"),
         covariates = c(
-          paste(c(
-            "sex", "age", "bmi",
-            sprintf("PC%02d", 1:5)
-          ), collapse = " + ")
+          paste(c("sex", "age", "bmi"), collapse = " + "),
+          paste(c("sex", "age", "bmi", sprintf("PC%02d", 1:2)), collapse = " + "),
+          paste(c("sex", "age", "bmi", sprintf("PC%02d", 1:5)), collapse = " + ")
         )
       ),
       pretty_trait, raw_trait, covariates
@@ -84,11 +83,17 @@ tar_gwas <- {list(
     packages = c("here", "data.table", "stats", "future.apply"),
     format = "file"
   ),
-  tar_target(gwas_results_ggplot,
-    command = plot_manhattan(file = gwas_results_file, model = gwas_models),
+  tar_target(gwas_results_manhattan,
+    command = plot_manhattan_gwas(file = gwas_results_file, model = gwas_models),
     pattern = map(gwas_models, gwas_results_file),
     iteration = "list",
     packages = c("ggplot2", "ggtext", "data.table", "ggrepel", "scales")
+  ),
+  tar_target(gwas_results_pp,
+    command = plot_pp_gwas(file = gwas_results_file, model = gwas_models),
+    pattern = map(gwas_models, gwas_results_file),
+    iteration = "list",
+    packages = c("ggplot2", "ggtext", "data.table", "stats")
   )
 )}
 
