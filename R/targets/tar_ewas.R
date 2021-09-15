@@ -54,12 +54,11 @@ tar_ewas <- {list(
     packages = "dplyr",
     iteration = "group"
   ),
-  tar_target(ma_betavalues_file, file.path(ma_export_directory, "EPIC_QC_betavalues.csv.gz"), format = "file"),
   tar_target(ewas_results_file,
     command = do_ewas(
       data = ewas_sample_sheet_qc, # phenotypes
       model = ewas_models,
-      beta_file = ma_betavalues_file,
+      beta_file = file.path(ma_export_directory, "EPIC_QC_betavalues.csv.gz"), format = "file"),
       path = file.path(output_directory, "ewas")
     ),
     pattern = map(ewas_models),
