@@ -1,9 +1,14 @@
 #' qc_sample_sheet_ewas
 #' @import data.table
 qc_sample_sheet_ewas <- function(phenotype, methylation) {
+  methy_sample_sheet <- data.table::fread(file = methylation)
+
   merge(
     x = phenotype[j = `:=`("Sample_Name" = IID)],
-    y = data.table::fread(file = methylation)[j = -c("cohort")], # Add cell components and QC metric
+    y =   methy_sample_sheet[
+      j = .SD,
+      .SDcols = grep("^CellT_|^Sample_|^Sentrix_|qc_sex_discrepancy|call_rate", names(methy_sample_sheet))
+    ], # Add cell components and QC metrics
     by = "Sample_Name",
     all.x = TRUE
   )[
@@ -12,6 +17,11 @@ qc_sample_sheet_ewas <- function(phenotype, methylation) {
   ][
     j = if (.N > 1) .SD[!Status %in% "Exclude" & call_rate == max(call_rate, na.rm = TRUE)] else .SD,
     by = "Sample_Name"
+  ][
+    j = `:=`(
+      bmi = weight / (height / 100)^2,
+      group = c("ELFE" = 1L, "EPIPAGE" = 2L)[cohort]
+    )
   ]
 }
 
