@@ -93,7 +93,7 @@ for (trait in traits) {
         form <- update.formula(form, as.formula(glue("~ . + { paste(cells[[trait]], collapse = ' + ') }")))
       }
 
-      pheno <- na.exclude(sample_sheet_qc[, .SD, .SDcols = c("ABOS_ID", "epic", all.vars(form))])
+      pheno <- na.exclude(sample_sheet_qc[, .SD, .SDcols = c("Sample_ID", "epic", all.vars(form))])
 
       limma_fit1 <- lmFit(
         object = beta_matrix[, as.character(pheno[["epic"]])],
