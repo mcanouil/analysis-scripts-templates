@@ -11,7 +11,7 @@ qc_sample_sheet_gwas <- function(phenotype, exclusion, relatedness, ethnicity) {
   bad_duplicated_samples <- relatedness[
     i = sub("_.*", "", IID1) == sub("_.*", "", IID2)
   ][
-    j = melt.data.table(.SD, measure.vars = paste0("F_MISS", 1:2)),
+    j = data.table::melt.data.table(.SD, measure.vars = paste0("F_MISS", 1:2)),
     .SDcols = c(paste0("IID", 1:2), paste0("F_MISS", 1:2))
   ][
     j = list(
@@ -42,7 +42,7 @@ qc_sample_sheet_gwas <- function(phenotype, exclusion, relatedness, ethnicity) {
 
   merge(
     x = merge(x = dt, y = exclusion[j = list(vcf_id = IID, Status)], by = "vcf_id", all.x = TRUE),
-    y = data.table::fread(file = ethnicity)[j = -c("cohort")], # Add genetics PCs,
+    y = data.table::fread(file = ethnicity)[j = -c("cohort")], # Add genetics PCs
     by.x = "vcf_id",
     by.y = "iid",
     all.x = TRUE
@@ -51,15 +51,13 @@ qc_sample_sheet_gwas <- function(phenotype, exclusion, relatedness, ethnicity) {
     j = Status := "Exclude"
   ][
     i = is.na(PC01),
-    j = vcf_id := NA_character_
+    j = `:=`(
+      vcf_id = NA_character_,
+      Status = "Exclude"
+    )
   ][
     i = is.na(vcf_id),
     j = is_related := NA
-  ][
-    j = `:=`(
-      bmi = weight / (height / 100)^2,
-      group = c("ELFE" = 1L, "EPIPAGE" = 2L)[cohort]
-    )
   ]
 }
 
