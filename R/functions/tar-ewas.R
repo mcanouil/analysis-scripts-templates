@@ -39,19 +39,26 @@ do_ewas <- function(
   dir.create(path = tmpdir, recursive = TRUE, mode = "0777")
   on.exit(unlink(tmpdir, recursive = TRUE))
 
-  beta_matrix <- data.table::fread(
-    file = file.path(data_directory, "EPIC", "EPIC_QC_betavalues.csv.gz"),
-    header = TRUE
-  )[j = .SD, .SDcols = c("cpg_id", sample_sheet_qc[["epic"]])]
-  beta_matrix <- (function(x) log2(x) - log2(1 - x))(as.matrix(beta_matrix, "cpg_id"))
+  beta_matrix <- data.table::fread(file = beta_file, header = TRUE)
+  data <- data[Sample_ID %in% names(beta_matrix)]
+  beta_matrix <- data.table::setnames(beta_matrix, data[["Sample_ID"]], data[["Sample_Name"]])[
+    j = (function(x) log2(x) - log2(1 - x))(as.matrix(.SD, "cpg_id")),
+    .SDcols = c("cpg_id", data[["Sample_Name"]])
+  ]
 
   covariates <- all.vars(as.formula(sprintf(" ~ %s", model[["covariates"]])))
+  if (any(grepl("^cell$", covariates))) {
+    covariates <- c(
+      covariates[!grepl("^cell$", covariates)],
+      names(sort(data[j = colMeans(.SD), .SDcols = grep("^CellT_", names(data))])[-1])
+    )
+  }
   dt <- unique(data.table::setnames(
     x = data.table::as.data.table(data)[
       j = na.exclude(.SD),
-      .SDcols = c("vcf_id", model[["raw_trait"]], covariates)
+      .SDcols = c("Sample_Name", model[["raw_trait"]], covariates)
     ],
-    old = "vcf_id",
+    old = "Sample_Name",
     new = "#IID"
   ))
 
