@@ -189,7 +189,8 @@ tar_methylation <- {list( # Methylation Array (ma)
       from = ma_export,
       report = here(grep("\\.html$", ma_qc_report, value = TRUE)),
       to = ma_export_directory
-    )
+    ),
+    packages = "here"
   )
 )}
 
