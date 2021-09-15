@@ -36,18 +36,17 @@ tar_setup <- {list( # Setup project
 
 
 ### targets ========================================================================================
-tar_sample_sheet_qc <- list({
-  tar_target(sample_sheet_qc,
-    command = qc_sample_sheet(
+tar_sample_sheet_qc <- {list(
+  tar_target(gwas_sample_sheet_qc,
+    command = qc_sample_sheet_gwas(
       phenotype = harmonised_phenotypes,
       exclusion = file.path(ga_export_directory, "quality-control-exclusion-checks.csv"),
       relatedness = file.path(ga_export_directory, "quality-control-relatedness.csv"),
-      ethnicity = file.path(ga_export_directory, "quality-control-ethnicity.csv"),
-      methylation = ma_csv
+      ethnicity = file.path(ga_export_directory, "quality-control-ethnicity.csv")
     ),
     packages = "data.table"
   )
-})
+)}
 
 tar_gwas <- {list(
   tar_target(gwas_models,
@@ -68,7 +67,7 @@ tar_gwas <- {list(
   ),
   tar_target(gwas_results_file,
     command = do_gwas(
-      data = sample_sheet_qc, # phenotypes
+      data = gwas_sample_sheet_qc, # phenotypes
       model = gwas_models,
       vcfs = ga_imputed_vcf_crossmap, # VCFs from tar_crossmap
       vep = veb_symbol_file, # VEP annotation from tar_vep
