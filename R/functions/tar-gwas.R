@@ -1,3 +1,69 @@
+#' qc_sample_sheet_gwas
+#' @import data.table
+qc_sample_sheet_gwas <- function(phenotype, exclusion, relatedness, ethnicity) {
+  exclusion <- data.table::fread(file = exclusion)[
+    i = Sex_Discrepancy == 1 | Sample_Call_Rate == 1 | Sex_Missing == 1 | Heterozygosity_Check == 1,
+    j = Status := "Exclude"
+  ]
+
+  relatedness <- data.table::fread(file = relatedness)
+
+  bad_duplicated_samples <- relatedness[
+    i = sub("_.*", "", IID1) == sub("_.*", "", IID2)
+  ][
+    j = melt.data.table(.SD, measure.vars = paste0("F_MISS", 1:2)),
+    .SDcols = c(paste0("IID", 1:2), paste0("F_MISS", 1:2))
+  ][
+    j = list(
+      IID = sub("_.*", "", IID1),
+      best_iid = data.table::fifelse(
+        test = variable[which.min(value)] == "F_MISS1",
+        yes = IID1,
+        no = IID2
+      )
+    ),
+    by = c(paste0("IID", 1:2))
+  ]
+
+  dt <- phenotype[j = `:=`(
+    "Sample_Name" = IID,
+    "vcf_id" = IID
+  )][# Add related variable
+    j = is_related := vcf_id %in% relatedness[
+      i = sub("_.*", "", IID1) != sub("_.*", "", IID2),
+      j = unique(unlist(.SD)),
+      .SDcols = paste0("IID", 1:2)
+    ]
+  ][# keep best duplicates from genotyping
+    i = bad_duplicated_samples,
+    j = vcf_id := best_iid,
+    on = "IID"
+  ]
+
+  merge(
+    x = merge(x = dt, y = exclusion[j = list(vcf_id = IID, Status)], by = "vcf_id", all.x = TRUE),
+    y = data.table::fread(file = ethnicity)[j = -c("cohort")], # Add genetics PCs,
+    by.x = "vcf_id",
+    by.y = "iid",
+    all.x = TRUE
+  )[
+    i = (is_related),
+    j = Status := "Exclude"
+  ][
+    i = is.na(PC01),
+    j = vcf_id := NA_character_
+  ][
+    i = is.na(vcf_id),
+    j = is_related := NA
+  ][
+    j = `:=`(
+      bmi = weight / (height / 100)^2,
+      group = c("ELFE" = 1L, "EPIPAGE" = 2L)[cohort]
+    )
+  ]
+}
+
+
 #' do_gwas
 #' @import data.table
 #' @import stats
