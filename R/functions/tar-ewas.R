@@ -1,41 +1,17 @@
 #' qc_sample_sheet_ewas
 #' @import data.table
 qc_sample_sheet_ewas <- function(phenotype, methylation) {
-  dt <- phenotype[j = `:=`(
-    "Sample_Name" = IID,
-    "vcf_id" = IID
-  )][# Add related variable
-    j = is_related := vcf_id %in% relatedness[
-      i = sub("_.*", "", IID1) != sub("_.*", "", IID2),
-      j = unique(unlist(.SD)),
-      .SDcols = paste0("IID", 1:2)
-    ]
-  ][# keep best duplicates from genotyping
-    i = bad_duplicated_samples,
-    j = vcf_id := best_iid,
-    on = "IID"
-  ]
-
   merge(
-    x = merge(x = dt, y = exclusion[j = list(vcf_id = IID, Status)], by = "vcf_id", all.x = TRUE),
-    y = data.table::fread(file = ethnicity)[j = -c("cohort")], # Add genetics PCs,
-    by.x = "vcf_id",
-    by.y = "iid",
+    x = phenotype[j = `:=`("Sample_Name" = IID)],
+    y = data.table::fread(file = methylation)[j = -c("cohort")], # Add cell components and QC metric
+    by = "Sample_Name",
     all.x = TRUE
   )[
-    i = (is_related),
+    i = (qc_sex_discrepancy | is.na(call_rate)),
     j = Status := "Exclude"
   ][
-    i = is.na(PC01),
-    j = vcf_id := NA_character_
-  ][
-    i = is.na(vcf_id),
-    j = is_related := NA
-  ][
-    j = `:=`(
-      bmi = weight / (height / 100)^2,
-      group = c("ELFE" = 1L, "EPIPAGE" = 2L)[cohort]
-    )
+    j = if (.N > 1) .SD[!Status %in% "Exclude" & call_rate == max(call_rate, na.rm = TRUE)] else .SD,
+    by = "Sample_Name"
   ]
 }
 
