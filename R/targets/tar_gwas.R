@@ -39,7 +39,7 @@ tar_setup <- {list( # Setup project
 tar_sample_sheet_qc <- {list(
   tar_target(gwas_sample_sheet_qc,
     command = qc_sample_sheet_gwas(
-      phenotype = harmonised_phenotypes,
+      phenotype = phenotypes,
       exclusion = file.path(ga_export_directory, "quality-control-exclusion-checks.csv"),
       relatedness = file.path(ga_export_directory, "quality-control-relatedness.csv"),
       ethnicity = file.path(ga_export_directory, "quality-control-ethnicity.csv")

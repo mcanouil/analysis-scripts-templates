@@ -30,7 +30,7 @@ tar_setup <- {list( # Setup project
 tar_sample_sheet_qc <- {list(
   tar_target(ewas_sample_sheet_qc,
     command = qc_sample_sheet_ewas(
-      phenotype = harmonised_phenotypes,
+      phenotype = phenotypes,
       methylation = file.path(ma_export_directory, "EPIC_QC_phenotypes.csv")
     ),
     packages = "data.table"
@@ -58,7 +58,7 @@ tar_ewas <- {list(
     command = do_ewas(
       data = ewas_sample_sheet_qc, # phenotypes
       model = ewas_models,
-      beta_file = file.path(ma_export_directory, "EPIC_QC_betavalues.csv.gz"), format = "file"),
+      beta_file = file.path(ma_export_directory, "EPIC_QC_betavalues.csv.gz"),
       path = file.path(output_directory, "ewas")
     ),
     pattern = map(ewas_models),
