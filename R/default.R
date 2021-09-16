@@ -44,11 +44,11 @@ suppressPackageStartupMessages({
 
 ### Set chmod ======================================================================================
 # Sys.chmod(
-#   list.files(output_directory, full.names = TRUE), 
+#   list.files(output_directory, full.names = TRUE),
 #   mode = "0775", use_umask = FALSE
 # )
 # Sys.chmod(
-#   list.files(output_directory, full.names = TRUE, recursive = TRUE, all.files = TRUE), 
+#   list.files(output_directory, full.names = TRUE, recursive = TRUE, all.files = TRUE),
 #   mode = "0775", use_umask = FALSE
 # )
 # invisible(system(paste("chgrp -R staff", output_directory), intern = TRUE))
