@@ -17,6 +17,19 @@ Script templates to work with omics datasets.
 
   - [default.R](R/default.R)
 
+### R/functions
+
+  - [tar-crossmap.R](R/functions/tar-crossmap.R)
+  - [tar-ewas.R](R/functions/tar-ewas.R)
+  - [tar-gwas.R](R/functions/tar-gwas.R)
+  - [tar-manhattan.R](R/functions/tar-manhattan.R)
+  - [tar-plink2.R](R/functions/tar-plink2.R)
+  - [tar-pval\_trans.R](R/functions/tar-pval_trans.R)
+  - [tar-qc\_idats.R](R/functions/tar-qc_idats.R)
+  - [tar-qc\_plink.R](R/functions/tar-qc_plink.R)
+  - [tar-sub\_chunk.R](R/functions/tar-sub_chunk.R)
+  - [tar-vep.R](R/functions/tar-vep.R)
+
 ### R/scripts
 
   - [01-design.R](R/scripts/01-design.R)
@@ -49,15 +62,9 @@ Script templates to work with omics datasets.
   - [tar\_ora.R](R/targets/tar_ora.R)
   - [tar\_vep.R](R/targets/tar_vep.R)
 
-### R/functions
+## Rmarkdown
 
-  - [tar-crossmap.R](R/functions/tar-crossmap.R)
-  - [tar-ewas.R](R/functions/tar-ewas.R)
-  - [tar-gwas.R](R/functions/tar-gwas.R)
-  - [tar-manhattan.R](R/functions/tar-manhattan.R)
-  - [tar-plink2.R](R/functions/tar-plink2.R)
-  - [tar-pval\_trans.R](R/functions/tar-pval_trans.R)
-  - [tar-qc\_idats.R](R/functions/tar-qc_idats.R)
-  - [tar-qc\_plink.R](R/functions/tar-qc_plink.R)
-  - [tar-sub\_chunk.R](R/functions/tar-sub_chunk.R)
-  - [tar-vep.R](R/functions/tar-vep.R)
+  - [ewas\_report.Rmd](Rmarkdown/ewas_report.Rmd)
+  - [genotype\_array\_qc\_report.Rmd](Rmarkdown/genotype_array_qc_report.Rmd)
+  - [gwas\_report.Rmd](Rmarkdown/gwas_report.Rmd)
+  - [methylation\_array\_qc\_report.Rmd](Rmarkdown/methylation_array_qc_report.Rmd)
