@@ -25,6 +25,9 @@ jobs:
       - name: Install data.table
         run: Rscript -e 'install.packages("data.table")'
 
+      - name: Install here
+        run: Rscript -e 'install.packages("here")'
+
       - name: Render README.Rmd
         run: Rscript -e 'if (file.exists("README.Rmd")) rmarkdown::render("README.Rmd")'
 
