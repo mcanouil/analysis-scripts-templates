@@ -107,11 +107,12 @@ for (trait in traits) {
           .fit = limma_fit2,
           .trait = trait,
           .ref = levels(sample_sheet_qc[[trait]])[1],
-          FUN = function(.coef, .fit, .trait, .ref) {
-            out <- as.data.table(topTable(
+          .number = nrow(beta_matrix),
+          FUN = function(.coef, .fit, .trait, .ref, .number) {
+            as.data.table(topTable(
               fit = .fit,
               coef = .coef,
-              number = nrow(beta_matrix),
+              number = .number,
               adjust.method = "BH",
               p.value = 1,
               sort.by = "none"
@@ -124,7 +125,6 @@ for (trait in traits) {
                 "contrast" = paste0(.trait, ": ", gsub(.trait, "", .coef), " Vs. ", .ref, " (ref)")
               )
             ]
-            out
           }
         )
         limma_top2 <- apply(
@@ -132,7 +132,8 @@ for (trait in traits) {
           MARGIN = 2,
           .fit = limma_fit1,
           .trait = trait,
-          FUN = function(icol, .fit, .trait) {
+          .number = nrow(beta_matrix),
+          FUN = function(icol, .fit, .trait, .number) {
             out <- paste0(.trait, icol)
             coef <- paste0(out[2], "-", out[1])
             contrasts_fit <- makeContrasts(contrasts = coef, levels = .fit$design)
@@ -142,10 +143,10 @@ for (trait in traits) {
             )
             limma_fit1b <- contrasts.fit(fit = .fit, contrasts = contrasts_fit)
             limma_fit2b <- eBayes(limma_fit1b)
-            limma_top <- as.data.table(topTable(
+            as.data.table(topTable(
               fit = limma_fit2b,
               coef = coef,
-              number = nrow(beta_matrix),
+              number = .number,
               adjust.method = "BH",
               p.value = 1,
               sort.by = "none"
@@ -158,7 +159,6 @@ for (trait in traits) {
                 "contrast" = paste0(.trait, ": ", icol[2], " Vs. ", icol[1], " (ref)")
               )
             ]
-            limma_top
           }
         )
         limma_top <- rbindlist(c(limma_top1, limma_top2))
@@ -167,10 +167,11 @@ for (trait in traits) {
         if (is.factor(sample_sheet_qc[[trait]])) {
           .levels <- levels(sample_sheet_qc[[trait]])
           .coef <- paste0(trait, .levels[-1])
-          limma_top <-  as.data.table(topTable(
+          .number <- nrow(beta_matrix)
+          limma_top <- as.data.table(topTable(
             fit = limma_fit2,
             coef = .coef,
-            number = nrow(beta_matrix),
+            number = .number,
             adjust.method = "BH",
             p.value = 1,
             sort.by = "none"
@@ -184,7 +185,7 @@ for (trait in traits) {
             )
           ]
         } else {
-          limma_top <-  as.data.table(topTable(
+          limma_top <- as.data.table(topTable(
             fit = limma_fit2,
             coef = trait,
             number = nrow(beta_matrix),
