@@ -259,34 +259,43 @@ do_ewas <- function(
 #' @import ggtext
 #' @import data.table
 #' @import ggrepel
+#' @import stats
 plot_manhattan_ewas <- function(file, model) {
+  raw_trait <- all.vars(stats::as.formula(paste0("~", model[["raw_trait"]])))
+
   dt <- data.table::fread(file)[
-    i = P <= 0.05 / .N,
-    j = gene_label := data.table::fifelse(Symbol == "", NA_character_, Symbol)
+    i = pvalue <= 0.05 / .N,
+    j = gene_label := data.table::fifelse(UCSC_RefGene_Name == "", NA_character_, UCSC_RefGene_Name)
   ][
     j = gene_label_min := data.table::fifelse(
-      test = P == min(P, na.rm = TRUE),
-      yes = gsub(",", ";", gene_label),
+      test = pvalue == min(pvalue, na.rm = TRUE),
+      yes = paste(unique(unlist(strsplit(gsub(",", ";", gene_label), ";"))), collapse = ";"),
       no = NA_character_
     ),
     by = "gene_label"
   ][
-    i = P > 0.05,
-    j = P := NA_real_
+    i = pvalue > 0.05,
+    j = pvalue := NA_real_
   ][
     j = file := basename(file)
   ][
-    j = c("CHROM", "POS", "P", "gene_label_min", "gene_label")
-  ]
+    j = cpg_chr := sub("chr", "", cpg_chr)
+  ][
+    j = c("cpg_chr", "cpg_pos", "pvalue", "gene_label_min", "gene_label")
+  ][order(pvalue)]
 
-  if (is.numeric(dt[["CHROM"]])) {
-    dt[j = "CHROM" := lapply(.SD, as.character), .SDcols = "CHROM"]
+  if (is.numeric(dt[["cpg_chr"]])) {
+    dt[j = "cpg_chr" := lapply(.SD, as.character), .SDcols = "cpg_chr"]
+  }
+
+  if (dt[!is.na(gene_label_min), .N] > 10) {
+    dt[-c(1:10), gene_label_min := NA_character_]
   }
 
   alpha <- 0.05 / nrow(dt)
 
   ggplot2::ggplot(data = dt) +
-    ggplot2::aes(x = .data[["POS"]], y = .data[["P"]], colour = .data[["CHROM"]]) +
+    ggplot2::aes(x = .data[["cpg_pos"]], y = .data[["pvalue"]], colour = .data[["cpg_chr"]]) +
     ggplot2::geom_point(stat = "manhattan", size = 0.60, na.rm = TRUE) +
     ggplot2::annotate(
       geom = "rect",
@@ -320,7 +329,7 @@ plot_manhattan_ewas <- function(file, model) {
       y = "P-value",
       colour = "Chromosome",
       title = model[["pretty_trait"]],
-      subtitle = toupper(paste(model[["raw_trait"]], "= ", model[["covariates"]]))
+      subtitle = toupper(paste(raw_trait, "= ", model[["covariates"]]))
     ) +
     ggplot2::theme(
       plot.title.position = "plot",
@@ -340,14 +349,16 @@ plot_manhattan_ewas <- function(file, model) {
 #' @import ggtext
 #' @import stats
 plot_pp_ewas <- function(file, model) {
+  raw_trait <- all.vars(stats::as.formula(paste0("~", model[["raw_trait"]])))
+
   dt <- data.table::fread(file)[
-    order(P)
+    order(pvalue)
   ][
     j = `:=`(
       "exppval" = (1:.N - 0.5) / .N,
       "labels" = paste0(
         "&lambda;<sub>gc</sub> = ",
-        format(stats::median(stats::qnorm(P / 2)^2, na.rm = TRUE) / stats::qchisq(0.5, df = 1), digits = 3, nsmall = 3)
+        format(stats::median(stats::qnorm(pvalue / 2)^2, na.rm = TRUE) / stats::qchisq(0.5, df = 1), digits = 3, nsmall = 3)
       )
     )
   ]
@@ -357,7 +368,7 @@ plot_pp_ewas <- function(file, model) {
   ggplot2::ggplot(data = dt) +
     ggplot2::aes(
       x = .data[["exppval"]],
-      y = .data[["P"]],
+      y = .data[["pvalue"]],
       colour = .data[["labels"]],
       shape = .data[["labels"]]
     ) +
@@ -383,7 +394,7 @@ plot_pp_ewas <- function(file, model) {
       colour = NULL,
       shape = NULL,
       title = model[["pretty_trait"]],
-      subtitle = toupper(paste(model[["raw_trait"]], "= ", model[["covariates"]]))
+      subtitle = toupper(paste(raw_trait, "= ", model[["covariates"]]))
     ) +
     ggplot2::theme(
       plot.title.position = "plot",
