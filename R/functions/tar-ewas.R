@@ -28,12 +28,16 @@ qc_sample_sheet_ewas <- function(phenotype, methylation) {
 #' do_ewas
 #' @import data.table
 #' @import stats
-#' @import future.apply future_lapply
+#' @import utils
+#' @import limma
+#' @import IlluminaHumanMethylationEPICanno.ilm10b5.hg38
+#' @importFrom future.apply future_lapply future_apply
 do_ewas <- function(
   data,
   model,
   beta_file,
-  path
+  path,
+  epic_annot_pkg = "IlluminaHumanMethylationEPICanno.ilm10b5.hg38"
 ) {
   tmpdir <- file.path(tempdir(), "ewas_limma", model[["raw_trait"]])
   dir.create(path = tmpdir, recursive = TRUE, mode = "0777")
@@ -46,21 +50,13 @@ do_ewas <- function(
     .SDcols = c("cpg_id", data[["Sample_Name"]])
   ]
 
-  covariates <- all.vars(as.formula(sprintf(" ~ %s", model[["covariates"]])))
+  covariates <- all.vars(stats::as.formula(sprintf(" ~ %s", model[["covariates"]])))
   if (any(grepl("^cell$", covariates))) {
     covariates <- c(
       covariates[!grepl("^cell$", covariates)],
-      names(sort(data[j = colMeans(.SD), .SDcols = grep("^CellT_", names(data))])[-1])
+      names(sort(data[j = colMeans(.SD, na.rm = TRUE), .SDcols = grep("^CellT_", names(data))])[-1])
     )
   }
-  dt <- unique(data.table::setnames(
-    x = data.table::as.data.table(data)[
-      j = na.exclude(.SD),
-      .SDcols = c("Sample_Name", model[["raw_trait"]], covariates)
-    ],
-    old = "Sample_Name",
-    new = "#IID"
-  ))
 
   if (length(sex_covariate <- grep("^sex", covariates, value = TRUE)) > 1) {
     stop(sprintf(
@@ -70,157 +66,148 @@ do_ewas <- function(
     ))
   }
 
-  model_type <- if (data.table::uniqueN(dt[[model[["raw_trait"]]]]) == 2) {
-    "logistic"
-  } else {
-    "linear"
+  basename_file <- sprintf("%s/limma_%s", tmpdir, model[["raw_trait"]])
+
+  message("Performing limma regression ...")
+
+  form <- stats::as.formula(paste0("~ ", paste(c(model[["raw_trait"]], covariates), collapse = " + ")))
+  pheno_dt <- unique(data.table::setnames(
+    x = data.table::as.data.table(data)[
+      j = na.exclude(.SD),
+      .SDcols = c("Sample_Name", all.vars(form))
+    ],
+    old = "Sample_Name",
+    new = "#IID"
+  ))
+
+  raw_trait <- all.vars(stats::as.formula(paste0("~", model[["raw_trait"]])))
+  if (grepl("factor\\(.+\\)", model[["raw_trait"]])) {
+    pheno_dt[
+      j = c(raw_trait) := lapply(
+        X = .SD,
+        FUN = function(x) {
+          eval(parse(text = sub(raw_trait, "x", model[["raw_trait"]])))
+        }
+      ),
+      .SDcols = c(raw_trait)
+    ]
+    model[["raw_trait"]] <- raw_trait
+    form <- stats::as.formula(paste0("~ ", paste(c(model[["raw_trait"]], covariates), collapse = " + ")))
   }
-  basename_file <- sprintf("%s/%s_%s", tmpdir, model_type, model[["raw_trait"]])
 
-  data.table::fwrite(
-    x = dt[j = .SD, .SDcols = "#IID"],
-    file = sprintf("%s.samples", basename_file),
-    sep = " "
+  trait_values <- pheno_dt[[model[["raw_trait"]]]]
+
+  limma_fit1 <- limma::lmFit(
+    object = beta_matrix[, as.character(pheno_dt[["#IID"]])],
+    design = model.matrix(object = form, data = pheno_dt)
   )
 
-  data.table::fwrite(
-    x = dt[j = .SD, .SDcols = c("#IID", model[["raw_trait"]])],
-    file = sprintf("%s.pheno", basename_file),
-    sep = " "
-  )
-
-  data.table::fwrite(
-    x = dt[j = .SD, .SDcols = c("#IID", setdiff(covariates, sex_covariate))],
-    file = sprintf("%s.cov", basename_file),
-    sep = " "
-  )
-
-  data.table::fwrite(
-    x = data.table::setnames(
-      x = data.table::copy(dt)[j = .SD, .SDcols = c("#IID", sex_covariate)],
-      old = sex_covariate,
-      new = "SEX"
-    ),
-    file = sprintf("%s.sex", basename_file),
-    sep = " "
-  )
-
-  message("Formatting VCFs and performing PLINK2 regression ...")
-
-  list_results <- future.apply::future_lapply(
-    X = vcfs,
-    basename_file = basename_file,
-    vep_file = vep,
-    bin_path = bin_path,
-    future.globals = FALSE,
-    future.packages = "data.table",
-    FUN = function(vcf, basename_file, vep_file, bin_path) {
-      vcf_file <- sprintf("%s__%s", basename_file, basename(vcf))
-      results_file <- sub("\\.vcf.gz", "", vcf_file)
-
-      system(paste(
-        bin_path[["bcftools"]],
-          "+fill-tags", vcf,
-       "|",
-        bin_path[["bcftools"]],
-          "view",
-          "--min-af 0.05",
-          "--exclude 'INFO/INFO < 0.8'",
-          "--min-alleles 2 --max-alleles 2 --types snps",
-          "--force-samples",
-          # "--no-update",
-          "--samples-file", sprintf("%s.samples", basename_file),
-       "|",
-        bin_path[["bcftools"]],
-          "annotate",
-          "--annotations", vep_file,
-          "--header-lines", sub("_formatted.tsv.gz", ".header", vep_file),
-          "--columns CHROM,POS,Gene,Symbol,rsid",
-          "--set-id '%INFO/rsid'",
-        "|",
-        bin_path[["bcftools"]],
-          "annotate",
-          "--set-id +'%CHROM:%POS:%REF:%ALT'",
-          "--output-type z --output", vcf_file
-      ))
-
-      system(paste(
-        bin_path[["plink2"]],
-        "--vcf", vcf_file, "dosage=DS",
-        "--mach-r2-filter",
-        "--threads 120",
-        "--glm sex",
-        "--keep", sprintf("%s.samples", basename_file),
-        "--update-sex", sprintf("%s.sex", basename_file),
-        "--pheno", sprintf("%s.pheno", basename_file),
-        "--covar", sprintf("%s.cov", basename_file),
-        "--covar-variance-standardize",
-        "--silent",
-        "--out", results_file
-      ))
-
-      annot <- data.table::fread(
-        cmd = paste(bin_path[["bcftools"]], "view --drop-genotypes", vcf_file),
-        skip = "#CHROM"
-      )
-      annot <- annot[
-        j = list(
-          .SD,
-          data.table::rbindlist(
-            l = lapply(
-              X = strsplit(INFO, ";"),
-              FUN = function(x) {
-                all_fields <- strsplit(x, "=")
-                out <- data.table::transpose(all_fields[sapply(all_fields, length) > 1])
-                data.table::setnames(
-                  x = data.table::as.data.table(do.call("rbind", out[-1])),
-                  old = out[[1]]
-                )
-              }
-            ),
-            use.names = TRUE,
-            fill = TRUE
-          )[
-            j = lapply(.SD, function(x) {
-              xout <- as.character(x)
-              data.table::fifelse(
-                test = xout %in% c(".", "-"),
-                yes = NA_character_,
-                no = xout
-              )
-            })
-          ]
-        ),
-        .SDcols = !c("INFO", "QUAL", "FILTER")
-      ]
-      data.table::setnames(
-        x = annot,
-        old = function(x) sub("^\\.SD\\.\\.*", "", x)
-      )
-
-      results <- data.table::setnames(
-        x = data.table::fread(
-          file = list.files(
-            path = dirname(results_file),
-            pattern = sprintf("%s\\..*\\.glm\\..*", basename(results_file)),
-            full.names = TRUE
+  if (is.factor(trait_values) & nlevels(trait_values) > 2) {
+    limma_fit2 <- limma::eBayes(limma_fit1)
+    limma_top1 <- future.apply::future_lapply(
+      X = paste0(model[["raw_trait"]], levels(trait_values)[-1]),
+      .fit = limma_fit2,
+      .trait = model[["raw_trait"]],
+      .ref = levels(trait_values)[1],
+      .number = nrow(beta_matrix),
+      future.globals = FALSE,
+      future.packages = c("data.table", "limma", "stats"),
+      FUN = function(.coef, .fit, .trait, .ref, .number) {
+        data.table::as.data.table(limma::topTable(
+          fit = .fit,
+          coef = .coef,
+          number = .number,
+          adjust.method = "BH",
+          p.value = 1,
+          sort.by = "none"
+        ), keep.rownames = "CpG")[
+          j = `:=`(
+            "se" = sqrt(.fit[["s2.post"]]) * .fit[["stdev.unscaled"]][, .coef],
+            "adj.P.Val" = NULL,
+            "B" = NULL,
+            "fdr" = stats::p.adjust(P.Value, method = "BH"),
+            "contrast" = sprintf("%s: %s Vs. %s (ref)", .trait, sub(.trait, "", .coef), .ref)
           )
-        ),
-        old = function(x) sub("^#", "", x)
-      )
-
-      data.table::fwrite(
-        x = data.table::merge.data.table(
-          x = results[TEST %in% "ADD" & !is.na(P), -c("TEST")],
-          y = annot,
-          by = c("CHROM", "POS", "ID", "REF", "ALT"), # intersect(names(results), names(annot))
-        )[MAF >= 0.05, .SDcols = !c("QUAL", "FILTER")],
-        file = sprintf("%s.results.gz", results_file)
-      )
-
-      sprintf("%s.results.gz", results_file)
+        ]
+      }
+    )
+    limma_top2 <- future.apply::future_apply(
+      X = combn(levels(trait_values)[-1], 2),
+      MARGIN = 2,
+      .fit = limma_fit1,
+      .trait = model[["raw_trait"]],
+      .number = nrow(beta_matrix),
+      future.globals = FALSE,
+      future.packages = c("data.table", "limma", "stats"),
+      FUN = function(icol, .fit, .trait, .number) {
+        out <- paste0(.trait, icol)
+        coef <- paste0(out[2], "-", out[1])
+        contrasts_fit <- limma::makeContrasts(contrasts = coef, levels = .fit$design)
+        attr(contrasts_fit, "dimnames") <- lapply(
+          X = attr(contrasts_fit, "dimnames"),
+          FUN = gsub, pattern = "^Intercept$", replacement = "(Intercept)"
+        )
+        limma_fit1b <- limma::contrasts.fit(fit = .fit, contrasts = contrasts_fit)
+        limma_fit2b <- limma::eBayes(limma_fit1b)
+        data.table::as.data.table(limma::topTable(
+          fit = limma_fit2b,
+          coef = coef,
+          number = .number,
+          adjust.method = "BH",
+          p.value = 1,
+          sort.by = "none"
+        ), keep.rownames = "CpG")[
+          j = `:=`(
+            "se" = sqrt(limma_fit2b[["s2.post"]]) * limma_fit2b[["stdev.unscaled"]][, coef],
+            "adj.P.Val" = NULL,
+            "B" = NULL,
+            "fdr" = stats::p.adjust(P.Value, method = "BH"),
+            "contrast" = sprintf("%s: %s Vs. %s (ref)", .trait, icol[2], icol[1])
+          )
+        ]
+      }
+    )
+    limma_top <- data.table::rbindlist(c(limma_top1, limma_top2))
+  } else {
+    limma_fit2 <- limma::eBayes(limma_fit1)
+    if (is.factor(trait_values)) {
+      .levels <- levels(trait_values)
+      .coef <- paste0(model[["raw_trait"]], .levels[-1])
+      limma_top <- data.table::as.data.table(limma::topTable(
+        fit = limma_fit2,
+        coef = .coef,
+        number = nrow(beta_matrix),
+        adjust.method = "BH",
+        p.value = 1,
+        sort.by = "none"
+      ), keep.rownames = "CpG")[
+        j = `:=`(
+          "se" = sqrt(limma_fit2[["s2.post"]]) * limma_fit2[["stdev.unscaled"]][, .coef],
+          "adj.P.Val" = NULL,
+          "B" = NULL,
+          "fdr" = stats::p.adjust(P.Value, method = "BH"),
+          "contrast" = paste0(model[["raw_trait"]], ": ", .levels[2], " Vs. ", .levels[1], " (ref)")
+        )
+      ]
+    } else {
+      limma_top <- data.table::as.data.table(limma::topTable(
+        fit = limma_fit2,
+        coef = model[["raw_trait"]],
+        number = nrow(beta_matrix),
+        adjust.method = "BH",
+        p.value = 1,
+        sort.by = "none"
+      ), keep.rownames = "CpG")[
+        j = `:=`(
+          "se" = sqrt(limma_fit2[["s2.post"]]) * limma_fit2[["stdev.unscaled"]][, model[["raw_trait"]]],
+          "adj.P.Val" = NULL,
+          "B" = NULL,
+          "fdr" = stats::p.adjust(P.Value, method = "BH"),
+          "contrast" = model[["raw_trait"]]
+        )
+      ]
     }
-  )
+  }
 
   results_file <- sprintf("%s/ewas_%s_%s.csv.gz", path, model[["raw_trait"]], model[["tar_group"]])
   dir.create(
@@ -230,22 +217,37 @@ do_ewas <- function(
     showWarnings = FALSE
   )
 
-  message("Aggregating PLINK2 results ...")
-
-  data.table::fwrite(
-    x = data.table::setcolorder(
-      x = data.table::rbindlist(lapply(list_results, data.table::fread), use.names = TRUE)[
-        j = `:=`(
-          FDR = stats::p.adjust(P, method = "BH"),
-          Bonferroni = stats::p.adjust(P, method = "bonferroni"),
-          trait = model[["pretty_trait"]],
-          covariates = model[["covariates"]]
-        )
-      ][order(P)],
-      neworder = c("trait", "covariates")
-    ),
-    file = results_file
+  data.table::setnames(
+    x = limma_top,
+    old = c("logFC", "AveExpr", "t", "P.Value"),
+    new = c("estimate", "avgmvalue_meth", "t_statistic", "pvalue"),
+    skip_absent = TRUE
   )
+
+  limma_annot <- Reduce(
+    f = function(x, y) data.table::merge.data.table(x, y, by = "CpG", all.x = TRUE),
+    x = suppressWarnings(list(
+      limma_top,
+      data.table::as.data.table(
+        x =   (function(x) `names<-`(x, paste0("cpg_", names(x))))(
+          x = get(utils::data("Locations", package = epic_annot_pkg))
+        ),
+        keep.rownames = "CpG"
+      ),
+      data.table::as.data.table(
+        x = get(utils::data("Islands.UCSC", package = epic_annot_pkg)),
+        keep.rownames = "CpG"
+      ),
+      data.table::as.data.table(
+        x = get(utils::data("Other", package = epic_annot_pkg)),
+        keep.rownames = "CpG"
+      )[
+        j = list(CpG, UCSC_RefGene_Name, UCSC_RefGene_Accession, UCSC_RefGene_Group)
+      ]
+    ))
+  )
+
+  fwrite(x = limma_annot, file = results_file)
 
   message(sprintf('Writing results to "%s"!', results_file))
 

@@ -44,9 +44,9 @@ tar_ewas <- {list(
         pretty_trait = c("Case/Control"),
         raw_trait = c("group"),
         covariates = c(
-          paste(c("sex", "age", "bmi"), collapse = " + "),
-          paste(c("sex", "age", "bmi", sprintf("PC%02d", 1:2)), collapse = " + "),
-          paste(c("sex", "age", "bmi", sprintf("PC%02d", 1:5)), collapse = " + ")
+          paste(c("sex", "age", "bmi", "cell"), collapse = " + "),
+          paste(c("sex", "age", "bmi", "cell", sprintf("PC%02d", 1:2)), collapse = " + "),
+          paste(c("sex", "age", "bmi", "cell", sprintf("PC%02d", 1:5)), collapse = " + ")
         )
       ),
       pretty_trait, raw_trait, covariates
@@ -59,11 +59,15 @@ tar_ewas <- {list(
       data = ewas_sample_sheet_qc, # phenotypes
       model = ewas_models,
       beta_file = file.path(ma_export_directory, "EPIC_QC_betavalues.csv.gz"),
-      path = file.path(output_directory, "ewas")
+      path = file.path(output_directory, "ewas"),
+      epic_annot_pkg = "IlluminaHumanMethylationEPICanno.ilm10b5.hg38"
     ),
     pattern = map(ewas_models),
     iteration = "list",
-    packages = c("here", "data.table", "stats", "future.apply"),
+    packages = c(
+      "here", "data.table", "stats", "utils", "future.apply", "limma",
+      "IlluminaHumanMethylationEPICanno.ilm10b5.hg38"
+    ),
     format = "file"
   ),
   tar_target(ewas_results_manhattan,
