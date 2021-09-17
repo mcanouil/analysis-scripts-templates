@@ -26,23 +26,23 @@ Script templates to work with omics datasets.
 
 ```{r, echo = FALSE, results = "asis"}
 dt <- data.table::data.table(
-  file = sort(list.files(path = here::here("R"), pattern = ".R", recursive = TRUE))
+  file = setdiff(sort(list.files(path = here::here(), pattern = ".R", recursive = TRUE)), "README.Rmd")
 )[
   j = root := data.table::tstrsplit(x = file, "/", keep = 1)
 ][
-  j = root := data.table::fifelse(file == root, "R", paste0("R/", root))
+  !grepl("assets", file)
 ][
   j = list(
     list_scripts = c(
-      sprintf("\n%s %s\n", if (grepl("/", root)) "###" else "##", root),
-      sprintf("  * [%s](R/%s)\n", basename(file), file)
+      sprintf("\n## %s\n", root),
+      if (filedir != root) sprintf("\n### %s\n", filedir),
+      sprintf("  * [%s](%s)\n", basename(file), file)
     )
   ),
-  by = "root"
+  by = list(root, filedir = dirname(file))
 ][
   order(factor(root, levels = c("R", "R/scripts", "R/targets", "R/functions")))
 ]
 
-cat(dt[["list_scripts"]], sep = "")
+cat(dt[["list_scripts"]][!duplicated(dt[["list_scripts"]])], sep = "")
 ```
-

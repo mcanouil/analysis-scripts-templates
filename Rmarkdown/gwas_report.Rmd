@@ -1,0 +1,504 @@
+---
+title: '`r targets::tar_read(project)`'
+subtitle: "Genome-Wide Association Studies"
+author: '`r targets::tar_read(author)`'
+institute: "_Inserm U1283 / CNRS UMR8199 / Institut Pasteur de Lille / Université de Lille_"
+date: '`r format(Sys.time(), "%A, the %d of %B, %Y")`'
+output:
+  xaringan::moon_reader:
+    self_contained: true
+    mathjax: null
+    css: [assets/umr1283_8199.css, https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.css]
+    includes:
+      in_header: assets/_scripts.html
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      ratio: "16:9"
+      countIncrementalSlides: false
+---
+
+class: part-slide
+
+```{r setup, include = FALSE}
+options("width" = 110)
+options(htmltools.dir.version = FALSE)
+
+
+### Load Packages ==================================================================================
+suppressPackageStartupMessages({
+  library(here)
+  library(knitr)
+
+  library(data.table)
+  
+  # library(ragg)
+  library(svglite)
+  library(showtext)
+  
+  library(ggplot2)
+  library(ggtext)
+  library(patchwork)
+  library(scales)
+  
+  library(gt)
+  
+  library(targets)
+  library(katex)
+  
+  library(bacon)
+  library(utils)
+})
+```
+
+```{r setup-knitr, include = FALSE}
+opts_chunk$set(
+  warning = FALSE,
+  message = FALSE,
+  eval = TRUE, # Default: TRUE
+  include = TRUE, # Default: TRUE
+  echo = FALSE, # Default: TRUE
+  width = getOption("width"),
+  comment = "#>", 
+  fig.align = "center",
+  fig.width = 11.5, # Default: 7
+  fig.height = 5.75,  # Default: 7
+  dpi = 150, # Default: 72
+  # dev = "ragg_png"
+  dev = "svg"
+)
+```
+
+```{r setup-ggplot2, code = source(here("scripts/slides/assets/setup-ggplot2.R")), include = FALSE}
+```
+
+```{r setup-gt, code = source(here("scripts/slides/assets/setup-gt.R")), include = FALSE}
+```
+
+```{r functions, include = FALSE}
+sub_chunk <- function(code, chunk_name = NULL, fig_width = 11.5, fig_height = 5.75) {
+  sub_chunk_txt <- paste0(
+    "\n```{r ", chunk_name, ", fig.width = ", fig_width, ", fig.height = ", fig_height, ", echo = FALSE}\n",
+    "(", paste0(deparse(function() code), collapse = ""), ")()",
+    "\n```\n\n"
+  )
+  cat(
+    "\n\n",
+    knitr::knit(text = knitr::knit_expand(text = sub_chunk_txt), quiet = TRUE),
+    "\n\n", 
+    sep = ""
+  )
+}
+
+eq <- function(tex, d = FALSE, ...) katex::katex_html(tex = tex, displayMode = d, ..., output = "html")
+
+source(here("scripts/tar-utils/tar-pval_trans.R"))
+
+col_numeric_trans <- function(
+  palette, domain, na.color = "#808080", alpha = FALSE, reverse = FALSE, trans = NULL
+) {
+  rng <- NULL
+  if (length(domain) > 0) {
+    rng <- range(domain, na.rm = TRUE)
+    if (!all(is.finite(rng))) {
+      stop("Wasn't able to determine range of domain")
+    }
+  }
+  pf <- scales:::safePaletteFunc(palette, na.color, alpha)
+  scales:::withColorAttr("numeric", list(na.color = na.color), function(x) {
+    x <- trans(x)
+    if (length(x) == 0 || all(is.na(x))) {
+      return(pf(x))
+    }
+    if (is.null(rng)) {
+      rng <- range(x, na.rm = TRUE)
+    }
+    rescaled <- scales::rescale(x, from = rng)
+    if (any(rescaled < 0 | rescaled > 1, na.rm = TRUE)) {
+      warning("Some values were outside the color scale and will be treated as NA", call. = FALSE)
+    }
+    if (reverse) {
+      rescaled <- 1 - rescaled
+    }
+    pf(rescaled)
+  })
+}
+```
+
+```{r tar-read, include = FALSE}
+```
+
+# Methods
+
+---
+
+# Sofware & Parameters
+
+* Variants minimum allele frequency:
+    `5.00 %` (using `bcftools view --min-af 0.05`)
+
+* Variants minimum imputation quality `INFO`:
+    `0.80` (using `bcftools view --exclude 'INFO/INFO < 0.8'`)
+
+* Minimum/Maximum alleles count per variants:
+    `2` (using `bcftools view --min-alleles 2 --max-alleles 2 --types snps`)
+
+* RS ID, HGNC Symbol and Ensembl gene ID: 
+    * Species: ` `r tar_read(ensembl_species)` `
+    * Genome build: ` `r tar_read(genome_assembly)` `
+    * Ensembl version: ` `r tar_read(ensembl_version)` `
+    
+* Linear/logistic/Firth-regression based association analysis using PLINK: 
+  * `--vcf file.vcf dosage=DS`, for imputed genotypes dosage.
+  * `--mach-r2-filter`, filter out variants with `INFO < 0.1` and `INFO > 2.0`.
+  * `--glm`, linear/logistic/Firth-regression based association analysis.
+  * `--covar-variance-standardize`, linearly transform numeric covariates to mean-zero, variance one.
+  
+```{r software-version, include = FALSE}
+suppressWarnings({
+  plink_ver <- sub("^v", "", strsplit(system(paste(tar_read(plink2), "--version"), intern = TRUE)[1], split = " ")[[1]][2])
+  bcftools_ver <- strsplit(system(paste(tar_read(bcftools), "--version"), intern = TRUE)[1], split = " ")[[1]][2]
+})
+```
+
+* Software:
+    * R ` `r paste0(R.version$major, ".", R.version$minor)` ` ([www.r-project.org](https://www.r-project.org/))
+    * PLINK ` `r plink_ver` ` (Chang et al., 2015; doi:[10.1186/s13742-015-0047-8](https://doi.org/10.1186/s13742-015-0047-8))
+    * BCFtools ` `r bcftools_ver` ` ([www.htslib.org](http://www.htslib.org/))
+    
+---
+
+# Models
+
+```{r models-data, include = FALSE}
+df_models <- setDT(tar_read(gwas_models))[
+  j = eq := {
+    fmt_covariates <- unlist(strsplit(x = covariates, split = " \\+ "))
+    if (any(grepl("^PC[0-9]+$", fmt_covariates))) {
+      fmt_pcs <- sprintf("PC_%s", paste(
+        range(
+          as.numeric(sub("PC", "", grep("^PC[0-9]+$", fmt_covariates, value = TRUE)))
+        ),
+        collapse = "-"
+      ))
+      toupper(sprintf(
+        "%s = %s", 
+        raw_trait, 
+        paste(
+          sub(
+            "^(.*_)([^_]+)$", "\\1{\\2}", 
+            c(fmt_covariates[-grep("^PC[0-9]+$", fmt_covariates)], fmt_pcs)
+          ), 
+          collapse = " + "
+        )
+      ))
+    } else {
+      toupper(sprintf(
+        "%s = %s", 
+        raw_trait, 
+        paste(
+          sub(
+            "^(.*_)([^_]+)$", "\\1{\\2}", 
+            fmt_covariates
+          ), 
+          collapse = " + "
+        )
+      ))
+    }
+  },
+  by = "tar_group"
+]
+
+pp_models <- df_models[
+  j = list(
+    pp = list(
+      ggplot(
+        data = rbindlist(lapply(
+          X = sprintf("%s (%s)", pretty_trait, tar_group),
+          FUN = function(imodel) {
+            fread(
+              file = unlist(tar_read(
+                name = gwas_results_file,
+                branches = as.numeric(sub(".*\\((.*)\\)", "\\1", imodel))
+              ))
+            )[
+              order(P)
+            ][
+              j = `:=`(
+                "exppval" = (1:.N - 0.5) / .N,
+                "labels" = paste0(
+                  "&lambda;<sub>gc</sub> = ", 
+                  format(median(qnorm(P / 2)^2, na.rm = TRUE) / qchisq(0.5, df = 1), digits = 3, nsmall = 3)
+                ),
+                "model" = imodel
+              )
+            ]
+          }
+        ))
+      ) +
+        aes(
+          x = .data[["exppval"]], 
+          y = .data[["P"]], 
+          colour = sprintf("%s: %s", .data[["model"]], .data[["labels"]]), 
+          shape = sprintf("%s: %s", .data[["model"]], .data[["labels"]])
+        ) +
+        geom_abline(intercept = 0, slope = 1, colour = "black", linetype = 2) +
+        geom_point(size = 0.60) +
+        scale_x_continuous(
+          trans = "pval", 
+          expand = expansion(c(0, 0.2)), 
+          limits = c(1, NA)
+        ) +
+        scale_y_continuous(
+          trans = "pval", 
+          expand = expansion(c(0, 0.2)), 
+          limits = c(1, NA)
+        ) +
+        scale_colour_viridis_d(begin = 0.15, end = 0.85) +
+        scale_shape_discrete(solid = TRUE) +
+        guides(shape = guide_legend(override.aes = list(size = 2))) +
+        labs(
+          x = "Expected P-value", 
+          y = "Observed P-value", 
+          colour = NULL, 
+          shape = NULL
+        ) +
+        theme(
+          plot.title.position = "plot",
+          plot.caption.position = "plot",
+          plot.title = element_markdown(),
+          plot.subtitle = element_markdown(face = "italic"),
+          axis.text.y = element_markdown(),
+          legend.position = c(0.99, 0.01),
+          legend.justification = c("right", "bottom"),
+          legend.box.just = "right",
+          legend.text = element_markdown(),
+          legend.margin = margin(1.5, 1.5, 1.5, 1.5),
+          legend.spacing.x = unit(1.5, "pt"),
+          legend.spacing.y = unit(1.5, "pt")
+        )
+    )
+  ),
+  by = "pretty_trait"
+]
+
+bc_models <- df_models[
+  j = list(
+    bc = list(
+      rbindlist(lapply(
+        X = sprintf("%s (%s)", pretty_trait, tar_group),
+        FUN = function(imodel) {
+          bc <- bacon(fread(
+            file = unlist(tar_read(
+              name = gwas_results_file,
+              branches = as.numeric(sub(".*\\((.*)\\)", "\\1", imodel))
+            )), 
+            select = "Z_STAT"
+          ))
+          data.table(
+            "Model" = imodel,
+            "Inflation" = inflation(bc),
+            "Bias" = bias(bc)
+          )
+        }
+      ))[
+        j = "Rank" := rank(rowMeans(cbind(abs(1 - Inflation), abs(Bias))))
+      ]
+    )
+  ),
+  by = "pretty_trait"
+]
+```
+
+```{r print-models-eq, results = "asis"}
+for (itrait in unique(df_models[["pretty_trait"]])) {
+  cat("*", itrait, "\n")
+  for (igroup in unique(df_models[pretty_trait %in% itrait, tar_group])) {
+    cat(sprintf("    1. %s\n", eq(
+      tex = df_models[df_models[["tar_group"]] %in% igroup, ][["eq"]], 
+      d = FALSE
+    )))
+  }
+  cat("\n\n")
+}
+```
+
+```{r print-models-pp, results = "asis", dev = "ragg_png", fig.height = 10, dpi = 120}
+for (itrait in unique(df_models[["pretty_trait"]])) {
+  cat(sprintf("---\n\n# Models: %s\n\n", itrait))
+  cat(".pull-left[\n")
+  cat(sprintf(
+    "Estimates were obtained using the bioconductor R package <code>bacon</code> v%s (doi:%s).\n\n",
+    as.character(packageVersion("bacon")),
+    '<a href="https://doi.org/10.18129/B9.bioc.bacon">10.18129/B9.bioc.bacon</a>'
+  ))
+  print(
+    gt(
+      data = bc_models[pretty_trait %in% itrait, bc][[1]], 
+      rowname_col = "Model"
+    ) %>%
+      umr() %>% 
+      tab_options(
+        column_labels.background.color = "#2a9bd3", 
+        stub.background.color = "#2a9bd3"
+      ) %>% 
+      # fmt_scientific(columns = "Minimum Corrected P-value", decimals = 2) %>% 
+      fmt_number(columns = c("Inflation", "Bias"), n_sigfig = 3) %>% 
+      data_color(
+        columns = "Inflation",
+        colors = col_numeric_trans(palette = "plasma", domain = NULL, trans = function(x) abs(1 - x))
+      ) %>%
+      data_color(
+        columns = "Bias",
+        colors = col_numeric_trans(palette = "plasma", domain = NULL, reverse = TRUE, trans = abs)
+      ) %>%
+      cols_align("center")
+  )
+  cat("\n]\n\n.pull-right[\n")
+  print(pp_models[pretty_trait %in% itrait, pp][[1]])
+  cat("\n]\n\n")
+}
+rm(pp_models, bc_models)
+```
+
+---
+class: part-slide
+
+# Results
+
+```{r print-models-results, results = "asis", dev = "ragg_png", fig.height = 5.50}
+for (igroup in df_models[["tar_group"]]) {
+  cat("\n\n---\n\n")
+  cat(sprintf(
+    "# Results: `%s (%s)` - Probability-Probability Plot\n", 
+    df_models[tar_group %in% igroup, pretty_trait], igroup
+  ))
+  cat(eq(tex = df_models[tar_group %in% igroup, eq], d = TRUE))
+  cat("\n")
+  print(
+    tar_read(gwas_results_pp, branches = igroup)[[1]] + 
+      theme(
+        plot.title = element_blank(),
+        plot.subtitle = element_blank()
+      )
+  )
+  cat("\n")
+  
+  cat("\n\n---\n\n")
+  cat(sprintf(
+    "# Results: `%s (%s)` - Manhattan Plot\n", 
+    df_models[tar_group %in% igroup, pretty_trait], igroup
+  ))
+  cat(eq(tex = df_models[tar_group %in% igroup, eq], d = TRUE))
+  cat("\n")
+  print(
+    tar_read(gwas_results_manhattan, branches = igroup)[[1]] + 
+      theme(
+        plot.title = element_blank(),
+        plot.subtitle = element_blank()
+      )
+  )
+  cat("\n")
+  
+  cat("\n\n---\n\n")
+  cat(sprintf(
+    "# Results: `%s (%s)` - Top 10 Loci\n", 
+    df_models[tar_group %in% igroup, pretty_trait], igroup
+  ))
+  cat(eq(tex = df_models[tar_group %in% igroup, eq], d = TRUE))
+  cat("\n")
+  dt <- fread(
+    file = tar_read(gwas_results_file, branches = igroup)[[1]]
+  )[
+    Symbol != "" & !is.na(Symbol) & P < 0.05
+  ]
+  effect_name <- grep("^(OR|BETA)$", names(dt), value = TRUE)
+  dt <- setnames(x = dt, old = effect_name, new = "EFFECT")[
+    j = list(
+      SNPs = .N,
+      RSID = gsub(",", ";", ID[P == min(P)]),
+      EFFECT = EFFECT[P == min(P)],
+      P = min(P),
+      REF = REF[P == min(P)],
+      ALT = ALT[P == min(P)],
+      AF = AF[P == min(P)],
+      RPAF = RefPanelAF[P == min(P)],
+      AC = AC[P == min(P)],
+      N = AN[P == min(P)] / 2,
+      INFO = INFO[P == min(P)]
+    ),
+    by = list("Gene" = gsub(",", "/", Symbol))
+  ][
+    order(P),
+    .SD[1:10]
+  ]
+  print(
+    gt(
+      data = dt, 
+      rowname_col = "Gene"
+    ) %>%
+      umr() %>% 
+      tab_options(
+        column_labels.background.color = "#2a9bd3", 
+        stub.background.color = "#2a9bd3"
+      ) %>% 
+      tab_style(
+        style = cell_text(style = "italic"),
+        locations = cells_stub()
+      ) %>% 
+      fmt_scientific(columns = "P", decimals = 2) %>% 
+      fmt_percent(columns = c("AF", "RPAF"), decimals = 2, incl_space = TRUE) %>% 
+      fmt_number(columns = c("EFFECT", "INFO"), n_sigfig = 3) %>% 
+      fmt_number(columns = c("AC", "N"), decimals = 0) %>% 
+      fmt(columns = "RSID", fns = function(x) gsub(";", "<br>", x)) %>% 
+      data_color(
+        columns = "SNPs", 
+        colors = col_numeric(palette = "plasma", domain = NULL)
+      ) %>% 
+      data_color(
+        columns = "P", 
+        colors = col_numeric(palette = "viridis", domain = NULL, reverse = TRUE)
+      ) %>% 
+      data_color(
+        columns = "EFFECT", 
+        colors = col_numeric(palette = "plasma", domain = NULL)
+      ) %>% 
+      cols_align("center") %>% 
+      cols_label(EFFECT = effect_name) %>% 
+      tab_source_note(
+        source_note = html(
+          sprintf(
+            paste(
+              "<b>SNPs</b>, the number of nominally significant SNPs at the locus (&alpha; = 0.05)",
+              "<b>RSID</b>, the RSID of the best SNP at the locus (Ensembl v%s)",
+              "<b>%s</b>, the %s estimate from <code>PLINK2&nbsp;--glm</code>",
+              "<b>P</b>, the p-value from <code>PLINK2&nbsp;--glm</code>",
+              "<b>REF</b>, the reference allele",
+              "<b>ALT</b>, the alternate allele",
+              "<b>AF</b>, the alternate allele frequency",
+              "<b>RPAF</b>, the reference panel alternate allele frequency",
+              "<b>AC</b>, the alternate allele count",
+              "<b>N</b>, the number of genotype/imputed individuals",
+              "<b>INFO</b>, the <code>IMPUTE2</code> information score.",
+              sep = "; "
+            ),
+            tar_read(ensembl_version),
+            effect_name,
+            c("BETA" = "beta", "OR" = "odds ratio")[effect_name]
+          )
+        )
+      ) %>% 
+      tab_options(table.font.size = "14px")
+  )
+  cat("\n")
+}
+```
+
+---
+class: part-slide
+
+.center[
+<a href="https://www.good.cnrs.fr/" target="_blank"><img src="https://raw.githubusercontent.com/mcanouil/hex-stickers/main/SVG/umr1283_8199.svg" width = "200px"/></br>
+<i style="font-size: 200%">www.good.cnrs.fr</i>
+</a>
+]
