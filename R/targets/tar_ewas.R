@@ -44,9 +44,8 @@ tar_ewas <- {list(
         pretty_trait = c("Case/Control"),
         raw_trait = c("group"),
         covariates = c(
-          paste(c("sex", "age", "bmi", "cell"), collapse = " + "),
-          paste(c("sex", "age", "bmi", "cell", sprintf("PC%02d", 1:2)), collapse = " + "),
-          paste(c("sex", "age", "bmi", "cell", sprintf("PC%02d", 1:5)), collapse = " + ")
+          paste(c("sex", "age", "bmi"), collapse = " + "),
+          paste(c("sex", "age", "bmi", "cell"), collapse = " + ")
         )
       ),
       pretty_trait, raw_trait, covariates
