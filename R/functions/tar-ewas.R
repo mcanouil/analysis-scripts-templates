@@ -218,7 +218,7 @@ do_ewas <- function(
   )
 
   data.table::setnames(
-    x = limma_top,
+    x = limma_top[j = `:=`(n = nrow(pheno_dt))],
     old = c("logFC", "AveExpr", "t", "P.Value"),
     new = c("estimate", "avgmvalue_meth", "t_statistic", "pvalue"),
     skip_absent = TRUE
