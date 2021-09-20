@@ -61,7 +61,6 @@ qc_sample_sheet_gwas <- function(phenotype, exclusion, relatedness, ethnicity) {
   ]
 }
 
-
 #' do_gwas
 #' @import data.table
 #' @import stats
@@ -330,7 +329,7 @@ plot_manhattan_gwas <- function(file, model) {
       expand = ggplot2::expansion(add = 0.25)
     ) +
     ggplot2::scale_y_continuous(
-      trans = "pval",
+      trans = pval_trans(md = TRUE),
       expand = ggplot2::expansion(mult = c(0, 0.2)),
       limits = c(0.05, NA)
     ) +
@@ -394,12 +393,12 @@ plot_pp_gwas <- function(file, model) {
     ggplot2::geom_point(size = 0.60) +
     ggplot2::geom_hline(yintercept = alpha, linetype = 2, colour = "#b22222") +
     ggplot2::scale_x_continuous(
-      trans = "pval",
+      trans = pval_trans(md = TRUE),
       expand = ggplot2::expansion(c(0, 0.2)),
       limits = c(1, NA)
     ) +
     ggplot2::scale_y_continuous(
-      trans = "pval",
+      trans = pval_trans(md = TRUE),
       expand = ggplot2::expansion(c(0, 0.2)),
       limits = c(1, NA)
     ) +
@@ -419,6 +418,7 @@ plot_pp_gwas <- function(file, model) {
       plot.caption.position = "plot",
       plot.title = ggtext::element_markdown(),
       plot.subtitle = ggtext::element_markdown(face = "italic"),
+      axis.text.x = ggtext::element_markdown(),
       axis.text.y = ggtext::element_markdown(),
       legend.position = c(0.99, 0.01),
       legend.justification = c("right", "bottom"),
