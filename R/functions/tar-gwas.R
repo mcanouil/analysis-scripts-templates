@@ -304,7 +304,7 @@ plot_manhattan_gwas <- function(file, model) {
     j = file := basename(file)
   ][
     j = c("CHROM", "POS", "P", "gene_label_min")
-  ][order(pvalue)]
+  ][order(P)]
 
   if (is.numeric(dt[["CHROM"]])) {
     dt[j = "CHROM" := lapply(.SD, as.character), .SDcols = "CHROM"]
