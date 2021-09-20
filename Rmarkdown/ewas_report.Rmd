@@ -31,21 +31,21 @@ suppressPackageStartupMessages({
   library(knitr)
 
   library(data.table)
-  
+
   # library(ragg)
   library(svglite)
   library(showtext)
-  
+
   library(ggplot2)
   library(ggtext)
   library(patchwork)
   library(scales)
-  
+
   library(gt)
-  
+
   library(targets)
   library(katex)
-  
+
   library(bacon)
   library(utils)
 })
@@ -59,7 +59,7 @@ opts_chunk$set(
   include = TRUE, # Default: TRUE
   echo = FALSE, # Default: TRUE
   width = getOption("width"),
-  comment = "#>", 
+  comment = "#>",
   fig.align = "center",
   fig.width = 11.5, # Default: 7
   fig.height = 5.75,  # Default: 7
@@ -76,20 +76,6 @@ opts_chunk$set(
 ```
 
 ```{r functions, include = FALSE}
-sub_chunk <- function(code, chunk_name = NULL, fig_width = 11.5, fig_height = 5.75) {
-  sub_chunk_txt <- paste0(
-    "\n```{r ", chunk_name, ", fig.width = ", fig_width, ", fig.height = ", fig_height, ", echo = FALSE}\n",
-    "(", paste0(deparse(function() code), collapse = ""), ")()",
-    "\n```\n\n"
-  )
-  cat(
-    "\n\n",
-    knitr::knit(text = knitr::knit_expand(text = sub_chunk_txt), quiet = TRUE),
-    "\n\n", 
-    sep = ""
-  )
-}
-
 eq <- function(tex, d = FALSE, ...) katex::katex_html(tex = tex, displayMode = d, ..., output = "html")
 
 source(here("scripts/tar-utils/tar-pval_trans.R"))
@@ -148,25 +134,30 @@ epic_annot_pkg_urls <- epic_annot_pkg_urls[
     is.null(check)
   })
 ]
-epic_annot_pkg_urls <- paste(sprintf("[%s](%s)", epic_annot_pkg_urls, epic_annot_pkg_urls), collapse = ",")
+epic_annot_pkg_urls <- paste(sprintf("\n-  [%s](%s)", epic_annot_pkg_urls, epic_annot_pkg_urls), collapse = "")
 ```
 
 * Tissue: ` `r tar_read(ma_params)[["cell_tissue"]]` `
 
 * Annotation package: ` `r epic_annot_pkg` `
-    
-* Linear regression based association analysis using `limma`: 
+
+* Linear regression based association analysis using `limma`:
   * `limma::lmFit`, linear regression model.
   * `limma::eBayes`, empirical Bayes statistics.
   * `stats::p.adjust(method = "BH")`, false discovery rate (FDR) by Benjamini-Hochberg.
-  
+
 * Software:
     * R ` `r paste0(R.version$major, ".", R.version$minor)` ` ([www.r-project.org](https://www.r-project.org/))
 
 * R packages:
-    * ` `r epic_annot_pkg` ` ` `r as.character(packageVersion(epic_annot_pkg))` ` (`r epic_annot_pkg_urls`)
-    * `limma` ` `r cat(as.character(packageVersion("limma")))` ` ([https://bioconductor.org/packages/limma/](https://bioconductor.org/packages/limma/))
-    
+    * ` `r epic_annot_pkg` ` ` `r as.character(packageVersion(epic_annot_pkg))` `
+        ```{r}
+        car(epic_annot_pkg_urls)
+        ```
+
+    * `limma` ` `r as.character(packageVersion("limma"))` `
+        - [https://bioconductor.org/packages/limma/](https://bioconductor.org/packages/limma/)
+
 ---
 
 # Models
@@ -183,25 +174,25 @@ df_models <- setDT(tar_read(ewas_models))[
         collapse = "-"
       ))
       toupper(sprintf(
-        "%s = %s", 
-        all.vars(as.formula(paste0("~", raw_trait))), 
+        "%s = %s",
+        all.vars(as.formula(paste0("~", raw_trait))),
         paste(
           sub(
-            "^(.*_)([^_]+)$", "\\1{\\2}", 
+            "^(.*_)([^_]+)$", "\\1{\\2}",
             c(fmt_covariates[-grep("^PC[0-9]+$", fmt_covariates)], fmt_pcs)
-          ), 
+          ),
           collapse = " + "
         )
       ))
     } else {
       toupper(sprintf(
-        "%s = %s", 
-        all.vars(as.formula(paste0("~", raw_trait))), 
+        "%s = %s",
+        all.vars(as.formula(paste0("~", raw_trait))),
         paste(
           sub(
-            "^(.*_)([^_]+)$", "\\1{\\2}", 
+            "^(.*_)([^_]+)$", "\\1{\\2}",
             fmt_covariates
-          ), 
+          ),
           collapse = " + "
         )
       ))
@@ -228,7 +219,7 @@ pp_models <- df_models[
               j = `:=`(
                 "exppval" = (1:.N - 0.5) / .N,
                 "labels" = paste0(
-                  "&lambda;<sub>gc</sub> = ", 
+                  "&lambda;<sub>gc</sub> = ",
                   format(median(qnorm(pvalue / 2)^2, na.rm = TRUE) / qchisq(0.5, df = 1), digits = 3, nsmall = 3)
                 ),
                 "model" = imodel
@@ -238,30 +229,30 @@ pp_models <- df_models[
         ))
       ) +
         aes(
-          x = .data[["exppval"]], 
-          y = .data[["pvalue"]], 
-          colour = sprintf("%s: %s", .data[["model"]], .data[["labels"]]), 
+          x = .data[["exppval"]],
+          y = .data[["pvalue"]],
+          colour = sprintf("%s: %s", .data[["model"]], .data[["labels"]]),
           shape = sprintf("%s: %s", .data[["model"]], .data[["labels"]])
         ) +
         geom_abline(intercept = 0, slope = 1, colour = "black", linetype = 2) +
         geom_point(size = 0.60) +
         scale_x_continuous(
-          trans = "pval", 
-          expand = expansion(c(0, 0.2)), 
+          trans = pval_trans(md = TRUE),
+          expand = expansion(c(0, 0.2)),
           limits = c(1, NA)
         ) +
         scale_y_continuous(
-          trans = "pval", 
-          expand = expansion(c(0, 0.2)), 
+          trans = pval_trans(md = TRUE),
+          expand = expansion(c(0, 0.2)),
           limits = c(1, NA)
         ) +
         scale_colour_viridis_d(begin = 0.15, end = 0.85) +
         scale_shape_discrete(solid = TRUE) +
         guides(shape = guide_legend(override.aes = list(size = 2))) +
         labs(
-          x = "Expected P-value", 
-          y = "Observed P-value", 
-          colour = NULL, 
+          x = "Expected P-value",
+          y = "Observed P-value",
+          colour = NULL,
           shape = NULL
         ) +
         theme(
@@ -269,6 +260,7 @@ pp_models <- df_models[
           plot.caption.position = "plot",
           plot.title = element_markdown(),
           plot.subtitle = element_markdown(face = "italic"),
+          axis.text.x = element_markdown(),
           axis.text.y = element_markdown(),
           legend.position = c(0.99, 0.01),
           legend.justification = c("right", "bottom"),
@@ -293,7 +285,7 @@ bc_models <- df_models[
             file = unlist(tar_read(
               name = ewas_results_file,
               branches = as.numeric(sub(".*\\((.*)\\)", "\\1", imodel))
-            )), 
+            )),
             select = "t_statistic"
           ))
           data.table(
@@ -316,7 +308,7 @@ for (itrait in unique(df_models[["pretty_trait"]])) {
   cat("*", itrait, "\n")
   for (igroup in unique(df_models[pretty_trait %in% itrait, tar_group])) {
     cat(sprintf("    1. %s\n", eq(
-      tex = df_models[df_models[["tar_group"]] %in% igroup, ][["eq"]], 
+      tex = df_models[df_models[["tar_group"]] %in% igroup, ][["eq"]],
       d = FALSE
     )))
   }
@@ -335,16 +327,16 @@ for (itrait in unique(df_models[["pretty_trait"]])) {
   ))
   print(
     gt(
-      data = bc_models[pretty_trait %in% itrait, bc][[1]], 
+      data = bc_models[pretty_trait %in% itrait, bc][[1]],
       rowname_col = "Model"
     ) %>%
-      umr() %>% 
+      umr() %>%
       tab_options(
-        column_labels.background.color = "#2a9bd3", 
+        column_labels.background.color = "#2a9bd3",
         stub.background.color = "#2a9bd3"
-      ) %>% 
-      # fmt_scientific(columns = "Minimum Corrected P-value", decimals = 2) %>% 
-      fmt_number(columns = c("Inflation", "Bias"), n_sigfig = 3) %>% 
+      ) %>%
+      # fmt_scientific(columns = "Minimum Corrected P-value", decimals = 2) %>%
+      fmt_number(columns = c("Inflation", "Bias"), n_sigfig = 3) %>%
       data_color(
         columns = "Inflation",
         colors = col_numeric_trans(palette = "plasma", domain = NULL, trans = function(x) abs(1 - x))
@@ -371,39 +363,39 @@ class: part-slide
 for (igroup in df_models[["tar_group"]]) {
   cat("\n\n---\n\n")
   cat(sprintf(
-    "# Results: `%s (%s)` - Probability-Probability Plot\n", 
+    "# Results: `%s (%s)` - Probability-Probability Plot\n",
     df_models[tar_group %in% igroup, pretty_trait], igroup
   ))
   cat(eq(tex = df_models[tar_group %in% igroup, eq], d = TRUE))
   cat("\n")
   print(
-    tar_read(ewas_results_pp, branches = igroup)[[1]] + 
+    tar_read(ewas_results_pp, branches = igroup)[[1]] +
       theme(
         plot.title = element_blank(),
         plot.subtitle = element_blank()
       )
   )
   cat("\n")
-  
+
   cat("\n\n---\n\n")
   cat(sprintf(
-    "# Results: `%s (%s)` - Manhattan Plot\n", 
+    "# Results: `%s (%s)` - Manhattan Plot\n",
     df_models[tar_group %in% igroup, pretty_trait], igroup
   ))
   cat(eq(tex = df_models[tar_group %in% igroup, eq], d = TRUE))
   cat("\n")
   print(
-    tar_read(ewas_results_manhattan, branches = igroup)[[1]] + 
+    tar_read(ewas_results_manhattan, branches = igroup)[[1]] +
       theme(
         plot.title = element_blank(),
         plot.subtitle = element_blank()
       )
   )
   cat("\n")
-  
+
   cat("\n\n---\n\n")
   cat(sprintf(
-    "# Results: `%s (%s)` - Top 10 Loci\n", 
+    "# Results: `%s (%s)` - Top 10 Loci\n",
     df_models[tar_group %in% igroup, pretty_trait], igroup
   ))
   cat(eq(tex = df_models[tar_group %in% igroup, eq], d = TRUE))
@@ -432,35 +424,35 @@ for (igroup in df_models[["tar_group"]]) {
   ]
   print(
     gt(
-      data = dt, 
+      data = dt,
       rowname_col = "Gene"
     ) %>%
-      umr() %>% 
+      umr() %>%
       tab_options(
-        column_labels.background.color = "#2a9bd3", 
+        column_labels.background.color = "#2a9bd3",
         stub.background.color = "#2a9bd3"
-      ) %>% 
+      ) %>%
       tab_style(
         style = cell_text(style = "italic"),
         locations = cells_stub()
-      ) %>% 
-      fmt_scientific(columns = c("P", "FDR"), decimals = 2) %>% 
-      fmt_number(columns = c("EFFECT", "MAVG"), n_sigfig = 3) %>% 
-      fmt_number(columns = c("N"), decimals = 0) %>% 
-      fmt(columns = "CpG", fns = function(x) gsub(";", "<br>", x)) %>% 
+      ) %>%
+      fmt_scientific(columns = c("P", "FDR"), decimals = 2) %>%
+      fmt_number(columns = c("EFFECT", "MAVG"), n_sigfig = 3) %>%
+      fmt_number(columns = c("N"), decimals = 0) %>%
+      fmt(columns = "CpG", fns = function(x) gsub(";", "<br>", x)) %>%
       data_color(
-        columns = "CpGs", 
+        columns = "CpGs",
         colors = col_numeric(palette = "plasma", domain = NULL)
-      ) %>% 
+      ) %>%
       data_color(
-        columns = "P", 
+        columns = "P",
         colors = col_numeric(palette = "viridis", domain = NULL, reverse = TRUE)
-      ) %>% 
+      ) %>%
       data_color(
-        columns = "EFFECT", 
+        columns = "EFFECT",
         colors = col_numeric(palette = "plasma", domain = NULL)
-      ) %>% 
-      cols_align("center") %>% 
+      ) %>%
+      cols_align("center") %>%
       tab_source_note(
         source_note = html(
           paste(
@@ -474,7 +466,7 @@ for (igroup in df_models[["tar_group"]]) {
             sep = "; "
           )
         )
-      ) %>% 
+      ) %>%
       tab_options(table.font.size = "14px")
   )
   cat("\n")

@@ -60,7 +60,7 @@ suppressPackageStartupMessages({
   library(data.table)
   library(gt)
   library(scales)
-  
+
   library(targets)
 })
 ```
@@ -73,7 +73,7 @@ knitr::opts_chunk$set(
   include = TRUE, # Default: TRUE
   echo = FALSE, # Default: TRUE
   width = getOption("width"),
-  comment = "#>", 
+  comment = "#>",
   fig.align = "center",
   fig.width = 11.5, # Default: 7
   fig.height = 5.75,  # Default: 7
@@ -90,15 +90,6 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup-functions, include = FALSE}
-sub_chunk <- function(code, chunk_name = NULL, fig_width = 11.5, fig_height = 5.75) {
-  sub_chunk_txt <- paste0(
-    "\n```{r ", chunk_name, ", fig.width = ", fig_width, ", fig.height = ", fig_height, ", echo = FALSE}\n",
-    "(", paste0(deparse(function() code), collapse = ""), ")()",
-    "\n```\n\n"
-  )
-  cat(knitr::knit(text = knitr::knit_expand(text = sub_chunk_txt), quiet = TRUE))
-}
-
 comma_fmt <- scales::comma_format(accuracy = 1)
 scientific_fmt <- function(x) gsub("(.*)e([-+]*)0*(.*)", "\\1&nbsp;&times;&nbsp;10<sup>\\2\\3</sup>", scales::scientific(x))
 ```
@@ -159,34 +150,34 @@ Array: ` `r params[["array"]]` `
 
 # Parameters
 
-* Raw data path: 
+* Raw data path:
     ` `r dirname(params[["input_files"]])` `
-    
-* Reference population: 
+
+* Reference population:
     ` `r if (is.null(params[["population"]])) "unspecified" else params[["population"]]` `
-    
-* Sample-based call rate threshold: 
+
+* Sample-based call rate threshold:
     ` `r percent_format(accuracy = 0.01, suffix = " %")(params[["callrate_samples"]])` `
-    
-* Variant-based call rate threshold: 
+
+* Variant-based call rate threshold:
     ` `r percent_format(accuracy = 0.01, suffix = " %")(params[["callrate_snps"]])` `
-    
-* Number of standard deviations (SD) from the mean heterozygosity rate: 
+
+* Number of standard deviations (SD) from the mean heterozygosity rate:
     ` `r params[["heterozygosity_threshold"]]` `
-    
-* Proportion of identity by descent (IBD) threshold: 
+
+* Proportion of identity by descent (IBD) threshold:
     ` `r params[["ibd_threshold"]]` `
 
-* Number of components for the principal component analysis (PCA): 
+* Number of components for the principal component analysis (PCA):
     ` `r params[["pca_components"]]` `
-    
-* Number of standard deviations (SD) from the population centroid based on the PCA: 
+
+* Number of standard deviations (SD) from the population centroid based on the PCA:
     ` `r params[["pca_threshold"]]` `
-    
-* Minor allele frequency (MAF) threshold: 
+
+* Minor allele frequency (MAF) threshold:
     ` `r percent_format(accuracy = 0.01, suffix = " %")(params[["maf_threshold"]])` `
-    
-* Hardy-Weinberg equilibrium p-value: 
+
+* Hardy-Weinberg equilibrium p-value:
     <code>`r scientific_fmt(params[["hwe_pvalue"]])`</code>
 
 ---
@@ -199,12 +190,12 @@ suppressWarnings({
   bcftools_ver <- strsplit(system(paste(bcftools, "--version"), intern = TRUE)[1], split = " ")[[1]][2]
   vcftools_ver <- gsub("[()]", "", strsplit(system(paste(vcftools, "--version"), intern = TRUE)[1], split = " ")[[1]][2])
   check_bim_script_ver <- sub(
-    ".*-v([0-9]+\\.[0-9]+\\..*)\\.zip", 
+    ".*-v([0-9]+\\.[0-9]+\\..*)\\.zip",
     "\\1",
     basename(params[["check_bim_script"]])
   )
   bim_script <- sub(
-    "(.*)-v([0-9]+\\.[0-9]+\\..*)\\.zip", 
+    "(.*)-v([0-9]+\\.[0-9]+\\..*)\\.zip",
     "\\1",
     basename(params[["check_bim_script"]])
   )
@@ -232,39 +223,39 @@ class: part-slide
 
 PLINK files includes:
 
-* ` `r comma_fmt(nrow(fam_data))` `&nbsp;samples.  
+* ` `r comma_fmt(nrow(fam_data))` `&nbsp;samples.
     + **Note:** ` `r comma_fmt(samples_duplicated)` `&nbsp;samples seemed to have duplicates.
 
 * ` `r comma_fmt(snps_number)` `&nbsp;variants.
 
 ```{r cohort-overview-table, results = "asis"}
 fam_data[
-  j = .N, 
+  j = .N,
   by = list(FID, gsub("[_-][^-_]*$", "", IID), cohort, sex_fct)
 ][
   j = .N, by = c("cohort", "sex_fct")
 ][
   j = list(sex_fct, N)
-] %>% 
+] %>%
   gt() %>%
   tab_header(title = "Samples Available") %>%
-  fmt_number(columns = "N", decimals = 0) %>% 
+  fmt_number(columns = "N", decimals = 0) %>%
   grand_summary_rows(
     columns = "N",
     fns = list(Total = ~sum(.)),
     formatter = fmt_number,
     decimals = 0
-  ) %>% 
-  cols_label(sex_fct = "Sex") %>% 
+  ) %>%
+  cols_label(sex_fct = "Sex") %>%
   tab_style(
-    style = cell_text(color = "#2a9bd3", weight = "bold"), 
+    style = cell_text(color = "#2a9bd3", weight = "bold"),
     locations = cells_body(columns = matches("IID"))
-  ) %>% 
+  ) %>%
   umr() %>%
-  cols_align(align = "center") %>% 
-  # tab_options(table.font.size = pct(75)) %>% 
-  opt_row_striping() %>% 
-  opt_all_caps() %>% 
+  cols_align(align = "center") %>%
+  # tab_options(table.font.size = pct(75)) %>%
+  opt_row_striping() %>%
+  opt_all_caps() %>%
   print()
 ```
 
@@ -295,19 +286,19 @@ samples_bad_callrate <- unique(c(
 tab_data <- dcast(
   data = rbind(
     callrate_samples[
-      i = paste(FID, IID, sep = "_") %in% samples_bad_callrate, 
+      i = paste(FID, IID, sep = "_") %in% samples_bad_callrate,
       j = list(FID, IID, cr = 1 - F_MISS, grp = "all")
     ],
     callrate_samples_leq_geq[
-      i = paste(FID, IID, sep = "_") %in% samples_bad_callrate, 
+      i = paste(FID, IID, sep = "_") %in% samples_bad_callrate,
       j = list(FID, IID, cr = 1 - F_MISS, grp)
     ]
-  ), 
-  formula = FID + IID ~ grp, 
+  ),
+  formula = FID + IID ~ grp,
   value.var = "cr"
 )[order(all, decreasing = TRUE)]
 
-gt(tab_data) %>% 
+gt(tab_data) %>%
   fmt_percent(matches("all|leq|geq"), incl_space = TRUE) %>%
   tab_spanner(label = "Call Rate", columns = matches("all|leq|geq")) %>%
   tab_header(html(paste(
@@ -315,21 +306,21 @@ gt(tab_data) %>%
   ))) %>%
   cols_label(
     .list = list(
-      all = "All SNPs", 
-      leq = sprintf("MAF < %s", percent_format(accuracy = 0.01, suffix = " %")(params[["maf_threshold"]])), 
+      all = "All SNPs",
+      leq = sprintf("MAF < %s", percent_format(accuracy = 0.01, suffix = " %")(params[["maf_threshold"]])),
       geq = html(sprintf("MAF &ge; %s", percent_format(accuracy = 0.01, suffix = " %")(params[["maf_threshold"]])))
     )[setdiff(colnames(tab_data), c("FID", "IID"))]
   ) %>%
-  cols_move(columns = "geq", after = "all") %>% 
+  cols_move(columns = "geq", after = "all") %>%
   tab_style(
-    style = cell_text(color = "#2a9bd3", weight = "bold"), 
+    style = cell_text(color = "#2a9bd3", weight = "bold"),
     locations = cells_body(columns = matches("IID"))
-  ) %>% 
+  ) %>%
   umr() %>%
-  cols_align(align = "center") %>% 
-  tab_options(table.font.size = pct(75)) %>% 
-  opt_row_striping() %>% 
-  opt_all_caps() %>% 
+  cols_align(align = "center") %>%
+  tab_options(table.font.size = pct(75)) %>%
+  opt_row_striping() %>%
+  opt_all_caps() %>%
   print()
 ```
 
@@ -355,34 +346,34 @@ tar_read(ga_check_sex_plot)
 
 ```{r sex-check-tab, results = "asis"}
 sexcheck[
-  i = (STATUS %in% "PROBLEM" & sex_discrepancy), 
+  i = (STATUS %in% "PROBLEM" & sex_discrepancy),
   j = list(
-    FID, IID, 
-    Phenotype = factor(PEDSEX, levels = c(0, 1, 2), labels = c("Unspecified", "Male", "Female")), 
-    Genotype = factor(SNPSEX, levels = c(0, 1, 2), labels = c("Undetermined", "Male", "Female")), 
+    FID, IID,
+    Phenotype = factor(PEDSEX, levels = c(0, 1, 2), labels = c("Unspecified", "Male", "Female")),
+    Genotype = factor(SNPSEX, levels = c(0, 1, 2), labels = c("Undetermined", "Male", "Female")),
     cr = 1 - F_MISS
   )
-][order(Phenotype, cr, decreasing = TRUE)] %>% 
-  gt() %>% 
-  tab_header("Samples To Be Checked (Or Excluded)") %>% 
+][order(Phenotype, cr, decreasing = TRUE)] %>%
+  gt() %>%
+  tab_header("Samples To Be Checked (Or Excluded)") %>%
   fmt_percent("cr", incl_space = TRUE) %>%
-  cols_label(cr = "Call Rate") %>% 
+  cols_label(cr = "Call Rate") %>%
   tab_style(
-    style = cell_text(color = "#2a9bd3", weight = "bold"), 
+    style = cell_text(color = "#2a9bd3", weight = "bold"),
     locations = cells_body(columns = matches("IID"))
-  ) %>% 
+  ) %>%
   data_color(
-    columns = c(Phenotype, Genotype), 
+    columns = c(Phenotype, Genotype),
     colors = col_factor(
-      palette = c("#2222b2", "#b22222", "#808080", "#808080"), 
+      palette = c("#2222b2", "#b22222", "#808080", "#808080"),
         levels = c("Male", "Female", "Unspecified", "Undetermined")
     )
   ) %>%
   umr() %>%
-  cols_align(align = "center") %>% 
-  tab_options(table.font.size = pct(75)) %>% 
-  opt_row_striping() %>% 
-  opt_all_caps() %>% 
+  cols_align(align = "center") %>%
+  tab_options(table.font.size = pct(75)) %>%
+  opt_row_striping() %>%
+  opt_all_caps() %>%
   print()
 ```
 
@@ -402,21 +393,21 @@ With `N(NM)`, the number of non-missing genotypes N(NM), and `O(Hom)`, the numbe
 
 ```{r heterozygosity-tab, results = "asis"}
 if (nrow(heterozygosity[grp %in% "all" & !is.na(labs)]) > 0) {
-  heterozygosity[grp %in% "all" & !is.na(labs), list(FID, IID, O.HOM., E.HOM., N.NM., hrate)] %>% 
-    gt() %>% 
+  heterozygosity[grp %in% "all" & !is.na(labs), list(FID, IID, O.HOM., E.HOM., N.NM., hrate)] %>%
+    gt() %>%
     tab_header(paste(
-      "Samples To Be Excluded For An Heterozygosity Rate Higher Than", params[["heterozygosity_threshold"]], 
+      "Samples To Be Excluded For An Heterozygosity Rate Higher Than", params[["heterozygosity_threshold"]],
       "Times The Standard Deviations From The Mean Heterozygosity Rate."
-    )) %>% 
+    )) %>%
     tab_style(
-      style = cell_text(color = "#2a9bd3", weight = "bold"), 
+      style = cell_text(color = "#2a9bd3", weight = "bold"),
       locations = cells_body(columns = matches("IID"))
-    ) %>% 
+    ) %>%
     umr() %>%
-    cols_align(align = "center") %>% 
-    tab_options(table.font.size = pct(75)) %>% 
-    opt_row_striping() %>% 
-    opt_all_caps() %>% 
+    cols_align(align = "center") %>%
+    tab_options(table.font.size = pct(75)) %>%
+    opt_row_striping() %>%
+    opt_all_caps() %>%
     print()
 }
 ```
@@ -435,14 +426,14 @@ tar_read(ga_het_samples_plot) + patchwork::plot_layout(ncol = 1, nrow = 2)
 
 # Relatedness: Overview
 
-In order to identify pairs of samples who look too similar to each other, 
+In order to identify pairs of samples who look too similar to each other,
 pairwise IBD (identity by descent) was computed, using the `--genome` command in PLINK.
 
-Prior to the analysis, the dataset was pruned to exclude high-LD-regions, 
+Prior to the analysis, the dataset was pruned to exclude high-LD-regions,
 that is no variants with MAF below ` `r percent_format(accuracy = 0.01, suffix = " %")(params[["maf_threshold"]])` ` and no pair of variants within 50 Kb have an r² > 0.2.
 
-If the samples in the cohort ` `r project` ` are not supposed to be related, 
-the expected pairwise $\hat{\pi}$ ("PI_HAT") should be less than ` `r params[["ibd_threshold"]]` `.  
+If the samples in the cohort ` `r project` ` are not supposed to be related,
+the expected pairwise $\hat{\pi}$ ("PI_HAT") should be less than ` `r params[["ibd_threshold"]]` `.
 Pairs of sample with $\hat{\pi}$ ("PI_HAT") greater than ` `r params[["ibd_threshold"]]` ` were flagged.
 
 ```{r relatedness-tab, results = "asis"}
@@ -452,7 +443,7 @@ relatedness_tab <- relatedness[
   !paste(FID1, IID1, sep = "_") %in% samples_bad_callrate &
     !paste(FID2, IID2, sep = "_") %in% samples_bad_callrate
 ][
-  j = .N, 
+  j = .N,
   by = list(grp = cut(
     x = PI_HAT,
     breaks = c(params[["ibd_threshold"]], 0.3, 0.4, 0.6, 0.8, 1),
@@ -460,10 +451,10 @@ relatedness_tab <- relatedness[
   ))
 ][
   order(grp)
-][ 
+][
   j = grp := factor(
-    x = grp, 
-    levels = levels(grp), 
+    x = grp,
+    levels = levels(grp),
     labels = paste0(
       levels(grp),
       c(" = Second Degree Relatives", "", " = First Degree Relatives", "", " = MZ Twins/Duplicates")
@@ -472,10 +463,10 @@ relatedness_tab <- relatedness[
 ]
 
 all_levels <- c(
-  sprintf("[%.01f,0.3] = Second Degree Relatives", params[["ibd_threshold"]]), 
-  "(0.3,0.4]", 
-  "(0.4,0.6] = First Degree Relatives", 
-  "(0.6,0.8]", 
+  sprintf("[%.01f,0.3] = Second Degree Relatives", params[["ibd_threshold"]]),
+  "(0.3,0.4]",
+  "(0.4,0.6] = First Degree Relatives",
+  "(0.6,0.8]",
   "(0.8,1] = MZ Twins/Duplicates"
 )
 
@@ -490,28 +481,28 @@ if (length(setdiff(all_levels, unique(relatedness_tab[["grp"]]))) > 0) {
         ),
         N = 0
       )
-    ), 
+    ),
     use.names = TRUE
   )[order(grp)]
 }
 
-relatedness_tab %>% 
-  gt() %>% 
-  cols_label(grp = "IBD Windows", N = "Pair Count") %>% 
+relatedness_tab %>%
+  gt() %>%
+  cols_label(grp = "IBD Windows", N = "Pair Count") %>%
   tab_header(html(sprintf(
     "The Distribution Of Identity By Descent Pairs (IBD &ge; %.01f; Call Rate &ge; %s)",
     params[["ibd_threshold"]],
     percent_format(accuracy = 0.01, suffix = " %")(params[["callrate_samples"]])
-  ))) %>% 
+  ))) %>%
   tab_style(
-    style = cell_text(color = "#2a9bd3", weight = "bold"), 
+    style = cell_text(color = "#2a9bd3", weight = "bold"),
     locations = cells_body(columns = "N")
-  ) %>% 
+  ) %>%
   umr() %>%
-  cols_align(align = "center") %>% 
-  tab_options(table.width = pct(75), table.font.size = pct(75), ) %>% 
-  opt_row_striping() %>% 
-  opt_all_caps() %>% 
+  cols_align(align = "center") %>%
+  tab_options(table.width = pct(75), table.font.size = pct(75), ) %>%
+  opt_row_striping() %>%
+  opt_all_caps() %>%
   print()
 ```
 
@@ -523,7 +514,7 @@ if (any(relatedness_tab[["N"]] != 0)) {
     x = merge(
       x = relatedness[
         i = !paste(FID1, IID1, sep = "_") %in% samples_bad_callrate &
-          !paste(FID2, IID2, sep = "_") %in% samples_bad_callrate, 
+          !paste(FID2, IID2, sep = "_") %in% samples_bad_callrate,
         j = list(FID1, IID1, FID2, IID2, PI_HAT)
       ],
       y = callrate_samples[, list(FID, IID, F_MISS)],
@@ -532,11 +523,11 @@ if (any(relatedness_tab[["N"]] != 0)) {
     ),
     y = callrate_samples[, list(FID, IID, F_MISS)],
     by.x = c("FID2", "IID2"),
-    by.y = c("FID", "IID"), 
+    by.y = c("FID", "IID"),
     suffixes = c("1", "2")
   )[
    j = paste0("Call_Rate", 1:2) := lapply(
-      X = .SD, 
+      X = .SD,
       FUN = function(x) percent_format(accuracy = 0.01, suffix = " %")(1 - x)
     ),
    .SDcols = paste0("F_MISS", 1:2)
@@ -549,65 +540,65 @@ if (any(relatedness_tab[["N"]] != 0)) {
       breaks = c(params[["ibd_threshold"]], 0.3, 0.4, 0.6, 0.8, 1),
       include.lowest = TRUE
     )
-  ][ 
+  ][
     j = IBD := factor(IBD, levels = levels(IBD), labels = paste0(
       levels(IBD),
       c(" = Second Degree Relatives", "", " = First Degree Relatives", "", " = MZ Twins/Duplicates")
     ))
   ][order(PI_HAT, decreasing = TRUE)]
-  
+
   for (iibd in as.character(unique(related_samples[["IBD"]]))) {
     cat(sprintf("\n\n---\n\n# Relatedness: %s\n\n", iibd))
-    
+
     related_samples[
       i = IBD %in% iibd,
       j = c("FID1", "IID1", "Call_Rate1", "FID2", "IID2", "Call_Rate2", "PI_HAT")
-    ] %>% 
-      gt() %>% 
+    ] %>%
+      gt() %>%
       tab_header(sprintf(
         "Pairs Of Samples With A Proportion Of IBD Higher Than %s", params[["ibd_threshold"]]
-      )) %>% 
+      )) %>%
       tab_style(
-        style = cell_text(color = "#2a9bd3", weight = "bold"), 
+        style = cell_text(color = "#2a9bd3", weight = "bold"),
         locations = cells_body(columns = matches("IID"))
       ) %>%
       umr() %>%
-      cols_align(align = "center") %>% 
+      cols_align(align = "center") %>%
       tab_options(
         table.width = pct(75),
         container.height = pct(100),
         table.font.size = pct(75)
-      ) %>% 
-      opt_row_striping() %>% 
-      opt_all_caps() %>% 
+      ) %>%
+      opt_row_striping() %>%
+      opt_all_caps() %>%
       print()
   }
-  
+
   cat('\n\n---\n\n# Relatedness: Group / "Family"\n\n')
-  
+
   related_samples[
     i = IID1 %in% intersect(IID1, IID2) | IID2 %in% intersect(IID1, IID2),
     j = c("IBD", "FID1", "IID1", "Call_Rate1", "FID2", "IID2", "Call_Rate2", "PI_HAT")
-  ] %>% 
-    gt(groupname_col = "IBD") %>% 
+  ] %>%
+    gt(groupname_col = "IBD") %>%
     tab_header(sprintf(
       "Group Of Samples With A Proportion Of IBD Higher Than %s", params[["ibd_threshold"]]
-    )) %>% 
+    )) %>%
     tab_style(
-      style = cell_text(color = "#2a9bd3", weight = "bold"), 
+      style = cell_text(color = "#2a9bd3", weight = "bold"),
       locations = cells_body(columns = matches("IID"))
     ) %>%
     umr() %>%
-    cols_align(align = "center") %>% 
+    cols_align(align = "center") %>%
     tab_options(
       table.width = pct(75),
       container.height = pct(100),
       table.font.size = pct(75)
-    ) %>% 
-    opt_row_striping() %>% 
-    opt_all_caps() %>% 
+    ) %>%
+    opt_row_striping() %>%
+    opt_all_caps() %>%
     print()
-      
+
 }
 ```
 
@@ -629,7 +620,7 @@ The data from the ` `r project` ` cohort was "pruned" (*i.e.*,&nbsp;clumped) usi
 
 * Heterozygosity rate within ` `r params[["heterozygosity_threshold"]]` `&nbsp;times the standard deviation from the mean heterozygosity rate.
 
-The resulting dataset was merged with the data from the publicly available [*1,000&nbsp;Genomes&nbsp;project*](https://www.internationalgenome.org/home) database, and thinned down to only include not palindromic variants that were present in both dataset. 
+The resulting dataset was merged with the data from the publicly available [*1,000&nbsp;Genomes&nbsp;project*](https://www.internationalgenome.org/home) database, and thinned down to only include not palindromic variants that were present in both dataset.
 
 A principal component analysis (PCA) was performed on the merged dataset (*i.e.*,&nbsp;` `r comma_fmt(n_samples)` `&nbsp;+&nbsp;` `r comma_fmt(n_samples_1kg)` `&nbsp;samples and ` `r comma_fmt(n_good_snp_1kg)` `&nbsp;variants).
 
@@ -677,50 +668,50 @@ pop_desc <- as.data.table(matrix(
     'BEB', 'Bengali', 'Bengali in Bangladesh',
     'STU', 'Sri Lankan', 'Sri Lankan Tamil in the UK',
     'ITU', 'Indian', 'Indian Telugu in the UK'
-  ), 
-  ncol = 3, 
-  dimnames = list(NULL, c("pop", "pop_fullname", "pop_really_fullname")), 
+  ),
+  ncol = 3,
+  dimnames = list(NULL, c("pop", "pop_fullname", "pop_really_fullname")),
   byrow = TRUE
 ))
 
 merge(
   x = pop_desc,
   y = pca_ethnicity_tidy[
-    i = cohort %in% "Target", 
-    j = .N, 
+    i = cohort %in% "Target",
+    j = .N,
     by = c("super_pop_closest", "pop_closest")
   ],
   by.x = "pop",
   by.y = "pop_closest"
 )[order(N, decreasing = TRUE)] %>%
-  gt() %>% 
+  gt() %>%
   tab_header("Distribution Of The Inferred Populations") %>%
   cols_label(
     super_pop_closest = "Closest Super Population",
     pop = "Closest Population"
-  ) %>% 
-  cols_move_to_start(super_pop_closest) %>% 
-  fmt_markdown(columns = "super_pop_closest") %>% 
+  ) %>%
+  cols_move_to_start(super_pop_closest) %>%
+  fmt_markdown(columns = "super_pop_closest") %>%
   data_color(
-    columns = "super_pop_closest", 
-    colors = col_factor("viridis", NULL), 
+    columns = "super_pop_closest",
+    colors = col_factor("viridis", NULL),
     apply_to = "text"
-  ) %>% 
+  ) %>%
   tab_style(
-    style = cell_text(weight = "bold"), 
+    style = cell_text(weight = "bold"),
     locations = cells_body(columns = matches("^super_pop_closest$|^N$"))
-  ) %>% 
+  ) %>%
   umr() %>%
-  cols_align(align = "center") %>% 
+  cols_align(align = "center") %>%
   tab_options(
     table.font.size = pct(cut(
-      x = pca_ethnicity_tidy[cohort %in% "Target", uniqueN(pop_closest)], 
-      breaks = c(0, 10, 15, 20, 30), 
+      x = pca_ethnicity_tidy[cohort %in% "Target", uniqueN(pop_closest)],
+      breaks = c(0, 10, 15, 20, 30),
       labels = c(75, 60, 45, 30)
     ))
-  ) %>% 
-  opt_row_striping() %>% 
-  opt_all_caps() %>% 
+  ) %>%
+  opt_row_striping() %>%
+  opt_all_caps() %>%
   print()
 ```
 
@@ -735,19 +726,19 @@ Variant-based QC was performed on ` `r comma_fmt(data_good_samples_fam)` `&nbsp;
 
 # Variant-based Quality-Control
 
-1. **Call Rate**  
-    Proportion of missing genotypes (*i.e.*,&nbsp;*call rate*) per variant was estimated using the `--missing` command in PLINK.  
-    &rArr; In total, ` `r comma_fmt(n_snps_cr)` `&nbsp;variants had a call rate below ` `r percent_format(accuracy = 0.01, suffix = " %")(params[["callrate_snps"]])` ` and were excluded.  
+1. **Call Rate**
+    Proportion of missing genotypes (*i.e.*,&nbsp;*call rate*) per variant was estimated using the `--missing` command in PLINK.
+    &rArr; In total, ` `r comma_fmt(n_snps_cr)` `&nbsp;variants had a call rate below ` `r percent_format(accuracy = 0.01, suffix = " %")(params[["callrate_snps"]])` ` and were excluded.
     &rArr; In total, ` `r comma_fmt(n_snps_dup)` `&nbsp;variants existed in multiple copies in the dataset (same chromosome and position) and were removed.
 
-2. **Hardy-Weinberg Equilibrium**  
-    Hardy-Weinberg equilibrium (HWE) p-value was computed using the `--hardy` command in PLINK.  
+2. **Hardy-Weinberg Equilibrium**
+    Hardy-Weinberg equilibrium (HWE) p-value was computed using the `--hardy` command in PLINK.
     &rArr; In total, ` `r comma_fmt(n_snps_hwe)` `&nbsp;variants had a HWE p-value below <code>`r scientific_fmt(params[["hwe_pvalue"]])`</code> and were excluded.
-    
-3. **Minor Allele Frequency**  
-    The MAF were computed using the `--freq` command in PLINK.  
+
+3. **Minor Allele Frequency**
+    The MAF were computed using the `--freq` command in PLINK.
     &rArr; In total, ` `r comma_fmt(n_snps_maf)` `&nbsp;variants (out of ` `r comma_fmt(n_snps_maf_all)` `) had a MAF below ` `r percent_format(accuracy = 0.01, suffix = " %")(params[["maf_threshold"]])` `.
-    
+
 ```{r variant-based-qc-fig, fig.height = 2.5}
 tar_read(ga_maf_snp_plot) + theme(text = element_text(size = 12))
 ```
@@ -766,8 +757,8 @@ class: part-slide
 * Samples identified in sample-based quality-control:
 
     + ` `r comma_fmt(n_exclude)` `&nbsp;samples excluded due to failures in the call rate and/or the heterozygosity checks.
-    
-    + ` `r comma_fmt(n_check)` `&nbsp;samples flagged.  
+
+    + ` `r comma_fmt(n_check)` `&nbsp;samples flagged.
         Those samples need to be checked in order to determine whether or not they have to be excluded.
 
 * Variants with a call rate below ` `r percent_format(accuracy = 0.01, suffix = " %")(params[["callrate_snps"]])` ` were removed.
@@ -798,7 +789,7 @@ summary_qc <- merge(
   by = c("FID", "IID")
 )[
   j = Status := factor(
-    x = fifelse(is.na(Status), "Clear", as.character(Status)), 
+    x = fifelse(is.na(Status), "Clear", as.character(Status)),
     levels = c("Clear", "Check", "Exclude")
   )
 ][
@@ -806,27 +797,27 @@ summary_qc <- merge(
 ][
   j = list(N = .N, PCT = .N / unique(total)),
   by = "Status"
-][order(Status)] %>% 
-  gt(rowname_col = "Status") %>% 
-  tab_header(title = "Quality-Control Summary") %>% 
-  cols_label(PCT = "Percentage") %>% 
-  fmt_percent(columns = "PCT", decimals = 2, incl_space = TRUE) %>% 
+][order(Status)] %>%
+  gt(rowname_col = "Status") %>%
+  tab_header(title = "Quality-Control Summary") %>%
+  cols_label(PCT = "Percentage") %>%
+  fmt_percent(columns = "PCT", decimals = 2, incl_space = TRUE) %>%
   grand_summary_rows(
-    columns = "PCT", 
-    fns = list(Total = ~ sum(.)), 
-    formatter = fmt_percent, 
+    columns = "PCT",
+    fns = list(Total = ~ sum(.)),
+    formatter = fmt_percent,
     incl_space = TRUE
-  ) %>% 
+  ) %>%
   grand_summary_rows(
-    columns = "N", 
-    fns = list(Total = ~ sum(.)), 
-    formatter = fmt_number, 
+    columns = "N",
+    fns = list(Total = ~ sum(.)),
+    formatter = fmt_number,
     decimals = 0
-  ) %>% 
+  ) %>%
   umr() %>%
-  cols_align(align = "center") %>% 
-  opt_row_striping() %>% 
-  opt_all_caps() %>% 
+  cols_align(align = "center") %>%
+  opt_row_striping() %>%
+  opt_all_caps() %>%
   print()
 ```
 
@@ -845,8 +836,8 @@ Imputation performed using the Sanger Imputation Services Pipeline [(https://imp
 
 ## Description
 
-The aim of the [Haplotype Reference Consortium (HRC)](http://www.haplotype-reference-consortium.org/) is to create a large reference panel of human haplotypes by combining together sequencing data from multiple cohorts.  
-This HRC.r1.1 release consists of 64,940 haplotypes of predominantly European ancestry.  
+The aim of the [Haplotype Reference Consortium (HRC)](http://www.haplotype-reference-consortium.org/) is to create a large reference panel of human haplotypes by combining together sequencing data from multiple cohorts.
+This HRC.r1.1 release consists of 64,940 haplotypes of predominantly European ancestry.
 More information about the HRC can be found on [www.haplotype-reference-consortium.org](http://www.haplotype-reference-consortium.org/).
 
 .pull-left[
@@ -868,8 +859,8 @@ More information about the HRC can be found on [www.haplotype-reference-consorti
 
 ## Pre-phasing And Imputation
 
-Prior to imputation with `PBWT`, each chromosome is phased against the chosen reference panel using `SHAPEIT2` (`v2.r790`).  
-The phasing does not take into account any sources of information other than the input genotypes when phasing. 
+Prior to imputation with `PBWT`, each chromosome is phased against the chosen reference panel using `SHAPEIT2` (`v2.r790`).
+The phasing does not take into account any sources of information other than the input genotypes when phasing.
 
 ]
 
@@ -883,14 +874,14 @@ The phasing does not take into account any sources of information other than the
 
 .small-text[
 
-The format of the returned data will be in the [Variant Call Format (VCF)](http://samtools.github.io/hts-specs/VCFv4.2.pdf).  
+The format of the returned data will be in the [Variant Call Format (VCF)](http://samtools.github.io/hts-specs/VCFv4.2.pdf).
 The returned files will be:
 
 1. Imputation pipelines: One VCF per-chromosome for the `PBWT` imputation pipelines.
 1. Each VCF will have been compressed with `bgzip` and have an associated `tabix` index (`.tbi`) file allowing random access queries with `bcftools`, `tabix` and other VCF processing tools.
 1. A tarball of the various log files associated with the pipeline is also returned.
 
-The VCF header should contain up-to-date information about the meaning of the __INFO__ and __FORMAT__ tags as well as program versions and command lines used in the pipeline.  
+The VCF header should contain up-to-date information about the meaning of the __INFO__ and __FORMAT__ tags as well as program versions and command lines used in the pipeline.
 A quick way to view the header is with `bcftools view -h my_file.vcf.gz` or `tabix -H my_file.vcf.gz`.
 
 .pull-left[
@@ -918,7 +909,7 @@ Depending on the pipeline choice, these may include:
 
 See the [resources](https://imputation.sanger.ac.uk/?resources=1) page for help converting phased output to Oxford HAP-SAMPLE format or imputed output to Oxford GEN-SAMPLE format.
 
-For imputation pipelines, the __ID__ column will be filled with [dbSNP rsIDs](http://www.ncbi.nlm.nih.gov/SNP/).  
+For imputation pipelines, the __ID__ column will be filled with [dbSNP rsIDs](http://www.ncbi.nlm.nih.gov/SNP/).
 See the VCF header lines for the dbSNP version used.
 
 ]
@@ -927,12 +918,12 @@ See the VCF header lines for the dbSNP version used.
 if (tar_read(ga_vcf_imputed_uptodate)) {
   cat("\n\n---\n\n# Imputation Quality-Control\n\n")
   cat('\n\n<div class="pull-left">\n\n')
-  gt(tar_read(ga_vcf_imputed_qc_af)) %>% 
+  gt(tar_read(ga_vcf_imputed_qc_af)) %>%
     cols_label(
       bin_af = "Alternate Allele Frequency",
       n = "Count",
       p = "Percentage"
-    ) %>% 
+    ) %>%
     tab_header(title = "Alternate Allele Frequency") %>%
     data_color(
       columns = c(n, p),
@@ -944,20 +935,20 @@ if (tar_read(ga_vcf_imputed_uptodate)) {
     fmt(columns = "p", fns = percent_format(accuracy = 0.0001, suffix = " %")) %>%
     fmt(columns = "n", fns = comma_format(accuracy = 1)) %>%
     umr() %>%
-    cols_align(align = "center") %>% 
+    cols_align(align = "center") %>%
     tab_options(table.font.size = pct(75)) %>%
-    opt_row_striping() %>% 
-    opt_all_caps() %>% 
+    opt_row_striping() %>%
+    opt_all_caps() %>%
     print()
   cat("\n\n</div>\n\n")
 
   cat('\n\n<div class="pull-right">\n\n')
-  gt(tar_read(ga_vcf_imputed_qc_info)) %>% 
+  gt(tar_read(ga_vcf_imputed_qc_info)) %>%
     cols_label(
       bin_info = "INFO score",
       n = "Count",
       p = "Percentage"
-    ) %>% 
+    ) %>%
     tab_header(title = "INFO score") %>%
     data_color(
       columns = c(n, p),
@@ -969,10 +960,10 @@ if (tar_read(ga_vcf_imputed_uptodate)) {
     fmt(columns = "p", fns = percent_format(accuracy = 0.0001, suffix = " %")) %>%
     fmt(columns = "n", fns = comma_format(accuracy = 1)) %>%
     umr() %>%
-    cols_align(align = "center") %>% 
+    cols_align(align = "center") %>%
     tab_options(table.font.size = pct(75)) %>%
-    opt_row_striping() %>% 
-    opt_all_caps() %>% 
+    opt_row_striping() %>%
+    opt_all_caps() %>%
     print()
   cat("\n\n</div>\n\n")
   cat(sprintf(
@@ -986,10 +977,10 @@ if (tar_read(ga_vcf_imputed_uptodate)) {
 
 # Imputation: References
 
-* The [Sanger Imputation Service](https://imputation.sanger.ac.uk/) was introduced as part of the first release of the [Haplotype Reference Consortium](http://www.haplotype-reference-consortium.org/). 
+* The [Sanger Imputation Service](https://imputation.sanger.ac.uk/) was introduced as part of the first release of the [Haplotype Reference Consortium](http://www.haplotype-reference-consortium.org/).
     * S. McCarthy et al. (2016) A reference panel of 64,976 haplotypes for genotype imputation, Nature Genetics. 48(10):1279-83. doi:[10.1038/ng.3643](https://doi.org/10.1038/ng.3643)
 
-* The [HRC.r1](http://www.haplotype-reference-consortium.org/) reference panel is described in the following paper.  
+* The [HRC.r1](http://www.haplotype-reference-consortium.org/) reference panel is described in the following paper.
     * S. McCarthy et al. (2016) A reference panel of 64,976 haplotypes for genotype imputation, Nature Genetics. 48(10):1279-83. doi:[10.1038/ng.3643](https://doi.org/10.1038/ng.3643)
 
 * [SHAPEIT2](http://shapeit.fr/) is used for pre-phasing:

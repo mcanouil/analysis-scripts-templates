@@ -33,11 +33,11 @@ params:
   filter_callrate: TRUE
   callrate_samples: 0.99
   callrate_probes: 1
-  sex_threshold: NULL 
+  sex_threshold: NULL
   sex_colname: NULL
   norm_background: "oob"
   norm_dye: "RELIC"
-  norm_quantile: "quantile1" 
+  norm_quantile: "quantile1"
   cell_tissue: NULL
   pca_vars: !r c("Sample_Plate", "Sentrix_ID")
   max_labels: 15
@@ -61,7 +61,7 @@ suppressPackageStartupMessages({
   library(data.table)
   library(gt)
   library(scales)
-  
+
   library(targets)
 })
 ```
@@ -74,7 +74,7 @@ knitr::opts_chunk$set(
   include = TRUE, # Default: TRUE
   echo = FALSE, # Default: TRUE
   width = getOption("width"),
-  comment = "#>", 
+  comment = "#>",
   fig.align = "center",
   fig.width = 11.5, # Default: 7
   fig.height = 5.75,  # Default: 7
@@ -92,10 +92,9 @@ knitr::opts_chunk$set(
 
 ```{r setup-functions, include = FALSE}
 sub_chunk <- function(code, chunk_name = NULL, fig_width = 11.5, fig_height = 5.75) {
-  sub_chunk_txt <- paste0(
-    "\n```{r ", chunk_name, ", fig.width = ", fig_width, ", fig.height = ", fig_height, ", echo = FALSE}\n",
-    "(", paste0(deparse(function() code), collapse = ""), ")()",
-    "\n```\n\n"
+  sub_chunk_txt <- sprintf(
+    "\n```{r %s, fig.width = %s, fig.height = %s, echo = FALSE}\n(%s)()\n```\n\n",
+    chunk_name, fig_width, fig_height, paste0(deparse(function() code), collapse = "")
   )
   cat(knitr::knit(text = knitr::knit_expand(text = sub_chunk_txt), quiet = TRUE))
 }
@@ -109,7 +108,7 @@ pca_mset <- tar_read(ma_pca_mset_plots)
 
 # Methods and Parameters
 
-Array: ` `r params[["array"]]` `  
+Array: ` `r params[["array"]]` `
 Annotation package from Bioconductor: ` `r params[["annotation"]]` `
 
 ---
@@ -120,67 +119,67 @@ Annotation package from Bioconductor: ` `r params[["annotation"]]` `
 
 * The threshold for the detection p-values: ` `r percent_format(accuracy = 0.01, suffix = " %")(params[["detection_pvalues"]])` `
 
-* The call rate threshold for samples: ` `r percent_format(accuracy = 0.01, suffix = " %")(params[["callrate_samples"]])` `  
+* The call rate threshold for samples: ` `r percent_format(accuracy = 0.01, suffix = " %")(params[["callrate_samples"]])` `
     &rArr; Should samples with less than the specified call rate (` `r percent_format(accuracy = 0.01, suffix = " %")(params[["callrate_samples"]])` `) for detection p-values below ` α=`r params[["detection_pvalues"]]` ` be removed?
-    
-* The call rate threshold for probes: ` `r percent_format(accuracy = 0.01, suffix = " %")(params[["callrate_probes"]])` `  
+
+* The call rate threshold for probes: ` `r percent_format(accuracy = 0.01, suffix = " %")(params[["callrate_probes"]])` `
     &rArr; Should probes with less than the specified call rate (` `r percent_format(accuracy = 0.01, suffix = " %")(params[["callrate_probes"]])` `) for detection p-values below ` α=`r params[["detection_pvalues"]]` ` be removed?
 
 ---
 
 # Pre-Processing
 
-* The method to estimate background normal distribution parameters: ` `r params[["norm_background"]]` `  
+* The method to estimate background normal distribution parameters: ` `r params[["norm_background"]]` `
     &rArr; Method from [*ENmix*](https://doi.org/doi:10.18129/B9.bioc.ENmix)
-    
-* The dye bias correction: ` `r params[["norm_dye"]]` `  
+
+* The dye bias correction: ` `r params[["norm_dye"]]` `
     &rArr; Method from [*ENmix*](https://doi.org/doi:10.18129/B9.bioc.ENmix)
-    
-* The quantile normalisation: ` `r params[["norm_quantile"]]` `  
+
+* The quantile normalisation: ` `r params[["norm_quantile"]]` `
     &rArr; Method from [*ENmix*](https://doi.org/doi:10.18129/B9.bioc.ENmix)
 
 ---
 
 # Probes Filtering
 
-* `filter_snps`: ` `r params[["filter_snps"]]` `  
+* `filter_snps`: ` `r params[["filter_snps"]]` `
     &rArr; Should probes in which the probed CpG falls near a SNP be removed? ([Zhou et al., 2016](https://www.doi.org/10.1093/nar/gkw967))
     * Name of the ethnicity group: ` `r if (is.null(params[["population"]])) "Not defined" else params[["population"]]` `
-    
-* `filter_non_cpg`: ` `r params[["filter_non_cpg"]]` `  
+
+* `filter_non_cpg`: ` `r params[["filter_non_cpg"]]` `
     &rArr; Should non-cg probes be removed?
-    
-* `filter_xy`: ` `r params[["filter_xy"]]` `  
+
+* `filter_xy`: ` `r params[["filter_xy"]]` `
     &rArr; Should probes from X and Y chromosomes be removed?
-    
-* `filter_multihit`: ` `r params[["filter_multihit"]]` ` ([Nordlund et al., 2013](https://www.doi.org/10.1186/gb-2013-14-9-r105))  
+
+* `filter_multihit`: ` `r params[["filter_multihit"]]` ` ([Nordlund et al., 2013](https://www.doi.org/10.1186/gb-2013-14-9-r105))
     &rArr; Should probes which align to multiple locations be removed?
-    
-* `filter_beads`: ` `r params[["filter_beads"]]` `  
+
+* `filter_beads`: ` `r params[["filter_beads"]]` `
     &rArr; Should probes with less than three beadcount in at least ` `r percent(params[["bead_cutoff"]], suffix = " %")` ` of the samples be removed?
 
 ---
 
 # Sex Check
 
-* The threshold value to discrimate sex: ` `r if (is.null(params[["sex_threshold"]])) "auto" else params[["sex_threshold"]]` `  
+* The threshold value to discrimate sex: ` `r if (is.null(params[["sex_threshold"]])) "auto" else params[["sex_threshold"]]` `
     &rArr; Flag samples with sex discrepancy with the phenotype based on X/Y chromosomes methylation.
 
 ---
 
 # Cell Composition
 
-* The cell tissue: ` `r params[["cell_tissue"]]` `  
+* The cell tissue: ` `r params[["cell_tissue"]]` `
     &rArr; Using a reference panel (*i.e.*,&nbsp;blood and cord blood) or `refFreeCellMix` method from [*RefFreeEWAS*](https://cran.r-project.org/package=RefFreeEWAS)
 
 ---
 
 # Final Processing
 
-* Probe design type bias correction: `rcp`  
+* Probe design type bias correction: `rcp`
     &rArr; Method from [*ENmix*](https://doi.org/doi:10.18129/B9.bioc.ENmix)
 
-* Batch effect normalisation: `ComBat`  
+* Batch effect normalisation: `ComBat`
     &rArr; Method from [*sva*](https://doi.org/doi:10.18129/B9.bioc.sva)
 
 ---
@@ -207,25 +206,25 @@ if ("qc_observed_sex" %in% names(phenotypes)) {
   phenotypes[
     j = sex_fct := factor(qc_observed_sex, levels = c("Male", "Female", NA), labels = c("Male", "Female", "Unspecified"), exclude = NULL)
   ]
-  
-  phenotypes[j = .N, by = sex_fct][j = list(sex_fct, N)] %>% 
-    gt() %>% 
-    cols_align(align = "center") %>% 
+
+  phenotypes[j = .N, by = sex_fct][j = list(sex_fct, N)] %>%
+    gt() %>%
+    cols_align(align = "center") %>%
     tab_header(
-      title = "Samples Available", 
+      title = "Samples Available",
       subtitle = md("*EPIC Array*")
     ) %>%
-    fmt_number(columns = "N", decimals = 0) %>% 
+    fmt_number(columns = "N", decimals = 0) %>%
     grand_summary_rows(
       columns = "N",
       fns = list(Total = ~ sum(.)),
       formatter = fmt_number,
       decimals = 0
-    ) %>% 
-    cols_label(sex_fct = "Sex") %>% 
-    umr() %>% 
-    opt_row_striping() %>% 
-    opt_all_caps() %>% 
+    ) %>%
+    cols_label(sex_fct = "Sex") %>%
+    umr() %>%
+    opt_row_striping() %>%
+    opt_all_caps() %>%
     print()
 }
 ```
@@ -246,25 +245,25 @@ data.frame(
   X3 = scales::percent_format(accuracy = 0.01, suffix = " %")(
     rowSums(sapply(phenotypes[["call_rate"]], "<", callrate_thresholds)) / nrow(phenotypes)
   )
-) %>% 
-  gt() %>% 
-  cols_align(align = "center") %>% 
-  tab_header("Number Of Samples To Exclude Based On Call Rate Thresholds") %>% 
+) %>%
+  gt() %>%
+  cols_align(align = "center") %>%
+  tab_header("Number Of Samples To Exclude Based On Call Rate Thresholds") %>%
   tab_style(
-    style = cell_fill(color = "#2222b2", alpha = 0.5), 
+    style = cell_fill(color = "#2222b2", alpha = 0.5),
     locations = cells_body(
-      columns = everything(), 
+      columns = everything(),
       rows = X1 == scales::percent_format(accuracy = 0.01, suffix = " %")(params[["callrate_samples"]])
     )
-  ) %>% 
+  ) %>%
   cols_label(
     X1 = "Call Rate Threshold",
     X2 = "Samples to Exclude (N)",
     X3 = "Samples to Exclude (%)"
-  ) %>% 
-  umr() %>% 
-  opt_row_striping() %>% 
-  opt_all_caps() %>% 
+  ) %>%
+  umr() %>%
+  opt_row_striping() %>%
+  opt_all_caps() %>%
   print()
 ```
 
@@ -294,32 +293,32 @@ if (is.null(params[["sex_colname"]])) {
 if (!is.null(params[["sex_colname"]]) & any(phenotypes[["qc_sex_discrepancy"]])) {
   cat("---\n\n# Sex Check\n\n")
   phenotypes[
-    i = (qc_sex_discrepancy), 
+    i = (qc_sex_discrepancy),
     j = list(Sample_Name, Sample_ID, qc_observed_sex, qc_predicted_sex)
   ][
     j = `:=`(
       qc_observed_sex = fifelse(is.na(qc_observed_sex), "Unspecified", as.character(qc_observed_sex)),
       qc_predicted_sex = fifelse(is.na(qc_predicted_sex), "Undetermined", as.character(qc_predicted_sex))
     )
-  ] %>% 
-    gt() %>% 
-    cols_align(align = "center") %>% 
+  ] %>%
+    gt() %>%
+    cols_align(align = "center") %>%
     cols_label(
       Sample_Name = "Name",
-      Sample_ID = "ID", 
-      qc_observed_sex = "Observed Sex", 
+      Sample_ID = "ID",
+      qc_observed_sex = "Observed Sex",
       qc_predicted_sex = "Predicted Sex"
-    ) %>% 
+    ) %>%
     data_color(
-      columns = c(qc_observed_sex, qc_predicted_sex), 
+      columns = c(qc_observed_sex, qc_predicted_sex),
       colors = col_factor(
-        palette = c("#2222b2", "#b22222", "#808080", "#808080"), 
+        palette = c("#2222b2", "#b22222", "#808080", "#808080"),
         levels = c("Male", "Female", "Unspecified", "Undetermined")
       )
-    ) %>% 
-    umr() %>% 
-    opt_row_striping() %>% 
-    opt_all_caps() %>% 
+    ) %>%
+    umr() %>%
+    opt_row_striping() %>%
+    opt_all_caps() %>%
     print()
 }
 ```
@@ -330,7 +329,7 @@ if (!is.null(params[["sex_colname"]]) & any(phenotypes[["qc_sex_discrepancy"]]))
 
 ```{r cell-composition-fig, results = "asis"}
 if (
-  is.null(params[["cell_tissue"]]) & 
+  is.null(params[["cell_tissue"]]) &
     any(grepl("^CellT_", names(phenotypes)))
 ) {
   cat("No cell tissue was provided or no available reference set (R packages).\n")
