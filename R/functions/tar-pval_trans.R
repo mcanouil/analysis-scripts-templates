@@ -9,9 +9,10 @@ pval_trans <- function(alpha = NULL, md = FALSE, prefix = FALSE, colour = "#b222
       -log(x, 10)
     },
     inverse = function(x) {10^-x},
-    breaks = (function(n = 5) {
+    breaks = (function(n = 5, digits = 3) {
       function(x) {
-        max <- floor(-log(min(c(x, alpha), na.rm = TRUE), base = 10))
+        values <- as.numeric(format(c(x, alpha), scientific = TRUE, digits = digits))
+        max <- floor(-log(min(values, na.rm = TRUE), base = 10))
         if (max == 0) 1 else sort(unique(c(10^-seq(0, max, by = floor(max / n) + 1), alpha)))
       }
     })(),
