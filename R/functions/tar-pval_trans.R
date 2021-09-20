@@ -17,30 +17,36 @@ pval_trans <- function(alpha = NULL, md = FALSE, prefix = FALSE, colour = "#b222
     })(),
     format = (function(x, digits = 3) {
       if (md & nchar(system.file(package = "ggtext")) != 0) {
-        prefix_text <- if (prefix) "&alpha; = " else ""
-        x_fmt <- gsub(
+        x_fmt <- sub(
           "^(.*)e[+]*([-]*)0*(.*)$",
           "\\1 &times; 10<sup>\\2\\3</sup>",
           format(x, scientific = TRUE, digits = digits)
         )
         x_fmt[x %in% c(0, 1)] <- x[x %in% c(0, 1)]
-        x_fmt <- gsub("^1 &times; ", "", x_fmt)
-        alpha_idx <- format(x, scientific = TRUE, digits = digits) ==
-          format(alpha, scientific = TRUE, digits = digits)
-        x_fmt[alpha_idx] <- paste0("<b style='color:", colour, ";'>", prefix_text, x_fmt[alpha_idx], "</b>")
+        x_fmt <- sub("^1 &times; ", "", x_fmt)
+        if (!is.null(alpha)) {
+          alpha_idx <- format(x, scientific = TRUE, digits = digits) ==
+            format(alpha, scientific = TRUE, digits = digits)
+          x_fmt[alpha_idx] <- paste0(
+            "<b style='color:", colour, ";'>",
+            if (prefix) "&alpha; = " else "", x_fmt[alpha_idx],
+            "</b>"
+          )
+        }
         x_fmt
       } else {
-        prefix_text <- if (prefix) "alpha == " else ""
-        x_fmt <- gsub(
+        x_fmt <- sub(
           "^(.*)e[+]*([-]*)0*(.*)$",
           "\\1 %*% 10^\\2\\3",
           format(x, scientific = TRUE, digits = digits)
         )
         x_fmt[x %in% c(0, 1)] <- x[x %in% c(0, 1)]
-        x_fmt <- gsub("^1 \\%\\*\\% ", "", x_fmt)
-        alpha_idx <- format(x, scientific = TRUE, digits = digits) ==
-          format(alpha, scientific = TRUE, digits = digits)
-        x_fmt[alpha_idx] <- paste0(prefix_text, x_fmt[alpha_idx])
+        x_fmt <- sub("^1 \\%\\*\\% ", "", x_fmt)
+        if (!is.null(alpha)) {
+          alpha_idx <- format(x, scientific = TRUE, digits = digits) ==
+            format(alpha, scientific = TRUE, digits = digits)
+          x_fmt[alpha_idx] <- paste0(if (prefix) "alpha == " else "", x_fmt[alpha_idx])
+        }
         parse(text = x_fmt)
       }
     })
