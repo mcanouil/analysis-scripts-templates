@@ -58,11 +58,6 @@ qc_sample_sheet_gwas <- function(phenotype, exclusion, relatedness, ethnicity) {
   ][
     i = is.na(vcf_id),
     j = is_related := NA
-  ][
-    j = `:=`(
-      bmi = weight / (height / 100)^2,
-      group = c("ELFE" = 1L, "EPIPAGE" = 2L)[cohort]
-    )
   ]
 }
 
@@ -301,7 +296,7 @@ plot_manhattan_gwas <- function(file, model) {
       yes = gsub(",", ";", Symbol),
       no = NA_character_
     ),
-    by = "gene_label"
+    by = "Symbol"
   ][
     i = P > 0.05,
     j = P := NA_real_
