@@ -474,9 +474,9 @@ plot_volcano_ewas <- function(file, model) {
       na.rm = TRUE
     ) +
     ggplot2::labs(
-      x = "Chromosome",
+      x = "Estimate",
       y = "P-value",
-      colour = "Chromosome",
+      colour = "Estimate",
       title = model[["pretty_trait"]],
       subtitle = toupper(paste(raw_trait, "= ", model[["covariates"]]))
     ) +
