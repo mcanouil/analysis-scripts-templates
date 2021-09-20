@@ -76,20 +76,6 @@ opts_chunk$set(
 ```
 
 ```{r functions, include = FALSE}
-sub_chunk <- function(code, chunk_name = NULL, fig_width = 11.5, fig_height = 5.75) {
-  sub_chunk_txt <- paste0(
-    "\n```{r ", chunk_name, ", fig.width = ", fig_width, ", fig.height = ", fig_height, ", echo = FALSE}\n",
-    "(", paste0(deparse(function() code), collapse = ""), ")()",
-    "\n```\n\n"
-  )
-  cat(
-    "\n\n",
-    knitr::knit(text = knitr::knit_expand(text = sub_chunk_txt), quiet = TRUE),
-    "\n\n",
-    sep = ""
-  )
-}
-
 eq <- function(tex, d = FALSE, ...) katex::katex_html(tex = tex, displayMode = d, ..., output = "html")
 
 source(here("scripts/tar-utils/tar-pval_trans.R"))
@@ -394,6 +380,22 @@ for (igroup in df_models[["tar_group"]]) {
   cat("\n")
   print(
     tar_read(gwas_results_manhattan, branches = igroup)[[1]] +
+      theme(
+        plot.title = element_blank(),
+        plot.subtitle = element_blank()
+      )
+  )
+  cat("\n")
+
+  cat("\n\n---\n\n")
+  cat(sprintf(
+    "# Results: `%s (%s)` - Volcano Plot\n",
+    df_models[tar_group %in% igroup, pretty_trait], igroup
+  ))
+  cat(eq(tex = df_models[tar_group %in% igroup, eq], d = TRUE))
+  cat("\n")
+  print(
+    tar_read(gwas_results_volcano, branches = igroup)[[1]] +
       theme(
         plot.title = element_blank(),
         plot.subtitle = element_blank()
