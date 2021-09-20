@@ -152,7 +152,7 @@ epic_annot_pkg_urls <- paste(sprintf("\n-  [%s](%s)", epic_annot_pkg_urls, epic_
 * R packages:
     * ` `r epic_annot_pkg` ` ` `r as.character(packageVersion(epic_annot_pkg))` `
         ```{r}
-        car(epic_annot_pkg_urls)
+        cat(epic_annot_pkg_urls)
         ```
 
     * `limma` ` `r as.character(packageVersion("limma"))` `
