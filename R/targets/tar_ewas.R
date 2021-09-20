@@ -75,11 +75,28 @@ tar_ewas <- {list(
     iteration = "list",
     packages = c("ggplot2", "ggtext", "data.table", "ggrepel", "scales")
   ),
+  tar_target(ewas_results_volcano,
+    command = plot_volcano_ewas(file = ewas_results_file, model = ewas_models),
+    pattern = map(ewas_models, ewas_results_file),
+    iteration = "list",
+    packages = c("ggplot2", "ggtext", "data.table", "ggrepel", "scales")
+  ),
   tar_target(ewas_results_pp,
     command = plot_pp_ewas(file = ewas_results_file, model = ewas_models),
     pattern = map(ewas_models, ewas_results_file),
     iteration = "list",
     packages = c("ggplot2", "ggtext", "data.table", "stats")
+  ),
+  tar_render(ewas_report,
+    path = here("scripts/slides/ewas_report.Rmd"),
+    output_dir = here("reports"),
+    packages = c(
+      "xaringan",
+      "here", "knitr", "ragg", "ggplot2", "ggtext",
+      "patchwork", "data.table", "gt", "scales",
+      "showtext", "svglite", "katex",
+      "targets", "bacon", "utils"
+    )
   )
 )}
 

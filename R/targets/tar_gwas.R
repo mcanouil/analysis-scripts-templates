@@ -86,13 +86,30 @@ tar_gwas <- {list(
     command = plot_manhattan_gwas(file = gwas_results_file, model = gwas_models),
     pattern = map(gwas_models, gwas_results_file),
     iteration = "list",
-    packages = c("ggplot2", "ggtext", "data.table", "ggrepel", "scales")
+    packages = c("ggplot2", "ggtext", "data.table", "ggrepel", "scales", "stats")
+  ),
+  tar_target(gwas_results_volcano,
+    command = plot_volcano_gwas(file = gwas_results_file, model = gwas_models),
+    pattern = map(gwas_models, gwas_results_file),
+    iteration = "list",
+    packages = c("ggplot2", "ggtext", "data.table", "ggrepel", "scales", "stats")
   ),
   tar_target(gwas_results_pp,
     command = plot_pp_gwas(file = gwas_results_file, model = gwas_models),
     pattern = map(gwas_models, gwas_results_file),
     iteration = "list",
     packages = c("ggplot2", "ggtext", "data.table", "stats")
+  ),
+  tar_render(gwas_report,
+    path = here("scripts/slides/gwas_report.Rmd"),
+    output_dir = here("reports"),
+    packages = c(
+      "xaringan",
+      "here", "knitr", "ragg", "ggplot2", "ggtext",
+      "patchwork", "data.table", "gt", "scales",
+      "showtext", "svglite", "katex",
+      "targets", "bacon", "utils"
+    )
   )
 )}
 

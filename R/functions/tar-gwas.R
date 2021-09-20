@@ -287,7 +287,10 @@ do_gwas <- function(
 #' @import ggtext
 #' @import data.table
 #' @import ggrepel
+#' @import stats
 plot_manhattan_gwas <- function(file, model) {
+  raw_trait <- all.vars(stats::as.formula(paste0("~", model[["raw_trait"]])))
+
   dt <- data.table::fread(file)[
     j = gene_label_min := data.table::fifelse(
       test = P == min(P, na.rm = TRUE) &
@@ -333,9 +336,10 @@ plot_manhattan_gwas <- function(file, model) {
     ) +
     ggplot2::scale_y_continuous(
       trans = pval_trans(md = TRUE),
-      expand = ggplot2::expansion(mult = c(0, 0.2)),
-      limits = c(0.05, NA)
+      expand = ggplot2::expansion(mult = c(0, 0.2))#,
+      # limits = c(0.05, NA)
     ) +
+    ggplot2::coord_cartesian(ylim = c(0.05, NA)) +
     ggplot2::scale_colour_manual(values = rep(scales::viridis_pal(begin = 1/4, end = 3/4)(2), 12)) +
     ggrepel::geom_label_repel(
       mapping = ggplot2::aes(label = .data[["gene_label_min"]]),
@@ -343,7 +347,7 @@ plot_manhattan_gwas <- function(file, model) {
       show.legend = FALSE,
       min.segment.length = 0,
       # direction = "x",
-      size = 1.75,
+      size = 2.5,
       na.rm = TRUE
     ) +
     ggplot2::labs(
@@ -351,7 +355,7 @@ plot_manhattan_gwas <- function(file, model) {
       y = "P-value",
       colour = "Chromosome",
       title = model[["pretty_trait"]],
-      subtitle = toupper(paste(model[["raw_trait"]], "= ", model[["covariates"]]))
+      subtitle = toupper(paste(raw_trait, "= ", model[["covariates"]]))
     ) +
     ggplot2::theme(
       plot.title.position = "plot",
@@ -371,6 +375,8 @@ plot_manhattan_gwas <- function(file, model) {
 #' @import ggtext
 #' @import stats
 plot_pp_gwas <- function(file, model) {
+  raw_trait <- all.vars(stats::as.formula(paste0("~", model[["raw_trait"]])))
+
   dt <- data.table::fread(file)[
     order(P)
   ][
@@ -414,7 +420,7 @@ plot_pp_gwas <- function(file, model) {
       colour = NULL,
       shape = NULL,
       title = model[["pretty_trait"]],
-      subtitle = toupper(paste(model[["raw_trait"]], "= ", model[["covariates"]]))
+      subtitle = toupper(paste(raw_trait, "= ", model[["covariates"]]))
     ) +
     ggplot2::theme(
       plot.title.position = "plot",
@@ -430,5 +436,87 @@ plot_pp_gwas <- function(file, model) {
       legend.margin = ggplot2::margin(1.5, 1.5, 1.5, 1.5),
       legend.spacing.x = ggplot2::unit(1.5, "pt"),
       legend.spacing.y = ggplot2::unit(1.5, "pt")
+    )
+}
+
+#' plot_volcano_gwas
+#' @import ggplot2
+#' @import ggtext
+#' @import data.table
+#' @import ggrepel
+#' @import stats
+plot_volcano_gwas <- function(file, model) {
+  raw_trait <- all.vars(stats::as.formula(paste0("~", model[["raw_trait"]])))
+
+  dt <- data.table::fread(file)[
+    j = gene_label_min := data.table::fifelse(
+      test = P == min(P, na.rm = TRUE) &
+        !is.na(Symbol) &
+        !Symbol %in% c("", "NA"),
+      yes = gsub(",", ";", Symbol),
+      no = NA_character_
+    ),
+    by = "Symbol"
+  ][
+    i = P > 0.05,
+    j = P := NA_real_
+  ][
+    j = file := basename(file)
+  ][
+    j = c("EFFECT", "CHROM", "POS", "P", "gene_label_min")
+  ][order(P)]
+
+  if (is.numeric(dt[["CHROM"]])) {
+    dt[j = "CHROM" := lapply(.SD, as.character), .SDcols = "CHROM"]
+  }
+
+  if (dt[!is.na(gene_label_min), .N] > 10) {
+    dt[which(!is.na(gene_label_min))[-c(1:10)], gene_label_min := NA_character_]
+  }
+
+  alpha <- 0.05 / nrow(dt)
+
+  ggplot2::ggplot(dt) +
+    ggplot2::aes(x = .data[["EFFECT"]], y = .data[["P"]], colour = abs(.data[["EFFECT"]])) +
+    ggplot2::geom_vline(xintercept = 0, linetype = 2) +
+    ggplot2::geom_point(size = 0.60) +
+    ggplot2::annotate(
+      geom = "rect",
+      xmin = -Inf, xmax = Inf, ymin = 1, ymax = alpha,
+      fill = "#b22222", alpha = 0.2, colour = NA,
+      na.rm = TRUE
+    ) +
+    ggplot2::geom_hline(yintercept = alpha, linetype = 2, colour = "#b22222") +
+    ggplot2::scale_colour_viridis_c(trans = "sqrt", limits = c(0, NA)) +
+    ggplot2::scale_y_continuous(
+      trans = pval_trans(md = TRUE),
+      expand = ggplot2::expansion(mult = c(0, 0.2))#,
+      # limits = c(1, NA)
+    ) +
+    ggplot2::coord_cartesian(ylim = c(0.05, NA)) +
+    ggrepel::geom_label_repel(
+      mapping = ggplot2::aes(label = .data[["gene_label_min"]]),
+      show.legend = FALSE,
+      min.segment.length = 0,
+      # direction = "x",
+      size = 2.5,
+      na.rm = TRUE
+    ) +
+    ggplot2::labs(
+      x = "Chromosome",
+      y = "P-value",
+      colour = "Chromosome",
+      title = model[["pretty_trait"]],
+      subtitle = toupper(paste(raw_trait, "= ", model[["covariates"]]))
+    ) +
+    ggplot2::theme(
+      plot.title.position = "plot",
+      plot.caption.position = "plot",
+      plot.title = ggtext::element_markdown(),
+      plot.subtitle = ggtext::element_markdown(face = "italic"),
+      axis.text.y = ggtext::element_markdown(),
+      panel.grid.major.x = ggplot2::element_blank(),
+      panel.grid.minor.x = ggplot2::element_blank(),
+      legend.position = "none"
     )
 }
