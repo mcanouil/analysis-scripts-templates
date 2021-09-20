@@ -17,6 +17,11 @@ qc_sample_sheet_ewas <- function(phenotype, methylation) {
   ][
     j = if (.N > 1) .SD[!Status %in% "Exclude" & call_rate == max(call_rate, na.rm = TRUE)] else .SD,
     by = "Sample_Name"
+  ][
+    j = `:=`(
+      bmi = weight / (height / 100)^2,
+      group = c("ELFE" = 1L, "EPIPAGE" = 2L)[cohort]
+    )
   ]
 }
 
@@ -259,15 +264,14 @@ plot_manhattan_ewas <- function(file, model) {
   raw_trait <- all.vars(stats::as.formula(paste0("~", model[["raw_trait"]])))
 
   dt <- data.table::fread(file)[
-    i = pvalue <= 0.05 / .N,
-    j = gene_label := data.table::fifelse(UCSC_RefGene_Name == "", NA_character_, UCSC_RefGene_Name)
-  ][
     j = gene_label_min := data.table::fifelse(
-      test = pvalue == min(pvalue, na.rm = TRUE),
-      yes = paste(unique(unlist(strsplit(gsub(",", ";", gene_label), ";"))), collapse = ";"),
+      test = pvalue == min(pvalue, na.rm = TRUE) &
+        !is.na(UCSC_RefGene_Name) &
+        !UCSC_RefGene_Name %in% c("", "NA"),
+      yes = paste(unique(unlist(strsplit(gsub(",", ";", UCSC_RefGene_Name), ";"))), collapse = ";"),
       no = NA_character_
     ),
-    by = "gene_label"
+    by = "UCSC_RefGene_Name"
   ][
     i = pvalue > 0.05,
     j = pvalue := NA_real_
@@ -276,7 +280,7 @@ plot_manhattan_ewas <- function(file, model) {
   ][
     j = cpg_chr := sub("chr", "", cpg_chr)
   ][
-    j = c("cpg_chr", "cpg_pos", "pvalue", "gene_label_min", "gene_label")
+    j = c("cpg_chr", "cpg_pos", "pvalue", "gene_label_min")
   ][order(pvalue)]
 
   if (is.numeric(dt[["cpg_chr"]])) {
@@ -284,7 +288,7 @@ plot_manhattan_ewas <- function(file, model) {
   }
 
   if (dt[!is.na(gene_label_min), .N] > 10) {
-    dt[-c(1:10), gene_label_min := NA_character_]
+    dt[which(!is.na(gene_label_min))[-c(1:10)], gene_label_min := NA_character_]
   }
 
   alpha <- 0.05 / nrow(dt)

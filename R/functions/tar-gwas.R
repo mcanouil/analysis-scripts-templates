@@ -58,6 +58,11 @@ qc_sample_sheet_gwas <- function(phenotype, exclusion, relatedness, ethnicity) {
   ][
     i = is.na(vcf_id),
     j = is_related := NA
+  ][
+    j = `:=`(
+      bmi = weight / (height / 100)^2,
+      group = c("ELFE" = 1L, "EPIPAGE" = 2L)[cohort]
+    )
   ]
 }
 
@@ -289,12 +294,11 @@ do_gwas <- function(
 #' @import ggrepel
 plot_manhattan_gwas <- function(file, model) {
   dt <- data.table::fread(file)[
-    i = P <= 0.05 / .N,
-    j = gene_label := data.table::fifelse(Symbol == "", NA_character_, Symbol)
-  ][
     j = gene_label_min := data.table::fifelse(
-      test = P == min(P, na.rm = TRUE),
-      yes = gsub(",", ";", gene_label),
+      test = P == min(P, na.rm = TRUE) &
+        !is.na(Symbol) &
+        !Symbol %in% c("", "NA"),
+      yes = gsub(",", ";", Symbol),
       no = NA_character_
     ),
     by = "gene_label"
@@ -304,11 +308,15 @@ plot_manhattan_gwas <- function(file, model) {
   ][
     j = file := basename(file)
   ][
-    j = c("CHROM", "POS", "P", "gene_label_min", "gene_label")
-  ]
+    j = c("CHROM", "POS", "P", "gene_label_min")
+  ][order(pvalue)]
 
   if (is.numeric(dt[["CHROM"]])) {
     dt[j = "CHROM" := lapply(.SD, as.character), .SDcols = "CHROM"]
+  }
+
+  if (dt[!is.na(gene_label_min), .N] > 10) {
+    dt[which(!is.na(gene_label_min))[-c(1:10)], gene_label_min := NA_character_]
   }
 
   alpha <- 0.05 / nrow(dt)
