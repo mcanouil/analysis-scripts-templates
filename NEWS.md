@@ -1,24 +1,26 @@
 # analysis_templates (development version)
 
 + `R/targets/`
-    + `tar_ora.R`, `targets` setup to compute over-representation analysis.
-    + `tar_gsea.R`, `targets` setup to compute gene-set enrichment analysis.
-    + `tar_methylation.R`, `targets` setup to compute idats (methylation) files quality-control.
-    + `tar_genotype.R`, `targets` setup to compute PLINK files quality-control.
-    + `tar_vep.R`, `targets` setup to compute VEP annotations.
     + `tar_crossmap.R`, `targets` setup to upgrade or downgrade genome assembly of VCF files.
+    + `tar_ewas.R`, `targets` setup to perform multiple EWAS.
+    + `tar_genotype.R`, `targets` setup to compute PLINK files quality-control.
+    + `tar_gsea.R`, `targets` setup to compute gene-set enrichment analysis.
     + `tar_gwas.R`, `targets` setup to perform multiple GWAS using PLINK2 software.
+    + `tar_methylation.R`, `targets` setup to compute idats (methylation) files quality-control.
+    + `tar_ora.R`, `targets` setup to compute over-representation analysis.
+    + `tar_vep.R`, `targets` setup to compute VEP annotations.
 
 + `R/functions/`
+    + `tar-crossmap.R`, functions, used in `tar_crossmap.R`, to upgrade or downgrade genome assembly of VCF files.
+    + `tar-ewas.R`, function, used in `tar_ewas.R`, to perform multiple EWAS.
+    + `tar-gwas.R`, function, used in `tar_gwas.R`, to perform multiple GWAS using PLINK2 software.
+    + `tar-manhattan.R`, functions to draw Manhattan plot using `ggplot2`.
+    + `tar-plink2.R`n function to download PLINK2 binary.
+    + `tar-pval_trans.R`, p-value `ggplot2` axis transformation.
     + `tar-qc_idats.R`, functions, used in `tar_methylation.R`, to compute idats (methylation) files quality-control.
     + `tar-qc_plink.R`, functions, used in `tar_genotype.R`, to compute PLINK files quality-control.
-    + `tar-vep.R`, functions, used in `tar_vep.R`, to prepare Docker command and to format VEP output.
-    + `tar-pval_trans.R`, p-value `ggplot2` axis transformation.
-    + `tar-manhattan.R`, functions to draw Manhattan plot using `ggplot2`.
     + `tar-sub_chunk.R`, function to create sub-chunk inside a chunk in RMarkdown.
-    + `tar-crossmap.R`, functions, used in `tar_crossmap.R`, to upgrade or downgrade genome assembly of VCF files.
-    + `tar-plink2.R`n function to download PLINK2 binary.
-    + `tar-gwas.R`, function, used in `tar_gwas.R`, to perform multiple GWAS using PLINK2 software.
+    + `tar-vep.R`, functions, used in `tar_vep.R`, to prepare Docker command and to format VEP output.
 
 + `R/scripts`
     + `**-****.R`,
