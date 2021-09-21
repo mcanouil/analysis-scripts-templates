@@ -8,21 +8,20 @@ name: render-readme
 
 jobs:
   render-readme:
-    runs-on: ubuntu-latest
+    runs-on: macOS-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v2
-
-      - uses: r-lib/actions/setup-pandoc@v1
+      - uses: actions/checkout@v2
 
       - uses: r-lib/actions/setup-r@v1
+
+      - uses: r-lib/actions/setup-pandoc@v1
 
       - name: Install rmarkdown, data.table, and here
         run: Rscript -e 'install.packages(c("rmarkdown", "data.table", "here"), Ncpus = 2)'
 
-      - name: Render README.Rmd
+      - name: Render README
         run: Rscript -e 'rmarkdown::render("README.Rmd", output_options = list(html_preview = FALSE))'
 
       - name: Commit results
