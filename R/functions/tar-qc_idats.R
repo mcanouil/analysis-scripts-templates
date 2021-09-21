@@ -331,7 +331,7 @@ read_sample_sheet <- function(
 #' read_metharray
 #' @import illuminaio
 #' @import minfi
-#' @import parallel
+#' @import future.apply
 read_metharray <- function(files, n_cores) {
   Grn <- Red <- NULL # to avoid note from global variable check
   basenames <- unique(sub("_Grn\\.idat.*|_Red\\.idat.*", "", files))
@@ -350,8 +350,10 @@ read_metharray <- function(files, n_cores) {
       i_files <- paste0(i_files, ".gz")
     }
     suppressWarnings({
-      i_idats <- parallel::mclapply(
-        X = i_files, mc.preschedule = FALSE, mc.cores = n_cores,
+      i_idats <- future.apply::future_lapply(
+        X = i_files,
+        future.globals = FALSE,
+        future.packages = "illuminaio",
         FUN = illuminaio::readIDAT
       )
     })
@@ -540,6 +542,7 @@ qc_idats <- function(params) {
 #' @import RefFreeEWAS
 #' @import stats
 #' @import utils
+#' @import future.apply
 estimate_cell_composition <- function(data_rgset, data_mset, cell_tissue, array, n_cores) {
   switch(
     EXPR = tolower(cell_tissue),
@@ -605,10 +608,9 @@ estimate_cell_composition <- function(data_rgset, data_mset, cell_tissue, array,
     {
       estimate_k_cluster <- function(Rmat, max_k = 25, n_cores = 1) {
         svdRmat <- RefFreeEWAS::svdSafe(Rmat)
-        tmp <- do.call("rbind", mclapply(
+        tmp <- do.call("rbind", future.apply::future_lapply(
           X = 0:max_k,
-          mc.cores = n_cores,
-          mc.preschedule = FALSE,
+          future.globals = FALSE,
           mc_Rmat = Rmat,
           mc_svdRmat = svdRmat,
           FUN = function(Ktest, mc_Rmat, mc_svdRmat) {

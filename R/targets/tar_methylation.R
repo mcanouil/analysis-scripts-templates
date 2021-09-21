@@ -76,7 +76,7 @@ tar_methylation <- {list( # Methylation Array (ma)
   tar_target(ma_data_idats,
     command = qc_idats(ma_params),
     packages = c(
-      "data.table", "parallel",
+      "data.table", "future", "future.apply",
       "IlluminaHumanMethylationEPICanno.ilm10b5.hg38",
       "IlluminaHumanMethylationEPICmanifest",
       # "IlluminaHumanMethylation450kmanifest",
@@ -102,7 +102,7 @@ tar_methylation <- {list( # Methylation Array (ma)
       )
     },
     packages = c(
-      "stats", "parallel",
+      "stats", "future", "future.apply",
       "minfi", "RefFreeEWAS",
       "FlowSorted.Blood.EPIC",
       "FlowSorted.CordBloodCombined.450k",
