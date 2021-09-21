@@ -23,7 +23,7 @@ jobs:
         run: Rscript -e 'install.packages(c("rmarkdown", "data.table", "here"), Ncpus = 2)'
 
       - name: Render README.Rmd
-        run: Rscript -e 'if (file.exists("README.Rmd")) rmarkdown::render("README.Rmd")'
+        run: Rscript -e 'rmarkdown::render("README.Rmd", output_options = list(html_preview = FALSE))'
 
       - name: Commit results
         run: |
