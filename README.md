@@ -64,6 +64,10 @@ Script templates to work with omics datasets.
 
 ## Rmarkdown
 
+Note: `assets` directory from
+[github.com/umr1283/xaringan-template](https://github.com/umr1283/xaringan-template)
+is required\!
+
   - [ewas\_report.Rmd](Rmarkdown/ewas_report.Rmd)
   - [genotype\_array\_qc\_report.Rmd](Rmarkdown/genotype_array_qc_report.Rmd)
   - [gwas\_report.Rmd](Rmarkdown/gwas_report.Rmd)
