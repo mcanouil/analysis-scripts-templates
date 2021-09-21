@@ -448,7 +448,11 @@ plot_volcano_ewas <- function(file, model) {
   alpha <- 0.05 / nrow(dt)
 
   ggplot2::ggplot(dt) +
-    ggplot2::aes(x = .data[["estimate"]], y = .data[["pvalue"]], colour = abs(.data[["estimate"]])) +
+    ggplot2::aes(
+      x = .data[["estimate"]],
+      y = .data[["pvalue"]],
+      colour = abs(.data[["estimate"]])
+    ) +
     ggplot2::geom_vline(xintercept = 0, linetype = 2) +
     ggplot2::geom_point(size = 0.60) +
     ggplot2::annotate(
@@ -461,17 +465,16 @@ plot_volcano_ewas <- function(file, model) {
     ggplot2::scale_colour_viridis_c(trans = "sqrt", limits = c(0, NA)) +
     ggplot2::scale_y_continuous(
       trans = pval_trans(md = TRUE),
-      expand = ggplot2::expansion(mult = c(0, 0.2))#,
-      # limits = c(1, NA)
+      expand = ggplot2::expansion(mult = c(0, 0.2))
     ) +
     ggplot2::coord_cartesian(ylim = c(0.05, NA)) +
     ggrepel::geom_label_repel(
       mapping = ggplot2::aes(label = .data[["gene_label_min"]]),
       show.legend = FALSE,
       min.segment.length = 0,
-      # direction = "x",
       size = 2.5,
-      na.rm = TRUE
+      na.rm = TRUE,
+      max.overlaps = Inf
     ) +
     ggplot2::labs(
       x = "Estimate",
@@ -486,8 +489,6 @@ plot_volcano_ewas <- function(file, model) {
       plot.title = ggtext::element_markdown(),
       plot.subtitle = ggtext::element_markdown(face = "italic"),
       axis.text.y = ggtext::element_markdown(),
-      panel.grid.major.x = ggplot2::element_blank(),
-      panel.grid.minor.x = ggplot2::element_blank(),
       legend.position = "none"
     )
 }
