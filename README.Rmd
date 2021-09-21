@@ -35,6 +35,9 @@ dt <- data.table::data.table(
   j = list(
     list_scripts = c(
       sprintf("\n## %s\n", root),
+      if (grepl("rmarkdown", root)) {
+        "\nNote: `assets` directory from [github.com/umr1283/xaringan-template](https://github.com/umr1283/xaringan-template) is required!\n"
+      },
       if (filedir != root) sprintf("\n### %s\n", filedir),
       sprintf("  * [%s](%s)\n", basename(file), file)
     )
