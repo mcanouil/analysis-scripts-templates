@@ -22,9 +22,16 @@ exclusion <- file.path(data_directory, "Omni2.5", paste0(project_name, "_QC_excl
 ### Load Packages ==================================================================================
 suppressPackageStartupMessages({
   library(IlluminaHumanMethylationEPICanno.ilm10b4.hg19)
-  library(parallel)
   library(data.table)
+  library(future)
+  library(future.apply)
+  library(future.callr)
 })
+
+
+### project setup ==================================================================================
+plan(future.callr::callr, workers = 11)
+message(sprintf("Number of workers: %d", future::nbrOfWorkers()))
 
 
 ### Get QCed Phenotypes ============================================================================
@@ -131,19 +138,33 @@ for (ichr in sprintf("chr%02d", 1:22)) {
   local({
     for (ianalysis in c("nominal", "permutation")) {
       n_chunk <- 20
-      mclapply(1:n_chunk, mc.cores = n_chunk, function(ichunk) {
-        system(paste("fastQTL",
-          "--silent",
-          "--seed", 20200331,
-          "--vcf", vcfs[ichr],
-          "--bed", file.path(output_epic, paste0(ichr, ".bed.gz")),
-          "--cov", file.path(output_covariates, "covariates.txt.gz"),
-          "--window", 500000, # 500 Kb,
-          ifelse(ianalysis == "nominal", "", "--permute 1000 10000"),
-          "--chunk", ichunk, n_chunk,
-          "--out", file.path(output_fastqtl, sprintf("%s_%s_%03d.txt.gz", ianalysis, ichr, ichunk))
-        ))
-      })
+      cis_window <- 500000 # 500 Kb
+      future_lapply(
+        X = 1:n_chunk,
+        future.globals = FALSE,
+        vcfs = vcfs,
+        output_epic = output_epic,
+        output_covariates = output_covariates,
+        output_fastqtl = output_fastqtl,
+        cis_window = cis_window,
+        ianalysis = ianalysis,
+        ichr = ichr,
+        n_chunk = n_chunk
+        cis_window = cis_window,
+        FUN = function(ichunk, vcfs, output_epic, output_covariates, output_fastqtl, cis_window, ianalysis, ichr, n_chunk) {
+          system(paste("fastQTL",
+            "--silent",
+            "--seed", 20200331,
+            "--vcf", vcfs[ichr],
+            "--bed", file.path(output_epic, paste0(ichr, ".bed.gz")),
+            "--cov", file.path(output_covariates, "covariates.txt.gz"),
+            "--window", cis_window,
+            ifelse(ianalysis == "nominal", "", "--permute 1000 10000"),
+            "--chunk", ichunk, n_chunk,
+            "--out", file.path(output_fastqtl, sprintf("%s_%s_%03d.txt.gz", ianalysis, ichr, ichunk))
+          ))
+        }
+      )
 
       system(paste(
         "zcat",
@@ -183,11 +204,14 @@ for (ichr in sprintf("chr%02d", 1:22)) {
 for (ianalysis in c("nominal", "permutation")) {
   local({
     fwrite(
-      x = rbindlist(mclapply(
+      x = rbindlist(future_lapply(
         X = sprintf("chr%02d", 1:22),
-        mc.cores = 11,
-        mc.preschedule = FALSE,
-        FUN = function(ichr) {
+        future.globals = FALSE,
+        future.packages = "data.table",
+        output_fastqtl_annotated = output_fastqtl_annotated,
+        project_name = project_name,
+        ianalysis = ianalysis,
+        FUN = function(ichr, output_fastqtl_annotated, project_name, ianalysis) {
           fread(file.path(output_fastqtl_annotated, sprintf("%s_%s_%s.txt.gz", project_name, ianalysis, ichr)))
         }
       )),

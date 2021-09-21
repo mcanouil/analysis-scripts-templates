@@ -21,8 +21,15 @@ ensembl_species <- "homo_sapiens"
 ### Load Packages ==================================================================================
 suppressPackageStartupMessages({
   library(data.table)
-  library(parallel)
+  library(future)
+  library(future.apply)
+  library(future.callr)
 })
+
+
+### project setup ==================================================================================
+plan(future.callr::callr, workers = 11)
+message(sprintf("Number of workers: %d", future::nbrOfWorkers()))
 
 
 ### Functions ======================================================================================
@@ -44,11 +51,13 @@ if (!file.exists(file.path(output_directory, "snps_locations.txt.gz"))) {
   )
   names(vcfs) <- sprintf("chr%02d", as.numeric(gsub(".pbwt_reference_impute.vcf.gz$", "", basename(vcfs))))
 
-  unique_snps <- unique(rbindlist(mclapply(
+  unique_snps <- unique(rbindlist(future_lapply(
     X = names(vcfs),
-    mc.cores = 11,
-    mc.preschedule = FALSE,
-    FUN = function(ivcf) {
+    future.globals = FALSE,
+    future.packages = "data.table",
+    vcfs = vcfs,
+    output_directory = output_directory,
+    FUN = function(ivcf, vcfs, output_directory) {
       fwrite(
         x = fread(
           cmd = paste(

@@ -23,10 +23,17 @@ plink_url <- "http://s3.amazonaws.com/plink2-assets/alpha2/plink2_linux_x86_64.z
 ### Load packages ==================================================================================
 suppressPackageStartupMessages({
   library(glue)
-  library(parallel)
   library(data.table)
   library(readxl)
+  library(future)
+  library(future.apply)
+  library(future.callr)
 })
+
+
+### project setup ==================================================================================
+plan(future.callr::callr, workers = 11)
+message(sprintf("Number of workers: %d", future::nbrOfWorkers()))
 
 
 ### Get PLINK2 =====================================================================================
@@ -102,11 +109,12 @@ names(vcfs) <- gsub("_qc.vcf.gz$", "", basename(vcfs))
 
 if (length(list.files(output_annot)) != 4 * 22) {
   local({
-    mclapply(
+    future_lapply(
       X = names(vcfs),
-      mc.cores = 11,
-      mc.preschedule = FALSE,
-      FUN = function(ivcf) {
+      future.globals = FALSE,
+      vcfs = vcfs,
+      output_annot = output_annot,
+      FUN = function(ivcf, vcfs, output_annot) {
         sapply(
           X = paste(
             "vcftools --gzvcf", vcfs[ivcf],
