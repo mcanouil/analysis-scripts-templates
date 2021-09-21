@@ -1,6 +1,7 @@
+message(timestamp(quiet = TRUE))
 ### Project Setup ==================================================================================
 library(here)
-project_name <- sub("(.*)_*\\..*", "\\1", list.files(here(), pattern = ".Rproj$"))
+project_name <- sub("(.*)_[^_]*\\.Rproj$", "\\1", list.files(here(), pattern = ".Rproj$"))
 output_directory <- here("outputs", "99-default")
 dir.create(output_directory, recursive = TRUE, showWarnings = FALSE, mode = "0775")
 
@@ -12,7 +13,15 @@ suppressPackageStartupMessages({
   # library(ggtext)
   # library(patchwork)
   # library(data.table)
+  # library(future)
+  # library(future.callr)
+  # library(future.apply)
 })
+
+
+### project setup ==================================================================================
+# plan(future.callr::callr, workers = 40)
+# message(sprintf("Number of workers: %d", future::nbrOfWorkers()))
 
 
 ### Tables and Figures Theme =======================================================================
@@ -22,7 +31,7 @@ suppressPackageStartupMessages({
 #   ggplot2.continuous.colour = function(...) scale_colour_viridis_c(..., begin = 0.15, end = 0.85),
 #   ggplot2.continuous.fill = function(...) scale_fill_viridis_c(..., begin = 0.15, end = 0.85)
 # )
-# theme_set(theme_minimal(base_family = "Tex Gyre Termes"))
+# theme_set(theme_minimal(base_family = "Verdana"))
 # theme_update(
 #   plot.title.position = "plot",
 #   plot.caption.position = "plot",
@@ -42,17 +51,6 @@ suppressPackageStartupMessages({
 ### Analysis =======================================================================================
 
 
-### Set chmod ======================================================================================
-# Sys.chmod(
-#   list.files(output_directory, full.names = TRUE),
-#   mode = "0775", use_umask = FALSE
-# )
-# Sys.chmod(
-#   list.files(output_directory, full.names = TRUE, recursive = TRUE, all.files = TRUE),
-#   mode = "0775", use_umask = FALSE
-# )
-# invisible(system(paste("chgrp -R staff", output_directory), intern = TRUE))
-
-
 ### Complete =======================================================================================
 message("Success!", appendLF = TRUE)
+message(timestamp(quiet = TRUE))
