@@ -22,6 +22,12 @@
     + `tar-sub_chunk.R`, function to create sub-chunk inside a chunk in RMarkdown.
     + `tar-vep.R`, functions, used in `tar_vep.R`, to prepare Docker command and to format VEP output.
 
++ `R/rmarkdown/`
+    + `ewas_report.Rmd`, `xaringan` report template associated with `R/targets/tar_ewas.R` and `R/functions/tar-ewas.R`.
+    + `genotype_array_qc_report.Rmd`, `xaringan` report template associated with `R/targets/tar_genotype.R` and `R/functions/tar-qc_plink.R`.
+    + `gwas_report.Rmd`, `xaringan` report template associated with `R/targets/tar_gwas.R` and `R/functions/tar-gwas.R`.
+    + `methylation_array_qc_report.Rmd`, `xaringan` report template associated with `R/targets/tar_methylation.R` and `R/functions/tar-qc_idats.R`.
+
 + `R/scripts`
     + `**-****.R`,
         - fix project name to not include file extension.
