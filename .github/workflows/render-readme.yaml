@@ -20,7 +20,7 @@ jobs:
       - uses: r-lib/actions/setup-r@v1
 
       - name: Install rmarkdown, data.table, and here
-        run: Rscript -e 'install.packages(c("rmarkdown", "data.table", "here"), Ncpus	= 2)'
+        run: Rscript -e 'install.packages(c("rmarkdown", "data.table", "here"), Ncpus = 2)'
 
       - name: Render README.Rmd
         run: Rscript -e 'if (file.exists("README.Rmd")) rmarkdown::render("README.Rmd", run_pandoc = FALSE)'
