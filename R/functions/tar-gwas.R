@@ -1,11 +1,6 @@
 #' qc_sample_sheet_gwas
 #' @import data.table
 qc_sample_sheet_gwas <- function(phenotype, exclusion, relatedness, ethnicity) {
-  exclusion <- data.table::fread(file = exclusion)[
-    i = Sex_Discrepancy == 1 | Sample_Call_Rate == 1 | Sex_Missing == 1 | Heterozygosity_Check == 1,
-    j = Status := "Exclude"
-  ]
-
   relatedness <- data.table::fread(file = relatedness)
 
   bad_duplicated_samples <- relatedness[
@@ -25,6 +20,16 @@ qc_sample_sheet_gwas <- function(phenotype, exclusion, relatedness, ethnicity) {
     by = c(paste0("IID", 1:2))
   ]
 
+  exclusion <- data.table::fread(file = exclusion)[
+    i = Sex_Discrepancy == 1 | Sample_Call_Rate == 1 | Sex_Missing == 1 | Heterozygosity_Check == 1,
+    j = Status := "Exclude"
+  ][
+    i = IID %in%
+      bad_duplicated_samples[j = unlist(.SD, use.names = FALSE), .SDcols = patterns("IID[0-9]+")] &
+        Status == "Check",
+    j = Status := NA_character_
+  ]
+
   dt <- phenotype[j = `:=`(
     "Sample_Name" = IID,
     "vcf_id" = IID
@@ -40,7 +45,7 @@ qc_sample_sheet_gwas <- function(phenotype, exclusion, relatedness, ethnicity) {
     on = "IID"
   ]
 
-  merge(
+  out <- merge(
     x = merge(x = dt, y = exclusion[j = list(vcf_id = IID, Status)], by = "vcf_id", all.x = TRUE),
     y = data.table::fread(file = ethnicity)[j = -c("cohort")], # Add genetics PCs
     by.x = "vcf_id",
@@ -48,7 +53,7 @@ qc_sample_sheet_gwas <- function(phenotype, exclusion, relatedness, ethnicity) {
     all.x = TRUE
   )[
     i = (is_related),
-    j = Status := "Exclude"
+    j = Status := "Related"
   ][
     i = is.na(PC01),
     j = `:=`(
