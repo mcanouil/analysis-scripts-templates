@@ -56,7 +56,6 @@ tar_gwas <- {list(
         raw_trait = c("group"),
         covariates = c(
           paste(c("sex", "age", "bmi"), collapse = " + "),
-          paste(c("sex", "age", "bmi", sprintf("PC%02d", 1:2)), collapse = " + "),
           paste(c("sex", "age", "bmi", sprintf("PC%02d", 1:5)), collapse = " + ")
         )
       ),
@@ -67,7 +66,7 @@ tar_gwas <- {list(
   ),
   tar_target(gwas_results_file,
     command = do_gwas(
-      data = gwas_sample_sheet_qc, # phenotypes
+      data = gwas_sample_sheet_qc[!Status %in% "Exclude"], # phenotypes
       model = gwas_models,
       vcfs = ga_imputed_vcf_crossmap, # VCFs from tar_crossmap
       vep = veb_symbol_file, # VEP annotation from tar_vep

@@ -55,7 +55,7 @@ tar_ewas <- {list(
   ),
   tar_target(ewas_results_file,
     command = do_ewas(
-      data = ewas_sample_sheet_qc, # phenotypes
+      data = ewas_sample_sheet_qc[!Status %in% "Exclude"], # phenotypes
       model = ewas_models,
       beta_file = file.path(ma_export_directory, "EPIC_QC_betavalues.csv.gz"),
       path = file.path(output_directory, "ewas"),
