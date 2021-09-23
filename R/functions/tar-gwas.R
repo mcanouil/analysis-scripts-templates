@@ -488,7 +488,7 @@ plot_volcano_gwas <- function(file, model) {
       y = .data[["P"]],
       colour = abs(.data[[grep("^(OR|BETA)$", names(dt), value = TRUE)]])
     ) +
-    ggplot2::geom_vline(xintercept = 0, linetype = 2) +
+    ggplot2::geom_vline(xintercept = as.numeric(grepl("^OR$", names(dt))), linetype = 2) +
     ggplot2::geom_point(size = 0.60) +
     ggplot2::annotate(
       geom = "rect",
