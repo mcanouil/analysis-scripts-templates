@@ -5,11 +5,11 @@
 
 <!-- badges: start -->
 
+[![License](https://img.shields.io/github/license/mcanouil/analysis-scripts-templates)](LICENSE)
 [![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
-![License](https://img.shields.io/github/license/mcanouil/analysis-scripts-templates)
+experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)]()
 <!-- [![GitHub
-tag](https://img.shields.io/github/tag/mcanouil/analysis_templates.svg?label=latest%20tag&include_prereleases)](https://github.com/mcanouil/analysis_templates) -->
+tag](https://img.shields.io/github/tag/mcanouil/analysis-scripts-templates.svg?label=latest%20tag&include_prereleases)](https://github.com/mcanouil/analysis-scripts-templates) -->
 <!-- badges: end -->
 
 Script templates to work with omics datasets.
