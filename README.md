@@ -5,8 +5,8 @@
 
 <!-- badges: start -->
 
-[![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
+![Lifecycle:
+experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)
 ![License](https://img.shields.io/github/license/mcanouil/analysis-scripts-templates)
 <!-- [![GitHub
 tag](https://img.shields.io/github/tag/mcanouil/analysis_templates.svg?label=latest%20tag&include_prereleases)](https://github.com/mcanouil/analysis_templates) -->
