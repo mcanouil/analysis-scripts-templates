@@ -26,9 +26,9 @@ tar_setup <- {list( # Setup project
   tar_target(project, gsub("(.*)_.*", "\\1", list.files(here(), pattern = ".Rproj$")), packages = "here"),
   tar_target(author, "Mickaël CANOUIL, *Ph.D.*"),
   tar_target(qc_data_path, "/disks/DATA/Projects"),
-  tar_target(ma_run, "/disks/RUN/Array/Run/Results/epipreterm-epic/"),
+  tar_target(ma_run, "/disks/RUN/Array/Run/Results/epic/"),
   tar_target(ma_sample_sheet,
-    command = file.path(ma_run, "samplesheet_EPIPRETERM_dna_total_epic.csv"),
+    command = file.path(ma_run, "samplesheet.csv"),
     format = "file"
   ),
   tar_target(ma_csv,

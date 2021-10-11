@@ -26,7 +26,7 @@ tar_setup <- {list( # Setup project
   tar_target(author, "Mickaël CANOUIL, *Ph.D.*"),
   tar_target(qc_data_path, "/disks/DATA/Projects"),
   tar_target(panel_data, "/disks/DATA/ExternalData"),
-  tar_target(ga_run, "/disks/RUN/Array/Dmap/plink/2020/epipreterm/PLINK_151220_0923/epipreterm_omni") # basename
+  tar_target(ga_run, "/disks/RUN/Array/Dmap/plink/PLINK_123456_0789/omni") # basename
 )}
 
 
