@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 # Mickaël Canouil's Analysis Scripts Templates
 
 <!-- badges: start -->
-![License](https://img.shields.io/github/license/mcanouil/analysis-scripts-templates)
+[![License](https://img.shields.io/github/license/mcanouil/analysis-scripts-templates)](LICENSE)
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)]()
 <!-- [![GitHub
