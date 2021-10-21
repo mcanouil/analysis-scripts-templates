@@ -6,12 +6,11 @@ library(data.table)
 library(future)
 library(future.callr)
 
-# tar_option_set(cue = tar_cue(mode = "never"))
-
 # targets::tar_renv(extras = "visNetwork", path = "scripts/_dependencies.R")
 
 
 ### project setup ==================================================================================
+# Functions/scripts required: tar-ewas.R, tar-pval_trans.R
 invisible(sapply(list.files(here("scripts"), pattern = "^tar-.*R$", full.names = TRUE), source, echo = FALSE))
 
 plan(future.callr::callr, workers = 3)
@@ -19,6 +18,8 @@ plan(future.callr::callr, workers = 3)
 message(sprintf("Number of workers: %d", future::nbrOfWorkers()))
 # setDTthreads(threads = 1)
 
+
+### targets setup ==================================================================================
 tar_setup <- {list( # Setup project
   tar_target(project, gsub("(.*)_.*", "\\1", list.files(here(), pattern = ".Rproj$")), packages = "here"),
   tar_target(author, "Mickaël CANOUIL, *Ph.D.*"),

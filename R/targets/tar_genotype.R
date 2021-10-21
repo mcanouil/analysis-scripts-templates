@@ -6,12 +6,11 @@ library(data.table)
 # library(future)
 # library(future.callr)
 
-# tar_option_set(cue = tar_cue(mode = "never"))
-
 # targets::tar_renv(extras = "visNetwork", path = "scripts/_dependencies.R")
 
 
 ### project setup ==================================================================================
+# Functions/scripts required: tar-qc_plink.R, tar-pval_trans.R
 invisible(sapply(list.files(here("scripts"), pattern = "^tar-.*R$", full.names = TRUE), source, echo = FALSE))
 
 # plan(future.callr::callr, workers = 40)
@@ -367,7 +366,8 @@ tar_genotype <- {list( # Genotype Array (ga)
   ),
   tar_target(ga_imputed_vcf,
     command = list_imputed_vcf(ga_export_directory),
-    format = "file"
+    format = "file",
+    error = "continue"
   ),
   tar_target(ga_vcf_imputed_uptodate,
     command = is_vcf_imputed_uptodate(
