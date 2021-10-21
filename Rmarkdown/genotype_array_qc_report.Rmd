@@ -91,7 +91,7 @@ knitr::opts_chunk$set(
 
 ```{r setup-functions, include = FALSE}
 comma_fmt <- scales::comma_format(accuracy = 1)
-scientific_fmt <- function(x) gsub("(.*)e([-+]*)0*(.*)", "\\1&nbsp;&times;&nbsp;10<sup>\\2\\3</sup>", scales::scientific(x))
+scientific_fmt <- function(x) sub("(.*)e([-+]*)0*(.*)", "\\1&nbsp;&times;&nbsp;10<sup>\\2\\3</sup>", scales::scientific(x))
 ```
 
 ```{r tar-reads, include = FALSE}
