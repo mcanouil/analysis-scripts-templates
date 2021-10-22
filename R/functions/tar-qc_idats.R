@@ -864,7 +864,7 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
         j = {
           m <- stats::model.matrix(
             object = stats::as.formula(
-              object = paste0("values ~ ", paste(keep_technical, collapse = " + "))
+              object = paste0("values ~ ", paste(sprintf("`%s`", keep_technical), collapse = " + "))
             ),
             data = .SD
           )
@@ -874,7 +874,7 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
               stats::anova(
                 stats::lm(
                   formula = stats::as.formula(
-                    object = paste0("values ~ ", paste(keep_technical, collapse = " + "))
+                    object = paste0("values ~ ", paste(sprintf("`%s`", keep_technical), collapse = " + "))
                   ),
                   data = .SD
                 )
@@ -883,7 +883,7 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
             )[term != "Residuals"]
           } else {
             out <- data.table::rbindlist(
-              lapply(X = keep_technical, .data = .SD, FUN = function(.x, .data) {
+              lapply(X = sprintf("`%s`", keep_technical), .data = .SD, FUN = function(.x, .data) {
                 data.table::as.data.table(
                   stats::anova(
                     stats::lm(
@@ -896,7 +896,7 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
               })
             )
           }
-          out[j = full_rank := qr(m)$rank == ncol(m)]
+          out[j = full_rank := qr(m)$rank == ncol(m)][j = term := gsub("`", "", term)]
         },
         by = "pc"
       ]

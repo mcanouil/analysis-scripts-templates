@@ -442,7 +442,7 @@ for (rna_level in c("genes", "isoforms")) {
     j = {
       m <- model.matrix(
         object = as.formula(
-          object = paste0("values ~ ", paste(paste0("`", keep_technical, "`"), collapse = " + "))
+          object = paste0("values ~ ", paste(sprintf("`%s`", keep_technical), collapse = " + "))
         ),
         data = .SD
       )
@@ -452,7 +452,7 @@ for (rna_level in c("genes", "isoforms")) {
           anova(
             lm(
               formula = as.formula(
-                object = paste0("values ~ ", paste(paste0("`", keep_technical, "`"), collapse = " + "))
+                object = paste0("values ~ ", paste(sprintf("`%s`", keep_technical), collapse = " + "))
               ),
               data = .SD
             )
@@ -461,11 +461,11 @@ for (rna_level in c("genes", "isoforms")) {
         )[term != "Residuals"]
       } else {
         out <- rbindlist(
-          lapply(X = keep_technical, .data = .SD, FUN = function(.x, .data) {
+          lapply(X = sprintf("`%s`", keep_technical), .data = .SD, FUN = function(.x, .data) {
             as.data.table(
               anova(
                 lm(
-                  formula = as.formula(paste0("values ~ `", .x, "`")),
+                  formula = tats::as.formula(paste0("values ~ ", .x)),
                   data = .SD
                 )
               ),
@@ -474,7 +474,7 @@ for (rna_level in c("genes", "isoforms")) {
           })
         )
       }
-      out[, full_rank := qr(m)$rank == ncol(m)]
+      out[, full_rank := qr(m)$rank == ncol(m)][j = term := gsub("`", "", term)]
     },
     by = "pc"
   ]
