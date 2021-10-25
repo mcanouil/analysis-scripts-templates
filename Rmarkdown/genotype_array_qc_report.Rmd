@@ -1,10 +1,9 @@
 ---
 title: '`r targets::tar_read(project)`'
-subtitle: "Omni2.5 Array Quality-Control"
+subtitle: "Genotyping Array Quality-Control"
 author: '`r targets::tar_read(author)`'
 institute: "_Inserm U1283 / CNRS UMR8199 / Institut Pasteur de Lille / Université de Lille_"
 date: '`r format(Sys.time(), "%A, the %d of %B, %Y")`'
-knit: (function(inputFile, encoding) rmarkdown::render(inputFile, encoding = encoding, output_dir = here::here("reports")))
 output:
   xaringan::moon_reader:
     self_contained: true
@@ -433,7 +432,7 @@ Prior to the analysis, the dataset was pruned to exclude high-LD-regions,
 that is no variants with MAF below ` `r percent_format(accuracy = 0.01, suffix = " %")(params[["maf_threshold"]])` ` and no pair of variants within 50 Kb have an r² > 0.2.
 
 If the samples in the cohort ` `r project` ` are not supposed to be related,
-the expected pairwise $\hat{\pi}$ ("PI_HAT") should be less than ` `r params[["ibd_threshold"]]` `.
+the expected pairwise $\hat{\pi}$ ("PI_HAT") should be less than ` `r params[["ibd_threshold"]]` `.  
 Pairs of sample with $\hat{\pi}$ ("PI_HAT") greater than ` `r params[["ibd_threshold"]]` ` were flagged.
 
 ```{r relatedness-tab, results = "asis"}
@@ -500,7 +499,7 @@ relatedness_tab %>%
   ) %>%
   umr() %>%
   cols_align(align = "center") %>%
-  tab_options(table.width = pct(75), table.font.size = pct(75), ) %>%
+  tab_options(table.width = pct(75), table.font.size = pct(75)) %>%
   opt_row_striping() %>%
   opt_all_caps() %>%
   print()
@@ -758,7 +757,7 @@ class: part-slide
 
     + ` `r comma_fmt(n_exclude)` `&nbsp;samples excluded due to failures in the call rate and/or the heterozygosity checks.
 
-    + ` `r comma_fmt(n_check)` `&nbsp;samples flagged.
+    + ` `r comma_fmt(n_check)` `&nbsp;samples flagged.  
         Those samples need to be checked in order to determine whether or not they have to be excluded.
 
 * Variants with a call rate below ` `r percent_format(accuracy = 0.01, suffix = " %")(params[["callrate_snps"]])` ` were removed.
@@ -837,7 +836,7 @@ Imputation performed using the Sanger Imputation Services Pipeline [(https://imp
 ## Description
 
 The aim of the [Haplotype Reference Consortium (HRC)](http://www.haplotype-reference-consortium.org/) is to create a large reference panel of human haplotypes by combining together sequencing data from multiple cohorts.
-This HRC.r1.1 release consists of 64,940 haplotypes of predominantly European ancestry.
+This HRC.r1.1 release consists of 64,940 haplotypes of predominantly European ancestry.  
 More information about the HRC can be found on [www.haplotype-reference-consortium.org](http://www.haplotype-reference-consortium.org/).
 
 .pull-left[
@@ -859,7 +858,7 @@ More information about the HRC can be found on [www.haplotype-reference-consorti
 
 ## Pre-phasing And Imputation
 
-Prior to imputation with `PBWT`, each chromosome is phased against the chosen reference panel using `SHAPEIT2` (`v2.r790`).
+Prior to imputation with `PBWT`, each chromosome is phased against the chosen reference panel using `SHAPEIT2` (`v2.r790`).  
 The phasing does not take into account any sources of information other than the input genotypes when phasing.
 
 ]
@@ -874,14 +873,14 @@ The phasing does not take into account any sources of information other than the
 
 .small-text[
 
-The format of the returned data will be in the [Variant Call Format (VCF)](http://samtools.github.io/hts-specs/VCFv4.2.pdf).
+The format of the returned data will be in the [Variant Call Format (VCF)](http://samtools.github.io/hts-specs/VCFv4.2.pdf).  
 The returned files will be:
 
 1. Imputation pipelines: One VCF per-chromosome for the `PBWT` imputation pipelines.
 1. Each VCF will have been compressed with `bgzip` and have an associated `tabix` index (`.tbi`) file allowing random access queries with `bcftools`, `tabix` and other VCF processing tools.
 1. A tarball of the various log files associated with the pipeline is also returned.
 
-The VCF header should contain up-to-date information about the meaning of the __INFO__ and __FORMAT__ tags as well as program versions and command lines used in the pipeline.
+The VCF header should contain up-to-date information about the meaning of the __INFO__ and __FORMAT__ tags as well as program versions and command lines used in the pipeline.  
 A quick way to view the header is with `bcftools view -h my_file.vcf.gz` or `tabix -H my_file.vcf.gz`.
 
 .pull-left[
@@ -909,7 +908,7 @@ Depending on the pipeline choice, these may include:
 
 See the [resources](https://imputation.sanger.ac.uk/?resources=1) page for help converting phased output to Oxford HAP-SAMPLE format or imputed output to Oxford GEN-SAMPLE format.
 
-For imputation pipelines, the __ID__ column will be filled with [dbSNP rsIDs](http://www.ncbi.nlm.nih.gov/SNP/).
+For imputation pipelines, the __ID__ column will be filled with [dbSNP rsIDs](http://www.ncbi.nlm.nih.gov/SNP/).  
 See the VCF header lines for the dbSNP version used.
 
 ]
