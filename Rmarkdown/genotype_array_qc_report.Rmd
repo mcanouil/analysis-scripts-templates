@@ -725,17 +725,17 @@ Variant-based QC was performed on ` `r comma_fmt(data_good_samples_fam)` `&nbsp;
 
 # Variant-based Quality-Control
 
-1. **Call Rate**
-    Proportion of missing genotypes (*i.e.*,&nbsp;*call rate*) per variant was estimated using the `--missing` command in PLINK.
-    &rArr; In total, ` `r comma_fmt(n_snps_cr)` `&nbsp;variants had a call rate below ` `r percent_format(accuracy = 0.01, suffix = " %")(params[["callrate_snps"]])` ` and were excluded.
+1. **Call Rate**  
+    Proportion of missing genotypes (*i.e.*,&nbsp;*call rate*) per variant was estimated using the `--missing` command in PLINK.  
+    &rArr; In total, ` `r comma_fmt(n_snps_cr)` `&nbsp;variants had a call rate below ` `r percent_format(accuracy = 0.01, suffix = " %")(params[["callrate_snps"]])` ` and were excluded.  
     &rArr; In total, ` `r comma_fmt(n_snps_dup)` `&nbsp;variants existed in multiple copies in the dataset (same chromosome and position) and were removed.
 
-2. **Hardy-Weinberg Equilibrium**
-    Hardy-Weinberg equilibrium (HWE) p-value was computed using the `--hardy` command in PLINK.
+2. **Hardy-Weinberg Equilibrium**  
+    Hardy-Weinberg equilibrium (HWE) p-value was computed using the `--hardy` command in PLINK.  
     &rArr; In total, ` `r comma_fmt(n_snps_hwe)` `&nbsp;variants had a HWE p-value below <code>`r scientific_fmt(params[["hwe_pvalue"]])`</code> and were excluded.
 
-3. **Minor Allele Frequency**
-    The MAF were computed using the `--freq` command in PLINK.
+3. **Minor Allele Frequency**  
+    The MAF were computed using the `--freq` command in PLINK.  
     &rArr; In total, ` `r comma_fmt(n_snps_maf)` `&nbsp;variants (out of ` `r comma_fmt(n_snps_maf_all)` `) had a MAF below ` `r percent_format(accuracy = 0.01, suffix = " %")(params[["maf_threshold"]])` `.
 
 ```{r variant-based-qc-fig, fig.height = 2.5}
@@ -835,7 +835,7 @@ Imputation performed using the Sanger Imputation Services Pipeline [(https://imp
 
 ## Description
 
-The aim of the [Haplotype Reference Consortium (HRC)](http://www.haplotype-reference-consortium.org/) is to create a large reference panel of human haplotypes by combining together sequencing data from multiple cohorts.
+The aim of the [Haplotype Reference Consortium (HRC)](http://www.haplotype-reference-consortium.org/) is to create a large reference panel of human haplotypes by combining together sequencing data from multiple cohorts.  
 This HRC.r1.1 release consists of 64,940 haplotypes of predominantly European ancestry.  
 More information about the HRC can be found on [www.haplotype-reference-consortium.org](http://www.haplotype-reference-consortium.org/).
 
