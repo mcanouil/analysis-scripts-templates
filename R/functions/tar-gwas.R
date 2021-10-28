@@ -2,22 +2,22 @@
 #' @import data.table
 qc_sample_sheet_gwas <- function(phenotype, exclusion, relatedness, ethnicity) {
   relatedness <- data.table::fread(file = relatedness)
-  
+
   related_pairs <- relatedness[
     i = sub("_.*", "", IID1) != sub("_.*", "", IID2)
   ]
-  
+
   best_related_samples <- sapply(
     X = unique(lapply(
-      X = related_pairs[["IID1"]], 
+      X = related_pairs[["IID1"]],
       FUN = function(iid) {
         related_pairs[IID1 %in% iid | IID2 %in% iid, sort(unique(c(IID1, IID2, iid)))]
       }
     )),
     FUN = function(x) {
       data.table::melt.data.table(
-        data = related_pairs[IID1 %in% x | IID2 %in% x, .SD, .SDcols = paste0(rep(c("IID", "F_MISS"), each = 2), 1:2)], 
-        measure.vars = patterns("^F_MISS", "^IID"), 
+        data = related_pairs[IID1 %in% x | IID2 %in% x, .SD, .SDcols = paste0(rep(c("IID", "F_MISS"), each = 2), 1:2)],
+        measure.vars = patterns("^F_MISS", "^IID"),
         value.name = c("F_MISS", "IID")
       )[
         which.min(F_MISS),
@@ -42,12 +42,12 @@ qc_sample_sheet_gwas <- function(phenotype, exclusion, relatedness, ethnicity) {
     ),
     by = c(paste0("IID", 1:2))
   ]
-  
+
   exclusion <- data.table::fread(file = exclusion)[
     i = Sex_Discrepancy == 1 | Sample_Call_Rate == 1 | Sex_Missing == 1 | Heterozygosity_Check == 1,
     j = Status := "Exclude"
   ][
-    i = IID %in% 
+    i = IID %in%
       bad_duplicated_samples[j = unlist(.SD, use.names = FALSE), .SDcols = patterns("IID[0-9]+")] &
         Status == "Check",
     j = Status := NA_character_
