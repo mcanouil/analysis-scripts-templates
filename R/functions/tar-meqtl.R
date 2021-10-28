@@ -151,10 +151,7 @@ do_meqtl <- function(
 
   epic_qc <- beta_matrix[
     rownames(epic_qc_annot),
-    intersect(
-      as.character(phenotype[["Sample_ID"]]),
-      colnames(beta_matrix)
-    )
+    as.character(phenotype[["Sample_ID"]])
   ]
   colnames(epic_qc) <- phenotype[["vcf_id"]]
 
@@ -200,6 +197,13 @@ do_meqtl <- function(
   )
   close(file_con)
 
+  data.table::fwrite(
+    x = phenotype[j = .SD, .SDcols = "vcf_id"],
+    file = sprintf("%s/keep.samples", tmp_dirs[["genotypes"]]),
+    sep = " ",
+    col.names = FALSE
+  )
+
   list_vcfs <- future.apply::future_sapply(
     X = vcfs[sub("\\.vcf.gz", "", basename(vcfs)) %in% 1:22],
     vep_file = vep,
@@ -220,7 +224,7 @@ do_meqtl <- function(
           "--min-alleles 2 --max-alleles 2 --types snps",
           "--force-samples",
           # "--no-update",
-          "--samples-file", sprintf("%s.samples", basename_file),
+          "--samples-file", sprintf("%s/keep.samples", output_genotypes),
        "|",
         bin_path[["bcftools"]],
           "annotate",
