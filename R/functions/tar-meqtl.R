@@ -294,7 +294,10 @@ do_meqtl <- function(
               data.table::as.data.table(epic_qc_annot, keep.rownames = "cpg_id"),
               data.table::as.data.table(get(utils::data("Other", package = epic_annot_pkg)), keep.rownames = "cpg_id")[
                 j = list(
-                  UCSC_RefGene_Name = paste(unique(tstrsplit(data.table::UCSC_RefGene_Name, split = ";")), collapse = ";")
+                  UCSC_RefGene_Name = paste(
+                    unique(tstrsplit(data.table::UCSC_RefGene_Name, split = ";")), 
+                    collapse = ";"
+                  )
                 ),
                 by = "cpg_id"
               ]
