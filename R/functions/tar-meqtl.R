@@ -116,6 +116,7 @@ qc_sample_sheet_meqtl <- function(phenotype, methylation, exclusion, relatedness
 #' @import data.table
 #' @import IlluminaHumanMethylationEPICanno.ilm10b5.hg38
 #' @import future_apply
+#' @import utils
 do_meqtl <- function(
   phenotype,
   model,
@@ -143,7 +144,7 @@ do_meqtl <- function(
     as.matrix(beta_matrix, "cpg_id")
   )[j = phenotype[["Sample_ID"]]]
 
-  epic_qc_annot <- IlluminaHumanMethylationEPICanno.ilm10b5.hg38::Locations
+  epic_qc_annot <- get(utils::data("Locations", package = epic_annot_pkg))
   epic_qc_annot <- epic_qc_annot[intersect(rownames(beta_matrix), rownames(epic_qc_annot)), ]
   epic_qc_annot <- na.exclude(as.data.frame(epic_qc_annot))
   epic_qc_annot <- epic_qc_annot[epic_qc_annot[["chr"]] %in% sprintf("chr%d", 1:22), ]
@@ -282,7 +283,7 @@ do_meqtl <- function(
             x = list(
               data.table::fread(sprintf("%s/%s_%s_%s.txt.gz", tmp_dirs[["qtl"]], project_name, ianalysis, ichr)),
               data.table::as.data.table(epic_qc_annot, keep.rownames = "cpg_id"),
-              data.table::as.data.table(IlluminaHumanMethylationEPICanno.ilm10b5.hg38::Other, keep.rownames = "cpg_id")[
+              data.table::as.data.table(get(utils::data("Other", package = epic_annot_pkg)), keep.rownames = "cpg_id")[
                 j = list(
                   UCSC_RefGene_Name = paste(unique(tstrsplit(data.table::UCSC_RefGene_Name, split = ";")), collapse = ";")
                 ),
