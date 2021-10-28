@@ -38,6 +38,8 @@ do_ewas <- function(
   dir.create(path = tmpdir, recursive = TRUE, mode = "0777")
   on.exit(unlink(tmpdir, recursive = TRUE))
 
+  if (!inherits(data, "data.table")) data.table::setDT(data)
+
   beta_matrix <- data.table::fread(file = beta_file, header = TRUE)
   data <- data[Sample_ID %in% names(beta_matrix)]
   beta_matrix <- data.table::setnames(beta_matrix, data[["Sample_ID"]], data[["Sample_Name"]])[
