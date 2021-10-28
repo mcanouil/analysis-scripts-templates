@@ -177,25 +177,42 @@ do_meqtl <- function(
     by = "grp"
   ]
 
-  file_con <- gzfile(file.path(tempdir(), "nominal_header.txt.gz"), "w")
-  cat(
-    c("cpg_id", "rs_id", "distance_bp", "pvalue", "slope\n"),
-    sep = " ",
-    file = file_con
-  )
-  close(file_con)
+  # file_con <- gzfile(file.path(tempdir(), "nominal_header.txt.gz"), "w")
+  # cat(
+  #   c("cpg_id", "rs_id", "distance_bp", "pvalue", "slope\n"),
+  #   sep = " ",
+  #   file = file_con
+  # )
+  # close(file_con)
+  #
+  # file_con <- gzfile(file.path(tempdir(), "permutation_header.txt.gz"))
+  # cat(
+  #   c(
+  #     "cpg_id", "variants_cis", "mle_shape1_beta", "mle_shape2_beta",
+  #     "dummy", "best_rs_id", "distance_bp", "pvalue", "slope",
+  #     "permutation_pvalue", "downstream_pvalue\n"
+  #   ),
+  #   sep = " ",
+  #   file = file_con
+  # )
+  # close(file_con)
 
-  file_con <- gzfile(file.path(tempdir(), "permutation_header.txt.gz"))
-  cat(
-    c(
-      "cpg_id", "variants_cis", "mle_shape1_beta", "mle_shape2_beta",
-      "dummy", "best_rs_id", "distance_bp", "pvalue", "slope",
-      "permutation_pvalue", "downstream_pvalue\n"
+  covariates <- strsplit(model[["covariates"]], " \\+ ")[[1]]
+  if (any(grepl("^cell$", covariates))) {
+    covariates <- c(
+      covariates[!grepl("^cell$", covariates)],
+      names(sort(phenotype[j = colMeans(.SD, na.rm = TRUE), .SDcols = grep("^CellT_", names(phenotype))])[-1])
+    )
+  }
+
+  data.table::fwrite(
+    x = data.table::transpose(
+      l = phenotype[j = .SD, .SDcols = covariates],
+      keep.names = "row"
     ),
-    sep = " ",
-    file = file_con
+    file = sprintf("%s/covariates.txt.gz", tmp_dirs[["covariates"]]),
+    quote = FALSE, col.names = FALSE, sep = "\t"
   )
-  close(file_con)
 
   data.table::fwrite(
     x = phenotype[j = .SD, .SDcols = "vcf_id"],
@@ -241,7 +258,7 @@ do_meqtl <- function(
       vcf_file
     }
   )
-  names(list_vcfs) <- sub("\\.vcf.gz", "", basename(list_vcfs))
+  names(list_vcfs) <- sprintf("chr%02d", as.numeric(sub("\\.vcf.gz", "", basename(list_vcfs))))
 
   for (ichr in sprintf("chr%02d", 1:22)) {
     local({
