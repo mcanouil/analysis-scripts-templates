@@ -131,8 +131,7 @@ do_meqtl <- function(
     bgzip = "/usr/bin/bgzip"
   ),
   cis_window = 500000,
-  n_chunk = 20,
-  seed = 123456
+  n_chunk = 20
 ) {
   tmp_dirs <- (function(x) `names<-`(file.path(path, x), x))(
     c("methylation", "genotypes", "covariates", "qtl", "qtl_annotated", "qtl_combined")
@@ -248,16 +247,15 @@ do_meqtl <- function(
           ichr = ichr,
           n_chunk = n_chunk
           cis_window = cis_window,
-          seed = seed,
-          FUN = function(ichunk, ivcf, tmp_dirs, cis_window, ianalysis, ichr, n_chunk, bin_path, seed) {
+          FUN = function(ichunk, ivcf, tmp_dirs, cis_window, ianalysis, ichr, n_chunk, bin_path) {
             system(paste(bin_path[["qtltools"]],
+              "cis",
               "--silent",
-              "--seed", seed,
               "--vcf", ivcf,
               "--bed", sprintf("%s/%s.bed.gz", tmp_dirs[["methylation"]], ichr),
               "--cov", sprintf("%s/covariates.txt.gz", tmp_dirs[["covariates"]]),
               "--window", cis_window,
-              ifelse(ianalysis == "nominal", "", "--permute 1000 10000"),
+              ifelse(ianalysis == "nominal", "--nominal 1", "--permute 1000"),
               "--chunk", ichunk, n_chunk,
               "--out", sprintf("%s/%s_%s_%03d.txt.gz", tmp_dirs[["qtl"]], ianalysis, ichr, ichunk)
             ))

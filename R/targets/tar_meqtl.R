@@ -68,14 +68,13 @@ tar_meqtl <- {list(
       path = file.path(output_directory, "meqtl"),
       epic_annot_pkg = "IlluminaHumanMethylationEPICanno.ilm10b5.hg38",
       bin_path = list(
-        qtltools = "QTLtools", 
-        bcftools =  "/usr/bin/bcftools", 
-        tabix = "/usr/bin/tabix", 
+        qtltools = "QTLtools",
+        bcftools =  "/usr/bin/bcftools",
+        tabix = "/usr/bin/tabix",
         bgzip = "/usr/bin/bgzip"
       ),
       cis_window = 500000,
-      n_chunk = 20,
-      seed = 123456
+      n_chunk = 20
     ),
     pattern = map(meqtl_models),
     iteration = "list",
