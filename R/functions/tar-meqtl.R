@@ -273,7 +273,7 @@ do_meqtl <- function(
           ianalysis = ianalysis,
           ichr = ichr,
           n_chunk = n_chunk,
-          cis_window = cis_window,
+          bin_path = bin_path,
           FUN = function(ichunk, ivcf, tmp_dirs, cis_window, ianalysis, ichr, n_chunk, bin_path) {
             system(paste(bin_path[["qtltools"]],
               "cis",
