@@ -2,7 +2,7 @@ message(timestamp(quiet = TRUE))
 ### Project Setup ==================================================================================
 library(here)
 project_name <- sub("(.*)_*\\..*", "\\1", list.files(here(), pattern = ".Rproj$"))
-output_directory <- here("outputs", "14-mqtl")
+output_directory <- here("outputs", "14-meqtl")
 dir.create(output_directory, recursive = TRUE, showWarnings = FALSE, mode = "0775")
 
 invisible(sapply(c("epic", "covariates", "fastqtl", "fastqtl_annotated", "fastqtl_combined"), function(x) {
@@ -113,7 +113,7 @@ epic_qc[
 ]
 
 
-### mQTL analysis (fastQTL) =======================================================================
+### meqtl analysis (fastQTL) ======================================================================
 file_con <- gzfile(file.path(tempdir(), "nominal_header.txt.gz"), "w")
 cat(
   c("cpg_id", "rs_id", "distance_bp", "pvalue", "slope\n"),
