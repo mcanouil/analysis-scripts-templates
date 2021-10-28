@@ -125,9 +125,9 @@ do_meqtl <- function(
   path,
   epic_annot_pkg = "IlluminaHumanMethylationEPICanno.ilm10b5.hg38",
   bin_path = list(
-    qtltools = "QTLtools", 
-    bcftools =  "/usr/bin/bcftools", 
-    tabix = "/usr/bin/tabix", 
+    qtltools = "QTLtools",
+    bcftools =  "/usr/bin/bcftools",
+    tabix = "/usr/bin/tabix",
     bgzip = "/usr/bin/bgzip"
   ),
   cis_window = 500000,
@@ -245,7 +245,7 @@ do_meqtl <- function(
           cis_window = cis_window,
           ianalysis = ianalysis,
           ichr = ichr,
-          n_chunk = n_chunk
+          n_chunk = n_chunk,
           cis_window = cis_window,
           FUN = function(ichunk, ivcf, tmp_dirs, cis_window, ianalysis, ichr, n_chunk, bin_path) {
             system(paste(bin_path[["qtltools"]],
@@ -264,9 +264,9 @@ do_meqtl <- function(
 
         system(sprintf(
           "zcat %s/%s_header.txt.gz %s/%s_%s_*.txt.gz | %s -c > %s/%s_%s.txt.gz",
-          tempdir(), ianalysis, 
+          tempdir(), ianalysis,
           tmp_dirs[["qtl"]], ianalysis, ichr,
-          bin_path[["bgzip"]]
+          bin_path[["bgzip"]],
           tmp_dirs[["qtl"]], ianalysis, ichr
         ))
 
@@ -324,11 +324,11 @@ do_meqtl <- function(
           list.files(path, full.names = TRUE),
           list.files(path, pattern = "qtl_combined", full.names = TRUE)
         )
-      ), 
-      recursive = TRUE, 
+      ),
+      recursive = TRUE,
       force = TRUE
     )
   )
-  
+
   list.files(path, pattern = "qtl_combined", full.names = TRUE)
 }
