@@ -150,7 +150,7 @@ do_meqtl <- function(
   epic_qc_annot[["chr"]] <- as.numeric(gsub("chr", "", epic_qc_annot[["chr"]]))
 
   epic_qc <- beta_matrix[
-    rownames(epic_qc_annot), 
+    rownames(epic_qc_annot),
     intersect(
       as.character(phenotype[["Sample_ID"]]),
       colnames(beta_matrix)
@@ -174,7 +174,7 @@ do_meqtl <- function(
       file <- sprintf("%s/chr%02d.bed", tmp_dirs[["methylation"]], unique(y))
       data.table::fwrite(x, file = file, quote = FALSE, sep = "\t")
       system(sprintf("%s -f %s", bin_path[["bgzip"]], file))
-      system(paste("%s -p bed -f %s.gz", bin_path[["tabix"]], file))
+      system(sprintf("%s -p bed -f %s.gz", bin_path[["tabix"]], file))
       return(TRUE)
     })(.SD, `#Chr`),
     by = "grp"
