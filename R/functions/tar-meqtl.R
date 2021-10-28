@@ -174,10 +174,10 @@ do_meqtl <- function(
       file <- sprintf("%s/chr%02d.bed", tmp_dirs[["methylation"]], unique(y))
       data.table::fwrite(x, file = file, quote = FALSE, sep = "\t")
       system(sprintf("%s -f %s", bin_path[["bgzip"]], file))
-      system(paste("%s -p bed -f %s", bin_path[["tabix"]], sprintf("%s.gz", file)))
+      system(paste("%s -p bed -f %s.gz", bin_path[["tabix"]], file))
       return(TRUE)
     })(.SD, `#Chr`),
-    by = grp
+    by = "grp"
   ]
 
   file_con <- gzfile(file.path(tempdir(), "nominal_header.txt.gz"), "w")
