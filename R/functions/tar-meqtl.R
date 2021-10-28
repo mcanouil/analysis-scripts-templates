@@ -208,7 +208,7 @@ do_meqtl <- function(
     X = vcfs[sub("\\.vcf.gz", "", basename(vcfs)) %in% 1:22],
     vep_file = vep,
     bin_path = bin_path,
-    output_genotypes = tmpdirs[["genotypes"]],
+    output_genotypes = tmp_dirs[["genotypes"]],
     future.globals = FALSE,
     future.packages = "data.table",
     FUN = function(vcf, vep_file, output_genotypes, bin_path) {
