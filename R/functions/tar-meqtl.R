@@ -139,10 +139,9 @@ do_meqtl <- function(
   )
   invisible(sapply(tmp_dirs, dir.create, recursive = TRUE, showWarnings = FALSE, mode = "0775"))
 
-  beta_matrix <- data.table::fread(file = beta_file, header = TRUE)
   beta_matrix <- (function(x) log2(x) - log2(1 - x))(
-    as.matrix(beta_matrix, "cpg_id")
-  )[j = phenotype[["Sample_ID"]]]
+    as.matrix(data.table::fread(file = beta_file, header = TRUE), "cpg_id")
+  )
 
   epic_qc_annot <- get(utils::data("Locations", package = epic_annot_pkg))
   epic_qc_annot <- epic_qc_annot[intersect(rownames(beta_matrix), rownames(epic_qc_annot)), ]
@@ -150,7 +149,13 @@ do_meqtl <- function(
   epic_qc_annot <- epic_qc_annot[epic_qc_annot[["chr"]] %in% sprintf("chr%d", 1:22), ]
   epic_qc_annot[["chr"]] <- as.numeric(gsub("chr", "", epic_qc_annot[["chr"]]))
 
-  epic_qc <- beta_matrix[rownames(epic_qc_annot), as.character(phenotype[["Sample_ID"]])]
+  epic_qc <- beta_matrix[
+    rownames(epic_qc_annot), 
+    intersect(
+      as.character(phenotype[["Sample_ID"]]),
+      colnames(beta_matrix)
+    )
+  ]
   colnames(epic_qc) <- phenotype[["vcf_id"]]
 
   devnull <- merge(
