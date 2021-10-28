@@ -23,7 +23,11 @@ message(sprintf("Number of workers: %d", future::nbrOfWorkers()))
 tar_setup <- {list( # Setup project
   tar_target(project, gsub("(.*)_.*", "\\1", list.files(here(), pattern = ".Rproj$")), packages = "here"),
   tar_target(author, "Mickaël CANOUIL, *Ph.D.*"),
-  tar_target(output_directory, here::here("outputs"), packages = "here")
+  tar_target(output_directory, here::here("outputs"), packages = "here"),
+  tar_target(bcftools, "/usr/bin/bcftools", format = "file"),
+  tar_target(tabix, "/usr/bin/tabix", format = "file"),
+  tar_target(bgzip, "/usr/bin/bgzip", format = "file"),
+  tar_target(qtltools, "qtltools", format = "file")
 )}
 
 
@@ -68,10 +72,10 @@ tar_meqtl <- {list(
       path = file.path(output_directory, "meqtl"),
       epic_annot_pkg = "IlluminaHumanMethylationEPICanno.ilm10b5.hg38",
       bin_path = list(
-        qtltools = "QTLtools",
-        bcftools =  "/usr/bin/bcftools",
-        tabix = "/usr/bin/tabix",
-        bgzip = "/usr/bin/bgzip"
+        qtltools = qtltools,
+        bcftools =  bcftools,
+        tabix = tabix,
+        bgzip = bgzip
       ),
       cis_window = 500000,
       n_chunk = 20
