@@ -292,10 +292,13 @@ do_meqtl <- function(
             x = list(
               data.table::fread(sprintf("%s/%s_%s_%s.txt.gz", tmp_dirs[["qtl"]], project_name, ianalysis, ichr)),
               data.table::as.data.table(epic_qc_annot, keep.rownames = "cpg_id"),
-              data.table::as.data.table(get(utils::data("Other", package = epic_annot_pkg)), keep.rownames = "cpg_id")[
+              data.table::as.data.table(
+                x = get(utils::data("Other", package = epic_annot_pkg)),
+                keep.rownames = "cpg_id"
+              )[
                 j = list(
                   UCSC_RefGene_Name = paste(
-                    unique(tstrsplit(data.table::UCSC_RefGene_Name, split = ";")), 
+                    unique(tstrsplit(data.table::UCSC_RefGene_Name, split = ";")),
                     collapse = ";"
                   )
                 ),
