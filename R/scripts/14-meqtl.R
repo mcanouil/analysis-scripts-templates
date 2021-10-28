@@ -69,6 +69,12 @@ sample_sheet_qc <- sample_sheet_qc[ # not related
   super_pop_closest %in% "EUR"
 ]
 
+fwrite(
+  x = transpose(sample_sheet_qc[j = c("vcf_id", "sex", "age", "bmi", "t2d", "PC01", "PC02")], keep.names = "row"),
+  file = file.path(output_covariates, "covariates.txt.gz"),
+  quote = FALSE, col.names = FALSE, sep = "\t"
+)
+
 
 ## Omni2.5 data ====================================================================================
 vcfs <- list.files(
