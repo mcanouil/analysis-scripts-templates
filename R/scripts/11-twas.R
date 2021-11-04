@@ -240,7 +240,7 @@ draw_volcano <- function(
 
 plot_planes <- function(pca_dfxy, ivar, fig_n_comp) {
   apply(
-    X = combn(sprintf("PC%02d", 1:fig_n_comp), 2),
+    X = combn(sprintf("PC%02d", seq_len(fig_n_comp)), 2),
     MARGIN = 2,
     FUN = function(.x) {
       ggplot(data = pca_dfxy[, .SD, .SDcols = c(ivar, .x)]) +
@@ -398,7 +398,7 @@ for (rna_level in c("genes", "isoforms")) {
     data = data.table(
       y = pca_res[["pve"]],
       x = sprintf("PC%02d", seq_along(pca_res[["pve"]]))
-    )[x %in% sprintf("PC%02d", 1:fig_n_comp)]
+    )[x %in% sprintf("PC%02d", seq_len(fig_n_comp))]
   ) +
     aes(
       x = paste0(x, "<br><i style='font-size:6pt;'>(", percent_format(accuracy = 0.01, suffix = " %")(y), ")</i>"),
@@ -438,7 +438,7 @@ for (rna_level in c("genes", "isoforms")) {
     measure.vars = grep("^PC[0-9]+$", names(pca_dfxy), value = TRUE),
     variable.name = "pc",
     value.name = "values"
-  )[pc %in% sprintf("PC%02d", 1:n_comp)][
+  )[pc %in% sprintf("PC%02d", seq_len(n_comp))][
     j = {
       m <- model.matrix(
         object = as.formula(
@@ -490,7 +490,7 @@ for (rna_level in c("genes", "isoforms")) {
             formula = term ~ pc,
             value.var = "Pr(>F)"
           ),
-          cols = levels(asso_dt[["pc"]])[1:n_comp],
+          cols = levels(asso_dt[["pc"]])[seq_len(n_comp)],
           order = -1
         )[["term"]]
       ),

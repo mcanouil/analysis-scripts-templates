@@ -414,7 +414,7 @@ plot_pp_gwas <- function(file, model) {
     order(P)
   ][
     j = `:=`(
-      "exppval" = (1:.N - 0.5) / .N,
+      "exppval" = (seq_len(.N) - 0.5) / .N,
       "labels" = paste0(
         "&lambda;<sub>gc</sub> = ",
         format(stats::median(stats::qnorm(P / 2)^2, na.rm = TRUE) / stats::qchisq(0.5, df = 1), digits = 3, nsmall = 3)

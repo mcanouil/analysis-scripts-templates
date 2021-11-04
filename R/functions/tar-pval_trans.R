@@ -8,7 +8,7 @@ pval_trans <- function(alpha = NULL, md = FALSE, prefix = FALSE, colour = "#b222
       x[x < .Machine$double.xmin] <- .Machine$double.xmin
       -log(x, 10)
     },
-    inverse = function(x) {10^-x},
+    inverse = function(x) 10^-x,
     breaks = (function(n = 5, digits = 3) {
       function(x) {
         values <- as.numeric(format(

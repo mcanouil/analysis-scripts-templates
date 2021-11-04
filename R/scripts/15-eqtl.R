@@ -204,7 +204,7 @@ for (rna_level in c("genes", "isoforms")) {
         for (ianalysis in c("nominal", "permutation")) {
           n_chunk <- 20
           future_lapply(
-            X = 1:n_chunk,
+            X = seq_len(n_chunk),
             future.globals = FALSE,
             seed = seed,
             vcfs = vcfs,
@@ -268,7 +268,7 @@ for (rna_level in c("genes", "isoforms")) {
             future.packages = "data.table",
             output_fastqtl_annotated = output_fastqtl_annotated,
             project_name = project_name,
-            ianalysis = ianalysis
+            ianalysis = ianalysis,
             FUN = function(ichr, output_fastqtl_annotated, project_name, ianalysis) {
               fread(file.path(output_fastqtl_annotated, sprintf("%s_%s_%s.txt.gz", project_name, ianalysis, ichr)))
             }

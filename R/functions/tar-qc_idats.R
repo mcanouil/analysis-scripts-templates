@@ -485,7 +485,7 @@ qc_idats <- function(params) {
   sample_sheet <- data.table::fread(params[["csv_file"]], skip = "Sample_Name")
   sample_sheet[
     j = Sample_ID := {
-      x <- as.character(1:.N)
+      x <- as.character(seq_len(.N))
       data.table::fifelse(x == "1", as.character(Sample_Name), paste(Sample_Name, x, sep = "_"))
     },
     by = "Sample_Name"
@@ -497,7 +497,7 @@ qc_idats <- function(params) {
     ]
   }
 
-  setcolorder(sample_sheet, neworder = "Sample_ID")
+  data.table::setcolorder(sample_sheet, neworder = "Sample_ID")
 
   if (!is.null(params[["sex_colname"]])) {
     sample_sheet[
@@ -505,9 +505,6 @@ qc_idats <- function(params) {
         "1" = 1, "2" = 2, "M" = 1, "F" = 2, "0" = 2
       )[as.character(get(params[["sex_colname"]]))]
     ]
-    pca_vars <- intersect(colnames(sample_sheet), unique(c(params[["pca_vars"]], "qc_observed_sex")))
-  } else {
-    pca_vars <- intersect(colnames(sample_sheet), params[["pca_vars"]])
   }
 
   data.table::fwrite(x = sample_sheet, file = file.path(tempdir(), "sample_sheet.csv"))
@@ -619,8 +616,8 @@ estimate_cell_composition <- function(data_rgset, data_mset, cell_tissue, array,
             if (Ktest == 0) {
               tmpRminLU <- mc_Rmat
             } else {
-              tmpRminLU <- mc_Rmat - mc_svdRmat$u[, 1:Ktest] %*%
-                (mc_svdRmat$d[1:Ktest] * t(mc_svdRmat$v[, 1:Ktest]))
+              tmpRminLU <- mc_Rmat - mc_svdRmat$u[, seq_len(Ktest)] %*%
+                (mc_svdRmat$d[seq_len(Ktest)] * t(mc_svdRmat$v[, seq_len(Ktest)]))
             }
             tmpSigSq <- rowSums(tmpRminLU * tmpRminLU) / N2
 
@@ -671,7 +668,7 @@ estimate_cell_composition <- function(data_rgset, data_mset, cell_tissue, array,
       )
 
       out <- RefFreeCellMixObj[["Omega"]]
-      colnames(out) <- paste0("CellT_", 1:ncol(out))
+      colnames(out) <- paste0("CellT_", sqe_len(ncol(out)))
       out
     }
   )
@@ -829,7 +826,7 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
         data = data.table::data.table(
           y = pca_res[["pve"]],
           x = sprintf("PC%02d", seq_along(pca_res[["pve"]]))
-        )[x %in% sprintf("PC%02d", 1:fig_n_comp)]
+        )[x %in% sprintf("PC%02d", seq_len(fig_n_comp))]
       ) +
         ggplot2::aes(
           x = paste0(
@@ -860,7 +857,7 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
         measure.vars = grep("^PC[0-9]+$", names(pca_dfxy), value = TRUE),
         variable.name = "pc",
         value.name = "values"
-      )[pc %in% sprintf("PC%02d", 1:n_comp)][
+      )[pc %in% sprintf("PC%02d", seq_len(n_comp))][
         j = {
           m <- stats::model.matrix(
             object = stats::as.formula(
@@ -912,7 +909,7 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
                 formula = term ~ pc,
                 value.var = "Pr(>F)"
               ),
-              cols = levels(asso_dt[["pc"]])[1:n_comp],
+              cols = levels(asso_dt[["pc"]])[seq_len(n_comp)],
               order = -1
             )[["term"]]
           ),
@@ -972,7 +969,7 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
             patchwork::wrap_plots(
               c(
                 apply(
-                  X = utils::combn(sprintf("PC%02d", 1:fig_n_comp), 2),
+                  X = utils::combn(sprintf("PC%02d", seq_len(fig_n_comp)), 2),
                   MARGIN = 2,
                   FUN = function(x) {
                     ggplot2::ggplot(data = pca_dfxy[j = .SD, .SDcols = c(ivar, x)]) +
@@ -1029,7 +1026,7 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
 plot_callrate_ma <- function(data, callrate, max_labels) {
   ggplot2::ggplot(
     data = data[order(call_rate), list(Sample_ID, call_rate)][
-      j = c("x", "labs") := list(1:.N, ifelse(call_rate < callrate, Sample_ID, NA))
+      j = c("x", "labs") := list(seq_len(.N), ifelse(call_rate < callrate, Sample_ID, NA))
     ]
   ) +
     ggplot2::aes(x = seq_along(call_rate), y = call_rate) +

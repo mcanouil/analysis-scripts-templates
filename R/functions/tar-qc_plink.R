@@ -97,7 +97,7 @@ make_ga_bed <- function(input, output, plink) {
   data.table::fwrite(
     x = data.table::fread(file.path(output, "data.fam"))[,
       V2 := {
-        x <- as.character(1:.N)
+        x <- as.character(seq_len(.N))
         data.table::fifelse(x == "1", as.character(V2), paste(V2, x, sep = "_"))
       },
       by = c("V1", "V2")
@@ -150,7 +150,7 @@ read_fam <- function(path, project) {
 #' @import ggrepel
 plot_callrate <- function(data, callrate, max_labels, type) {
   ggplot2::ggplot(data = data) +
-    ggplot2::aes(x = length(F_MISS):1, y = 1 - F_MISS) +
+    ggplot2::aes(x = rev(seq_along(F_MISS)), y = 1 - F_MISS) +
     ggplot2::geom_point(
       colour = scales::viridis_pal(begin = 0.5, end = 0.5)(1),
       shape = 1,
@@ -1101,7 +1101,7 @@ compute_samples_to_exclude <- function(
   if (length(missing_qc_columns) > 0) {
     for (icol in missing_qc_columns) {
       all_exclusion_wide[j = tmp_col := 0]
-      setnames(all_exclusion_wide, "tmp_col", icol)
+      data.table::setnames(all_exclusion_wide, "tmp_col", icol)
     }
   }
 
@@ -1115,9 +1115,12 @@ compute_samples_to_exclude <- function(
       levels = c("Exclude", "Check")
     )
   ]
-  setcolorder(all_exclusion_wide, c("FID", "IID", "Status", "Sample_Call_Rate", "Heterozygosity_Check"))
+  data.table::setcolorder(
+    x = all_exclusion_wide,
+    neworder = c("FID", "IID", "Status", "Sample_Call_Rate", "Heterozygosity_Check")
+  )
 
-  setorderv(
+  data.table::setorderv(
     x = all_exclusion_wide,
     cols = setdiff(colnames(all_exclusion_wide), c("FID", "IID")),
     order = sign(setdiff(colnames(all_exclusion_wide), c("FID", "IID")) %in% "Status" - 0.5)
@@ -1260,7 +1263,7 @@ compute_hwe_snp <- function(bfile, hwe, plink) {
 #' @import scales
 plot_hwe_snp <- function(data, hwe) {
   ggplot2::ggplot(data = data[P < hwe * 10]) +
-    ggplot2::aes(x = 1:length(P), y = P) +
+    ggplot2::aes(x = seq_along(P), y = P) +
     ggplot2::geom_point(
       colour = scales::viridis_pal(begin = 0.5, end = 0.5)(1),
       shape = 1,
@@ -1593,7 +1596,7 @@ compute_vcf_imputed_qc <- function(vcf, vcftools, uptodate) {
   fct_explicit_na <- function(f) {
     factor(
       x = ifelse(is.na(f), "(Missing)", f),
-      levels = c(1:nlevels(f), "(Missing)"),
+      levels = c(seq_len(nlevels(f)), "(Missing)"),
       labels = c(levels(f), "(Missing)")
     )
   }

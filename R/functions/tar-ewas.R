@@ -63,8 +63,6 @@ do_ewas <- function(
     ))
   }
 
-  basename_file <- sprintf("%s/limma_%s", tmpdir, model[["raw_trait"]])
-
   message("Performing limma regression ...")
 
   form <- stats::as.formula(paste0("~ ", paste(c(model[["raw_trait"]], covariates), collapse = " + ")))
@@ -244,7 +242,7 @@ do_ewas <- function(
     ))
   )
 
-  fwrite(x = limma_annot, file = results_file)
+  data.table::fwrite(x = limma_annot, file = results_file)
 
   message(sprintf('Writing results to "%s"!', results_file))
 
@@ -352,7 +350,7 @@ plot_pp_ewas <- function(file, model) {
     order(pvalue)
   ][
     j = `:=`(
-      "exppval" = (1:.N - 0.5) / .N,
+      "exppval" = (seq_len(.N) - 0.5) / .N,
       "labels" = paste0(
         "&lambda;<sub>gc</sub> = ",
         format(stats::median(stats::qnorm(pvalue / 2)^2, na.rm = TRUE) / stats::qchisq(0.5, df = 1), digits = 3, nsmall = 3)

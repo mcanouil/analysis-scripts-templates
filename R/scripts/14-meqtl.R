@@ -146,7 +146,7 @@ for (ichr in sprintf("chr%02d", 1:22)) {
       n_chunk <- 20
       cis_window <- 500000 # 500 Kb
       future_lapply(
-        X = 1:n_chunk,
+        X = seq_len(n_chunk),
         future.globals = FALSE,
         vcfs = vcfs,
         output_epic = output_epic,
@@ -155,7 +155,7 @@ for (ichr in sprintf("chr%02d", 1:22)) {
         cis_window = cis_window,
         ianalysis = ianalysis,
         ichr = ichr,
-        n_chunk = n_chunk
+        n_chunk = n_chunk,
         cis_window = cis_window,
         FUN = function(ichunk, vcfs, output_epic, output_covariates, output_fastqtl, cis_window, ianalysis, ichr, n_chunk) {
           system(paste("fastQTL",
