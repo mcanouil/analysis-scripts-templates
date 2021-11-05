@@ -164,6 +164,8 @@ epic_annot_pkg_urls <- paste(sprintf("\n-  [%s](%s)", epic_annot_pkg_urls, epic_
 
 ```{r models-data, include = FALSE}
 df_models <- setDT(tar_read(ewas_models))[
+  j = pretty_trait := factor(pretty_trait, levels = unique(pretty_trait))
+][
   j = eq := {
     fmt_covariates <- unlist(strsplit(x = covariates, split = " \\+ "))
     if (any(grepl("^PC[0-9]+$", fmt_covariates))) {
@@ -174,7 +176,7 @@ df_models <- setDT(tar_read(ewas_models))[
         collapse = "-"
       ))
       toupper(sprintf(
-        "%s = %s",
+        "\bold{M_{value}} = \bold{%s} + %s",
         all.vars(as.formula(paste0("~", raw_trait))),
         paste(
           sub(
@@ -186,7 +188,7 @@ df_models <- setDT(tar_read(ewas_models))[
       ))
     } else {
       toupper(sprintf(
-        "%s = %s",
+        "\bold{M_{value}} = \bold{%s} + %s",
         all.vars(as.formula(paste0("~", raw_trait))),
         paste(
           sub(
@@ -199,7 +201,7 @@ df_models <- setDT(tar_read(ewas_models))[
     }
   },
   by = "tar_group"
-]
+][order(pretty_trait, tar_group)]
 
 pp_models <- df_models[
   j = list(
@@ -247,7 +249,7 @@ pp_models <- df_models[
           limits = c(1, NA)
         ) +
         scale_colour_viridis_d(begin = 0.15, end = 0.85) +
-        scale_shape_discrete(solid = TRUE) +
+        scale_shape_manual(values = rep(1:5, 3)) +
         guides(shape = guide_legend(override.aes = list(size = 2))) +
         labs(
           x = "Expected P-value",
@@ -319,12 +321,13 @@ for (itrait in unique(df_models[["pretty_trait"]])) {
 ```{r print-models-pp, results = "asis", dev = "ragg_png", fig.height = 10, dpi = 120}
 for (itrait in unique(df_models[["pretty_trait"]])) {
   cat(sprintf("---\n\n# Models: %s\n\n", itrait))
-  cat(".pull-left[\n")
+  cat(".pull-left[\n\n")
   cat(sprintf(
     "Estimates were obtained using the bioconductor R package <code>bacon</code> v%s (doi:%s).\n\n",
     as.character(packageVersion("bacon")),
     '<a href="https://doi.org/10.18129/B9.bioc.bacon">10.18129/B9.bioc.bacon</a>'
   ))
+  cat("\n\n")
   print(
     gt(
       data = bc_models[pretty_trait %in% itrait, bc][[1]],
@@ -347,9 +350,9 @@ for (itrait in unique(df_models[["pretty_trait"]])) {
       ) %>%
       cols_align("center")
   )
-  cat("\n]\n\n.pull-right[\n")
+  cat("\n\n]\n\n.pull-right[\n\n")
   print(pp_models[pretty_trait %in% itrait, pp][[1]])
-  cat("\n]\n\n")
+  cat("\n\n]\n\n")
 }
 rm(pp_models, bc_models)
 ```
@@ -366,7 +369,7 @@ for (igroup in df_models[["tar_group"]]) {
     "# Results: `%s (%s)` - Probability-Probability Plot\n",
     df_models[tar_group %in% igroup, pretty_trait], igroup
   ))
-  cat(eq(tex = df_models[tar_group %in% igroup, eq], d = TRUE))
+  cat(eq(tex = sprintf("\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
   cat("\n")
   print(
     tar_read(ewas_results_pp, branches = igroup)[[1]] +
@@ -382,7 +385,7 @@ for (igroup in df_models[["tar_group"]]) {
     "# Results: `%s (%s)` - Manhattan Plot\n",
     df_models[tar_group %in% igroup, pretty_trait], igroup
   ))
-  cat(eq(tex = df_models[tar_group %in% igroup, eq], d = TRUE))
+  cat(eq(tex = sprintf("\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
   cat("\n")
   print(
     tar_read(ewas_results_manhattan, branches = igroup)[[1]] +
@@ -398,7 +401,7 @@ for (igroup in df_models[["tar_group"]]) {
     "# Results: `%s (%s)` - Volcano Plot\n",
     df_models[tar_group %in% igroup, pretty_trait], igroup
   ))
-  cat(eq(tex = df_models[tar_group %in% igroup, eq], d = TRUE))
+  cat(eq(tex = sprintf("\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
   cat("\n")
   print(
     tar_read(ewas_results_volcano, branches = igroup)[[1]] +
@@ -414,7 +417,7 @@ for (igroup in df_models[["tar_group"]]) {
     "# Results: `%s (%s)` - Top 10 Loci\n",
     df_models[tar_group %in% igroup, pretty_trait], igroup
   ))
-  cat(eq(tex = df_models[tar_group %in% igroup, eq], d = TRUE))
+  cat(eq(tex = sprintf("\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
   cat("\n")
   dt <- fread(
     file = tar_read(ewas_results_file, branches = igroup)[[1]]
