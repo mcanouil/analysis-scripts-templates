@@ -492,7 +492,7 @@ cat(eq(tex = sprintf("\\footnotesize %s", df_models[tar_group %in% igroup, eq]),
           )
         )
       ) %>%
-      tab_options(table.font.size = "14px")
+      tab_options(table.font.size = if (nchar(dt[["Gene"]]) > 20) "12px" else "14px")
   )
   cat("\n")
 }
