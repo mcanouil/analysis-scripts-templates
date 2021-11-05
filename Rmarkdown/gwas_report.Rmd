@@ -361,7 +361,7 @@ for (igroup in df_models[["tar_group"]]) {
     "# Results: `%s (%s)` - Probability-Probability Plot\n",
     df_models[tar_group %in% igroup, pretty_trait], igroup
   ))
-  ccat(eq(tex = sprintf("\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
+  ccat(eq(tex = sprintf("\\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
   cat("\n")
   print(
     tar_read(gwas_results_pp, branches = igroup)[[1]] +
@@ -377,7 +377,7 @@ for (igroup in df_models[["tar_group"]]) {
     "# Results: `%s (%s)` - Manhattan Plot\n",
     df_models[tar_group %in% igroup, pretty_trait], igroup
   ))
-  ccat(eq(tex = sprintf("\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
+  ccat(eq(tex = sprintf("\\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
   cat("\n")
   print(
     tar_read(gwas_results_manhattan, branches = igroup)[[1]] +
@@ -393,7 +393,7 @@ for (igroup in df_models[["tar_group"]]) {
     "# Results: `%s (%s)` - Volcano Plot\n",
     df_models[tar_group %in% igroup, pretty_trait], igroup
   ))
-cat(eq(tex = sprintf("\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
+cat(eq(tex = sprintf("\\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
   cat("\n")
   print(
     tar_read(gwas_results_volcano, branches = igroup)[[1]] +
@@ -409,7 +409,7 @@ cat(eq(tex = sprintf("\footnotesize %s", df_models[tar_group %in% igroup, eq]), 
     "# Results: `%s (%s)` - Top 10 Loci\n",
     df_models[tar_group %in% igroup, pretty_trait], igroup
   ))
-  ccat(eq(tex = sprintf("\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
+  ccat(eq(tex = sprintf("\\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
   cat("\n")
   dt <- fread(
     file = tar_read(gwas_results_file, branches = igroup)[[1]]
