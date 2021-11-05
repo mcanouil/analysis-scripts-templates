@@ -176,7 +176,7 @@ df_models <- setDT(tar_read(ewas_models))[
         collapse = "-"
       ))
       toupper(sprintf(
-        "\bold{M_{value}} = \bold{%s} + %s",
+        "\\bold{M_{value}} = \\bold{%s} + %s",
         all.vars(as.formula(paste0("~", raw_trait))),
         paste(
           sub(
@@ -188,7 +188,7 @@ df_models <- setDT(tar_read(ewas_models))[
       ))
     } else {
       toupper(sprintf(
-        "\bold{M_{value}} = \bold{%s} + %s",
+        "\\bold{M_{value}} = \\bold{%s} + %s",
         all.vars(as.formula(paste0("~", raw_trait))),
         paste(
           sub(

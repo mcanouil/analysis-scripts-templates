@@ -168,7 +168,7 @@ df_models <- setDT(tar_read(gwas_models))[
         collapse = "-"
       ))
       toupper(sprintf(
-        "\bold{G_{SNV}} = \bold{%s} + %s",,
+        "\\bold{G_{SNV}} = \\bold{%s} + %s",,
         raw_trait,
         paste(
           sub(
@@ -180,7 +180,7 @@ df_models <- setDT(tar_read(gwas_models))[
       ))
     } else {
       toupper(sprintf(
-        "\bold{G_{SNV}} = \bold{%s} + %s",,
+        "\\bold{G_{SNV}} = \\bold{%s} + %s",,
         raw_trait,
         paste(
           sub(
