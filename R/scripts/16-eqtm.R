@@ -227,7 +227,7 @@ for (rna_level in do_rna_level) {
     j = c("count_id", "start", "cpg_id", "CHR_hg38", "position_cpg", "dist", "W")
   ]
 
-  cis_cpg_gene_pairs <- cis_cpg_gene_pairs_info[j = c("count_id", "cpg_id", "W")]
+  cis_cpg_gene_pairs <- cis_cpg_gene_pairs_info#[j = c("count_id", "cpg_id", "W")]
 
   counts_vst <- counts_vst[unique(cis_cpg_gene_pairs[["count_id"]]), , drop = FALSE]
   beta_matrix <- raw_beta_matrix[unique(cis_cpg_gene_pairs[["cpg_id"]]), , drop = FALSE]
