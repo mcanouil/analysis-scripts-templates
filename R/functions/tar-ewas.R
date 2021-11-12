@@ -279,7 +279,7 @@ plot_manhattan_ewas <- function(file, model) {
   ][order(pvalue)]
 
   if (is.numeric(dt[["cpg_chr"]])) {
-    dt[j = "cpg_chr" := lapply(.SD, as.character), .SDcols = "cpg_chr"]
+    dt[j = "cpg_chr" := lapply(.SD, factor), .SDcols = "cpg_chr"]
   }
 
   if (dt[!is.na(gene_label_min), .N] > 10) {

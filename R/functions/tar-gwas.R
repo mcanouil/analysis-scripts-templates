@@ -343,7 +343,7 @@ plot_manhattan_gwas <- function(file, model) {
   ][order(P)]
 
   if (is.numeric(dt[["CHROM"]])) {
-    dt[j = "CHROM" := lapply(.SD, as.character), .SDcols = "CHROM"]
+    dt[j = "CHROM" := lapply(.SD, factor), .SDcols = "CHROM"]
   }
 
   if (dt[!is.na(gene_label_min), .N] > 10) {
