@@ -280,7 +280,7 @@ bc_models <- df_models[
               name = gwas_results_file,
               branches = as.numeric(sub(".*\\((.*)\\)", "\\1", imodel))
             )),
-            select = "Z_STAT"
+            select = sprintf("%s_STAT", c("T", "Z"))
           ))
           data.table(
             "Model" = imodel,
