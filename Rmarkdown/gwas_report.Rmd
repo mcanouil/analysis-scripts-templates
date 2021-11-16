@@ -152,10 +152,6 @@ suppressWarnings({
     * PLINK ` `r plink_ver` ` (Chang et al., 2015; doi:[10.1186/s13742-015-0047-8](https://doi.org/10.1186/s13742-015-0047-8))
     * BCFtools ` `r bcftools_ver` ` ([www.htslib.org](http://www.htslib.org/))
 
----
-
-# Models
-
 ```{r models-data, include = FALSE}
 df_models <- setDT(tar_read(gwas_models))[
   j = eq := {
@@ -297,9 +293,14 @@ bc_models <- df_models[
 ]
 ```
 
-```{r print-models-eq, results = "asis"}
+---
+class: part-slide
+
+# Models
+
+```{r print-models-pp, results = "asis", dev = "ragg_png", fig.height = 10, dpi = 120}
 for (itrait in unique(df_models[["pretty_trait"]])) {
-  cat("*", itrait, "\n")
+  cat(sprintf("\n\n---\n\n#  %s\n\n", itrait))
   for (igroup in unique(df_models[pretty_trait %in% itrait, tar_group])) {
     cat(sprintf("    1. %s\n", eq(
       tex = df_models[df_models[["tar_group"]] %in% igroup, ][["eq"]],
@@ -307,12 +308,7 @@ for (itrait in unique(df_models[["pretty_trait"]])) {
     )))
   }
   cat("\n\n")
-}
-```
-
-```{r print-models-pp, results = "asis", dev = "ragg_png", fig.height = 10, dpi = 120}
-for (itrait in unique(df_models[["pretty_trait"]])) {
-  cat(sprintf("---\n\n# Models: %s\n\n", itrait))
+  cat(sprintf("---\n\n# `%s`\n\n", itrait))
   cat(".pull-left[\n\n")
   cat(sprintf(
     "Estimates were obtained using the bioconductor R package <code>bacon</code> v%s (doi:%s).\n\n",
@@ -358,7 +354,7 @@ class: part-slide
 for (igroup in df_models[["tar_group"]]) {
   cat("\n\n---\n\n")
   cat(sprintf(
-    "# Results: `%s (%s)` - Probability-Probability Plot\n",
+    "# `%s (%s)` - Probability-Probability Plot\n",
     df_models[tar_group %in% igroup, pretty_trait], igroup
   ))
   ccat(eq(tex = sprintf("\\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
@@ -374,7 +370,7 @@ for (igroup in df_models[["tar_group"]]) {
 
   cat("\n\n---\n\n")
   cat(sprintf(
-    "# Results: `%s (%s)` - Manhattan Plot\n",
+    "# `%s (%s)` - Manhattan Plot\n",
     df_models[tar_group %in% igroup, pretty_trait], igroup
   ))
   ccat(eq(tex = sprintf("\\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
@@ -390,7 +386,7 @@ for (igroup in df_models[["tar_group"]]) {
 
   cat("\n\n---\n\n")
   cat(sprintf(
-    "# Results: `%s (%s)` - Volcano Plot\n",
+    "# `%s (%s)` - Volcano Plot\n",
     df_models[tar_group %in% igroup, pretty_trait], igroup
   ))
 cat(eq(tex = sprintf("\\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
@@ -406,7 +402,7 @@ cat(eq(tex = sprintf("\\footnotesize %s", df_models[tar_group %in% igroup, eq]),
 
   cat("\n\n---\n\n")
   cat(sprintf(
-    "# Results: `%s (%s)` - Top 10 Loci\n",
+    "# `%s (%s)` - Top 10 Loci\n",
     df_models[tar_group %in% igroup, pretty_trait], igroup
   ))
   ccat(eq(tex = sprintf("\\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
@@ -492,7 +488,7 @@ cat(eq(tex = sprintf("\\footnotesize %s", df_models[tar_group %in% igroup, eq]),
           )
         )
       ) %>%
-      tab_options(table.font.size = if (nchar(dt[["Gene"]]) > 20) "12px" else "14px")
+      tab_options(table.font.size = if (max(nchar(dt[["Gene"]])) > 20) "12px" else "14px")
   )
   cat("\n")
 }
