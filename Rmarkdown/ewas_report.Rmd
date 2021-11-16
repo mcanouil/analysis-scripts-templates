@@ -310,7 +310,7 @@ class: part-slide
 for (itrait in unique(df_models[["pretty_trait"]])) {
   cat(sprintf("\n\n---\n\n#  %s\n\n", itrait))
   for (igroup in unique(df_models[pretty_trait %in% itrait, tar_group])) {
-    cat(sprintf("    1. %s\n", eq(
+    cat(sprintf("\n1. %s\n", eq(
       tex = df_models[df_models[["tar_group"]] %in% igroup, ][["eq"]],
       d = FALSE
     )))
