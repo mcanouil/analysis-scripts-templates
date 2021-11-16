@@ -354,7 +354,7 @@ class: part-slide
 for (igroup in df_models[["tar_group"]]) {
   cat("\n\n---\n\n")
   cat(sprintf(
-    "# `%s (%s)` - Probability-Probability Plot\n",
+    "# `%s (%s)`<i style='font-size:50%;'> - Probability-Probability Plot</i>\n",
     df_models[tar_group %in% igroup, pretty_trait], igroup
   ))
   ccat(eq(tex = sprintf("\\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
@@ -370,7 +370,7 @@ for (igroup in df_models[["tar_group"]]) {
 
   cat("\n\n---\n\n")
   cat(sprintf(
-    "# `%s (%s)` - Manhattan Plot\n",
+    "# `%s (%s)`<i style='font-size:50%;''> - Manhattan Plot</i>\n",
     df_models[tar_group %in% igroup, pretty_trait], igroup
   ))
   ccat(eq(tex = sprintf("\\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
@@ -386,7 +386,7 @@ for (igroup in df_models[["tar_group"]]) {
 
   cat("\n\n---\n\n")
   cat(sprintf(
-    "# `%s (%s)` - Volcano Plot\n",
+    "# `%s (%s)`<i style='font-size:50%;'> - Volcano Plot</i>\n",
     df_models[tar_group %in% igroup, pretty_trait], igroup
   ))
 cat(eq(tex = sprintf("\\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
