@@ -21,7 +21,7 @@ invisible(sapply(list.files(here("scripts"), pattern = "^tar-.*R$", full.names =
 
 ### targets setup ==================================================================================
 tar_setup <- list( # Setup project
-  tar_target(project, gsub("(.*)_.*", "\\1", list.files(here(), pattern = ".Rproj$")), packages = "here"),
+  tar_target(project, sub("(.*)_[^_]*\\.Rproj$", "\\1", list.files(here(), pattern = ".Rproj$")), packages = "here"),
   tar_target(author, "Mickaël CANOUIL, *Ph.D.*"),
   tar_target(qc_data_path, "/disks/DATA/Projects"),
   tar_target(ma_run, "/disks/RUN/Array/Run/Results/epic/"),

@@ -21,7 +21,7 @@ message(sprintf("Number of workers: %d", future::nbrOfWorkers()))
 
 ### targets setup ==================================================================================
 tar_setup <- list( # Setup project
-  tar_target(project, gsub("(.*)_.*", "\\1", list.files(here(), pattern = ".Rproj$")), packages = "here"),
+  tar_target(project, sub("(.*)_[^_]*\\.Rproj$", "\\1", list.files(here(), pattern = ".Rproj$")), packages = "here"),
   tar_target(author, "Mickaël CANOUIL, *Ph.D.*"),
   tar_target(output_directory, here::here("outputs"), packages = "here"),
   tar_target(genome_assembly, "GRCh38"),
