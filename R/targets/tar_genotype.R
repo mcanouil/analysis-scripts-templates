@@ -20,17 +20,17 @@ invisible(sapply(list.files(here("scripts"), pattern = "^tar-.*R$", full.names =
 
 
 ### targets setup ==================================================================================
-tar_setup <- {list( # Setup project
+tar_setup <- list( # Setup project
   tar_target(project, gsub("(.*)_.*", "\\1", list.files(here(), pattern = ".Rproj$")), packages = "here"),
   tar_target(author, "Mickaël CANOUIL, *Ph.D.*"),
   tar_target(qc_data_path, "/disks/DATA/Projects"),
   tar_target(panel_data, "/disks/DATA/ExternalData"),
   tar_target(ga_run, "/disks/RUN/Array/Dmap/plink/PLINK_123456_0789/omni") # basename
-)}
+)
 
 
 ### targets ========================================================================================
-tar_genotype <- {list( # Genotype Array (ga)
+tar_genotype <- list( # Genotype Array (ga)
   tar_target(ga_imputation_panel,
     # command = file.path(panel_data, "1kg/hg19/Reference_genome/1000GP_Phase3_combined.legend"),
     command = file.path(panel_data, "HRC/HRC.r1-1.GRCh37.wgs.mac5.sites.tab"),
@@ -435,7 +435,7 @@ tar_genotype <- {list( # Genotype Array (ga)
       to = ga_export_directory
     )
   )
-)}
+)
 
 list(
   tar_setup,

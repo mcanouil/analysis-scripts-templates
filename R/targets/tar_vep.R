@@ -20,7 +20,7 @@ message(sprintf("Number of workers: %d", future::nbrOfWorkers()))
 
 
 ### targets setup ==================================================================================
-tar_setup <- {list( # Setup project
+tar_setup <- list( # Setup project
   tar_target(project, gsub("(.*)_.*", "\\1", list.files(here(), pattern = ".Rproj$")), packages = "here"),
   tar_target(author, "Mickaël CANOUIL, *Ph.D.*"),
   tar_target(output_directory, here::here("outputs"), packages = "here"),
@@ -36,11 +36,11 @@ tar_setup <- {list( # Setup project
   tar_target(bcftools, "/usr/bin/bcftools", format = "file"),
   tar_target(tabix, "/usr/bin/tabix", format = "file"),
   tar_target(bgzip, "/usr/bin/bgzip", format = "file")
-)}
+)
 
 
 ### targets ========================================================================================
-tar_vep <- {list(
+tar_vep <- list(
   tar_target(vep_symbol,
     command = get_symbol_vep(
       input = get_variants(
@@ -63,7 +63,7 @@ tar_vep <- {list(
     ),
     format = "file"
   )
-)}
+)
 
 list(
   tar_setup,

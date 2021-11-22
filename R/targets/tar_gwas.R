@@ -20,7 +20,7 @@ message(sprintf("Number of workers: %d", future::nbrOfWorkers()))
 
 
 ### targets setup ==================================================================================
-tar_setup <- {list( # Setup project
+tar_setup <- list( # Setup project
   tar_target(project, gsub("(.*)_.*", "\\1", list.files(here(), pattern = ".Rproj$")), packages = "here"),
   tar_target(author, "Mickaël CANOUIL, *Ph.D.*"),
   tar_target(output_directory, here::here("outputs"), packages = "here"),
@@ -33,11 +33,11 @@ tar_setup <- {list( # Setup project
     format = "file",
     packages = "utils"
   )
-)}
+)
 
 
 ### targets ========================================================================================
-tar_sample_sheet_qc <- {list(
+tar_sample_sheet_qc <- list(
   tar_target(gwas_sample_sheet_qc,
     command = qc_sample_sheet_gwas(
       phenotype = phenotypes,
@@ -47,9 +47,9 @@ tar_sample_sheet_qc <- {list(
     ),
     packages = "data.table"
   )
-)}
+)
 
-tar_gwas <- {list(
+tar_gwas <- list(
   tar_target(gwas_models,
     command = tar_group(dplyr::group_by(
       data.frame(
@@ -111,7 +111,7 @@ tar_gwas <- {list(
       "targets", "bacon", "utils"
     )
   )
-)}
+)
 
 list(
   tar_setup,

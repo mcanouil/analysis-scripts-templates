@@ -20,7 +20,7 @@ invisible(sapply(list.files(here("scripts"), pattern = "^tar-.*R$", full.names =
 
 
 ### targets setup ==================================================================================
-tar_setup <- {list( # Setup project
+tar_setup <- list( # Setup project
   tar_target(project, gsub("(.*)_.*", "\\1", list.files(here(), pattern = ".Rproj$")), packages = "here"),
   tar_target(author, "Mickaël CANOUIL, *Ph.D.*"),
   tar_target(qc_data_path, "/disks/DATA/Projects"),
@@ -34,11 +34,11 @@ tar_setup <- {list( # Setup project
     format = "file",
     packages = "data.table"
   )
-)}
+)
 
 
 ### targets ========================================================================================
-tar_methylation <- {list( # Methylation Array (ma)
+tar_methylation <- list( # Methylation Array (ma)
   tar_target(ma_params,
     command = list(
       output_directory = here("outputs", "qc_ma"),
@@ -190,7 +190,7 @@ tar_methylation <- {list( # Methylation Array (ma)
     ),
     packages = "here"
   )
-)}
+)
 
 list(
   tar_setup,

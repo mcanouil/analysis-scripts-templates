@@ -20,7 +20,7 @@ message(sprintf("Number of workers: %d", future::nbrOfWorkers()))
 
 
 ### targets setup ==================================================================================
-tar_setup <- {list( # Setup project
+tar_setup <- list( # Setup project
   tar_target(project, gsub("(.*)_.*", "\\1", list.files(here(), pattern = ".Rproj$")), packages = "here"),
   tar_target(author, "Mickaël CANOUIL, *Ph.D.*"),
   tar_target(output_directory, here::here("outputs"), packages = "here"),
@@ -28,11 +28,11 @@ tar_setup <- {list( # Setup project
   tar_target(tabix, "/usr/bin/tabix", format = "file"),
   tar_target(bgzip, "/usr/bin/bgzip", format = "file"),
   tar_target(qtltools, "qtltools", format = "file")
-)}
+)
 
 
 ### targets ========================================================================================
-tar_sample_sheet_qc <- {list(
+tar_sample_sheet_qc <- list(
   tar_target(meqtl_sample_sheet_qc,
     command = qc_sample_sheet_meqtl(
       phenotype = phenotypes,
@@ -43,9 +43,9 @@ tar_sample_sheet_qc <- {list(
     ),
     packages = "data.table"
   )
-)}
+)
 
-tar_meqtl <- {list(
+tar_meqtl <- list(
   tar_target(meqtl_models,
     command = tar_group(dplyr::group_by(
       data.frame(
@@ -88,7 +88,7 @@ tar_meqtl <- {list(
     ),
     format = "file"
   )
-)}
+)
 
 list(
   tar_setup,

@@ -36,7 +36,7 @@ tar_setup <- list(
 
 
 ### targets ========================================================================================
-tar_crossmap <- {list(
+tar_crossmap <- list(
   tar_target(ga_imputed_vcf_crossmap,
     command = {
       if (ga_save_qc) {
@@ -52,7 +52,7 @@ tar_crossmap <- {list(
     packages = "future.apply",
     format = "file"
   )
-)}
+)
 
 list(
   tar_setup,
