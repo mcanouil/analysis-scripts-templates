@@ -48,10 +48,9 @@ read_rsem <- function(sample_sheet) {
 #' @import scales
 #' @import stats
 #' @import utils
-plot_pca_twas <- function(data, sample_sheet, pca_vars, n_comp = 10, fig_n_comp = 3) {
-  n_comp <- min(n_comp, ncol(txi_counts))
-  fig_n_comp <- min(fig_n_comp, ncol(txi_counts))
-
+#' @import DESeq2
+#' @import MatrixGenerics
+plot_pca_twas <- function(txi, sample_sheet, pca_vars, n_comp = 10, fig_n_comp = 3) {
   if (missing(pca_vars) || is.null(pca_vars)) {
     pca_vars <- colnames(sample_sheet)
   } else {
@@ -99,6 +98,8 @@ plot_pca_twas <- function(data, sample_sheet, pca_vars, n_comp = 10, fig_n_comp 
   }
   if (length(keep_technical) == 0) return(NULL)
 
+  n_comp <- min(n_comp, ncol(txi_counts) - 5)
+  fig_n_comp <- min(fig_n_comp, ncol(txi_counts) - 5)
   pca_res <- flashpcaR::flashpca(X = t(txi_counts), stand = "sd", ndim = n_comp)
 
   pca_dfxy <- data.table::as.data.table(pca_res[["vectors"]], keep.rownames = "Sample_ID")
