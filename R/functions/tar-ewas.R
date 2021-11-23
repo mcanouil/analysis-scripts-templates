@@ -240,7 +240,7 @@ do_ewas <- function(
 
   data.table::fwrite(x = limma_annot, file = results_file)
 
-  message(sprintf("Writing results to \"%s\"!"", results_file))
+  message(sprintf("Writing results to \"%s\"!", results_file))
 
   results_file
 }
