@@ -34,10 +34,6 @@ do_ewas <- function(
   path,
   epic_annot_pkg = "IlluminaHumanMethylationEPICanno.ilm10b5.hg38"
 ) {
-  tmpdir <- file.path(tempdir(), "ewas_limma", model[["raw_trait"]])
-  dir.create(path = tmpdir, recursive = TRUE, mode = "0777")
-  on.exit(unlink(tmpdir, recursive = TRUE))
-
   if (!inherits(data, "data.table")) data.table::setDT(data)
 
   beta_matrix <- data.table::fread(file = beta_file, header = TRUE)
@@ -224,7 +220,7 @@ do_ewas <- function(
     x = suppressWarnings(list(
       limma_top,
       data.table::as.data.table(
-        x =   (function(x) `names<-`(x, paste0("cpg_", names(x))))(
+          x = (function(x) `names<-`(x, paste0("cpg_", names(x))))(
           x = get(utils::data("Locations", package = epic_annot_pkg))
         ),
         keep.rownames = "CpG"
