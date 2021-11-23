@@ -963,57 +963,57 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
           fill = "P-Value"
         )
 
-        c(
-          p_association = list(p_association),
-          lapply(stats::setNames(keep_technical, keep_technical), function(ivar) {
-            patchwork::wrap_plots(
-              c(
-                apply(
-                  X = utils::combn(sprintf("PC%02d", seq_len(fig_n_comp)), 2),
-                  MARGIN = 2,
-                  FUN = function(x) {
-                    ggplot2::ggplot(data = pca_dfxy[j = .SD, .SDcols = c(ivar, x)]) +
-                      ggplot2::aes(x = .data[[x[1]]], y = .data[[x[2]]], colour = .data[[ivar]]) +
-                      ggplot2::geom_hline(yintercept = 0, linetype = 2, na.rm = TRUE) +
-                      ggplot2::geom_vline(xintercept = 0, linetype = 2, na.rm = TRUE) +
-                      ggplot2::geom_point(na.rm = TRUE) +
-                      {
-                        if (is.numeric(pca_dfxy[[ivar]])) {
-                          ggplot2::scale_colour_viridis_c(
+      c(
+        p_association = list(p_association),
+        lapply(stats::setNames(keep_technical, keep_technical), function(ivar) {
+          patchwork::wrap_plots(
+            c(
+              apply(
+                X = utils::combn(sprintf("PC%02d", seq_len(fig_n_comp)), 2),
+                MARGIN = 2,
+                FUN = function(x) {
+                  ggplot2::ggplot(data = pca_dfxy[j = .SD, .SDcols = c(ivar, x)]) +
+                    ggplot2::aes(x = .data[[x[1]]], y = .data[[x[2]]], colour = .data[[ivar]]) +
+                    ggplot2::geom_hline(yintercept = 0, linetype = 2, na.rm = TRUE) +
+                    ggplot2::geom_vline(xintercept = 0, linetype = 2, na.rm = TRUE) +
+                    ggplot2::geom_point(na.rm = TRUE) +
+                    {
+                      if (is.numeric(pca_dfxy[[ivar]])) {
+                        ggplot2::scale_colour_viridis_c(
+                          name = NULL,
+                          begin = 0,
+                          end = 0.75
+                        )
+                      } else {
+                        list(
+                          ggplot2::stat_ellipse(type = "norm", na.rm = TRUE, show.legend = FALSE),
+                          ggplot2::scale_colour_viridis_d(
                             name = NULL,
-                            begin = 0,
-                            end = 0.75
-                          )
-                        } else {
-                          list(
-                            ggplot2::stat_ellipse(type = "norm", na.rm = TRUE, show.legend = FALSE),
-                            ggplot2::scale_colour_viridis_d(
-                              name = NULL,
-                              begin = if (pca_dfxy[j = data.table::uniqueN(.SD), .SDcols = ivar] == 2) 0.25 else 0,
-                              end = 0.75,
-                              guide = ggplot2::guide_legend(override.aes = list(size = 4))
-                            ),
-                            if (length(unique(pca_dfxy[[ivar]])) > 10) {
-                              ggplot2::theme(legend.position = "none")
-                            } else {
-                              NULL
-                            }
-                          )
-                        }
+                            begin = if (pca_dfxy[j = data.table::uniqueN(.SD), .SDcols = ivar] == 2) 0.25 else 0,
+                            end = 0.75,
+                            guide = ggplot2::guide_legend(override.aes = list(size = 4))
+                          ),
+                          if (length(unique(pca_dfxy[[ivar]])) > 10) {
+                            ggplot2::theme(legend.position = "none")
+                          } else {
+                            NULL
+                          }
+                        )
                       }
-                  }
-                ),
-                list(p_inertia)
+                    }
+                }
               ),
-              guides = "collect"
-            ) +
-              patchwork::plot_annotation(
-                title = paste0("Structure Detection For: '<i>", ivar, "</i>'"),
-                tag_levels = "A",
-                theme = ggplot2::theme(plot.title = ggtext::element_markdown())
-              )
-          })
-        )
+              list(p_inertia)
+            ),
+            guides = "collect"
+          ) +
+            patchwork::plot_annotation(
+              title = paste0("Structure Detection For: '<i>", ivar, "</i>'"),
+              tag_levels = "A",
+              theme = ggplot2::theme(plot.title = ggtext::element_markdown())
+            )
+        })
+      )
     }
   )
 }
