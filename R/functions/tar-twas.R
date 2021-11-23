@@ -52,15 +52,34 @@ plot_pca_twas <- function(data, sample_sheet, pca_vars, n_comp = 10, fig_n_comp 
   n_comp <- min(n_comp, ncol(txi_counts))
   fig_n_comp <- min(fig_n_comp, ncol(txi_counts))
 
-  txi_counts <- data[["counts"]]
-  txi_counts <- txi_counts[rowSums(is.na(txi_counts)) == 0, ]
-
-  sample_sheet <- sample_sheet[Sample_ID %in% colnames(txi_counts)]
   if (missing(pca_vars) || is.null(pca_vars)) {
     pca_vars <- colnames(sample_sheet)
   } else {
     pca_vars <- intersect(colnames(sample_sheet), pca_vars)
   }
+
+  dds_pheno <- na.exclude(
+    sample_sheet[
+      j = .SD,
+      .SDcols = unique(c("Sample_ID", pca_vars))
+    ]
+  )
+
+  dds_counts <- lapply(
+    X = txi,
+    .sample = as.character(dds_pheno[["Sample_ID"]]),
+    FUN = function(.l, .samples) if (is.matrix(.l)) .l[, .samples] else .l
+  )
+
+  dds <- DESeq2::DESeqDataSetFromTximport(txi = dds_counts, colData = dds_pheno, design = ~ 1)
+  dds <- dds[
+    MatrixGenerics::rowVars(DESeq2::counts(dds)) != 0 &
+      rowMeans(DESeq2::counts(dds)) > 1 &
+      MatrixGenerics::rowMedians(DESeq2::counts(dds)) > 0, 
+  ]
+
+  txi_counts <- DESeq2::counts(dds)
+  sample_sheet <- sample_sheet[Sample_ID %in% colnames(txi_counts)]
 
   keep_technical <- names(which(sapply(sample_sheet[
     j = lapply(.SD, function(x) {
@@ -80,7 +99,7 @@ plot_pca_twas <- function(data, sample_sheet, pca_vars, n_comp = 10, fig_n_comp 
   }
   if (length(keep_technical) == 0) return(NULL)
 
-  pca_res <- flashpcaR::flashpca(X = t(data), stand = "sd", ndim = n_comp)
+  pca_res <- flashpcaR::flashpca(X = t(txi_counts), stand = "sd", ndim = n_comp)
 
   pca_dfxy <- data.table::as.data.table(pca_res[["vectors"]], keep.rownames = "Sample_ID")
   data.table::setnames(
