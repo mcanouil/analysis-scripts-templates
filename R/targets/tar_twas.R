@@ -57,6 +57,19 @@ tar_twas <- list(
     command = read_rsem(twas_sample_sheet_qc),
     packages = c("tximport", "readr")
   ),
+  tar_target(twas_pca_plots,
+    command = pca_plot_twas(
+      data = twas_tximport,
+      sample_sheet = twas_sample_sheet_qc,
+      pca_vars = c("group", "group.rep"),
+      n_comp = 10,
+      fig_n_comp = 3
+    ),
+    packages = c(
+      "flashpcaR", "data.table", "ggplot2", "ggtext", "patchwork",
+      "scales", "stats", "utils"
+    )
+  ),
   tar_target(twas_results_file,
     command = do_twas(
       data = twas_sample_sheet_qc[!Status %in% "Exclude"], # phenotypes
