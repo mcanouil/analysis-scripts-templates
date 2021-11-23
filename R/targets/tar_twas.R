@@ -58,7 +58,7 @@ tar_twas <- list(
     packages = c("tximport", "readr")
   ),
   tar_target(twas_pca_plots,
-    command = pca_plot_twas(
+    command = plot_pca_twas(
       data = twas_tximport,
       sample_sheet = twas_sample_sheet_qc,
       pca_vars = c("group", "group.rep"),

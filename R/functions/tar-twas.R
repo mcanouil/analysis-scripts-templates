@@ -39,7 +39,7 @@ read_rsem <- function(sample_sheet) {
   txi_counts
 }
 
-#' pca_plot_twas
+#' plot_pca_twas
 #' @import data.table
 #' @import flashpcaR
 #' @import ggplot2
@@ -48,7 +48,7 @@ read_rsem <- function(sample_sheet) {
 #' @import scales
 #' @import stats
 #' @import utils
-pca_plot_twas <- function(data, sample_sheet, pca_vars, n_comp = 10, fig_n_comp = 3) {
+plot_pca_twas <- function(data, sample_sheet, pca_vars, n_comp = 10, fig_n_comp = 3) {
   sample_sheet <- sample_sheet[Sample_ID %in% colnames(data)]
   pca_vars <- intersect(colnames(sample_sheet), pca_vars)
 
