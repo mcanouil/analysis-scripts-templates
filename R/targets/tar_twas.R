@@ -54,7 +54,7 @@ tar_twas <- list(
     iteration = "group"
   ),
   tar_target(twas_tximport,
-    command = read_rsem(sample_sheet),
+    command = read_rsem(twas_sample_sheet_qc),
     packages = c("tximport")
   ),
   tar_target(twas_results_file,
