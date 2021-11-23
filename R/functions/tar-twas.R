@@ -296,7 +296,7 @@ plot_pca_twas <- function(txi, sample_sheet, pca_vars, n_comp = 10, fig_n_comp =
         guides = "collect"
       ) +
         patchwork::plot_annotation(
-          title = paste0("Structure Detection For: '<i>", ivar, "</i>'"),
+          title = sprintf("Structure Detection For: '\"<i>%s</i>\"", ivar),
           tag_levels = "A",
           theme = ggplot2::theme(plot.title = ggtext::element_markdown())
         )
