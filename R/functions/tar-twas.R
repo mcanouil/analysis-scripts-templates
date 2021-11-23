@@ -138,6 +138,13 @@ plot_pca_twas <- function(txi, sample_sheet, pca_vars, n_comp = 10, fig_n_comp =
     ggplot2::labs(
       x = "Principal Components",
       y = "Variance Explained"
+    ) +
+    ggplot2::theme(
+      plot.title.position = "plot",
+      plot.caption.position = "plot",
+      plot.title = ggtext::element_markdown(),
+      plot.subtitle = ggtext::element_markdown(face = "italic"),
+      axis.text.x = ggtext::element_markdown()
     )
 
   asso_dt <- data.table::melt(
@@ -219,7 +226,6 @@ plot_pca_twas <- function(txi, sample_sheet, pca_vars, n_comp = 10, fig_n_comp =
       na.rm = TRUE
     ) +
     ggplot2::scale_fill_viridis_c(na.value = "grey85", end = 0.75, limits = c(0, 0.1)) +
-    ggplot2::theme(panel.grid = ggplot2::element_blank()) +
     ggplot2::scale_x_discrete(
       expand = c(0, 0),
       labels = function(x) {
@@ -249,6 +255,14 @@ plot_pca_twas <- function(txi, sample_sheet, pca_vars, n_comp = 10, fig_n_comp =
         )
       ),
       fill = "P-Value"
+    ) +
+    ggplot2::theme(
+      plot.title.position = "plot",
+      plot.caption.position = "plot",
+      plot.title = ggtext::element_markdown(),
+      plot.subtitle = ggtext::element_markdown(face = "italic"),
+      panel.grid = ggplot2::element_blank(),
+      axis.text.x = ggtext::element_markdown()
     )
 
   c(
@@ -288,7 +302,14 @@ plot_pca_twas <- function(txi, sample_sheet, pca_vars, n_comp = 10, fig_n_comp =
                       }
                     )
                   }
-                }
+                } +
+                ggplot2::theme(
+                  plot.title.position = "plot",
+                  plot.caption.position = "plot",
+                  plot.title = ggtext::element_markdown(),
+                  plot.subtitle = ggtext::element_markdown(face = "italic"),
+                  axis.text.x = ggtext::element_markdown()
+                )
             }
           ),
           list(p_inertia)
