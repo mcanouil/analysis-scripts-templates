@@ -49,13 +49,18 @@ read_rsem <- function(sample_sheet) {
 #' @import stats
 #' @import utils
 plot_pca_twas <- function(data, sample_sheet, pca_vars, n_comp = 10, fig_n_comp = 3) {
-  sample_sheet <- sample_sheet[Sample_ID %in% colnames(data)]
-  pca_vars <- intersect(colnames(sample_sheet), pca_vars)
+  n_comp <- min(n_comp, ncol(txi_counts))
+  fig_n_comp <- min(fig_n_comp, ncol(txi_counts))
 
-  data <- data[rowSums(is.na(data)) == 0, ]
+  txi_counts <- data[["counts"]]
+  txi_counts <- txi_counts[rowSums(is.na(txi_counts)) == 0, ]
 
-  n_comp <- min(n_comp, ncol(data))
-  fig_n_comp <- min(fig_n_comp, ncol(data))
+  sample_sheet <- sample_sheet[Sample_ID %in% colnames(txi_counts)]
+  if (missing(pca_vars) || is.null(pca_vars)) {
+    pca_vars <- colnames(sample_sheet)
+  } else {
+    pca_vars <- intersect(colnames(sample_sheet), pca_vars)
+  }
 
   keep_technical <- names(which(sapply(sample_sheet[
     j = lapply(.SD, function(x) {
