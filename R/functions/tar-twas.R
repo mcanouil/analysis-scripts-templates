@@ -9,29 +9,35 @@ qc_sample_sheet_twas <- function(phenotype, run_path) {
         full.names = TRUE
       )
     )[
-      j = `:=`(
-        Sample_ID = sub(".genes.results$", "", basename(rnaseq_path))
-      )
+      j = `:=`(Sample_ID = sub(".genes.results$", "", basename(rnaseq_path)))
     ][
       j = `:=`(
-        group = factor(sub("-.*", "", Sample_ID), levels = unique(sub("-.*", "", Sample_ID)))
+        group = factor(x = sub("-.*", "", Sample_ID), levels = c("bsa", "palmitate"))
       )
+    ][
+      j = `:=`(rep = sub("^[^-]+-(r[^-]+).*", "\\1", Sample_ID))
+    ][
+      j = `:=`(group.rep = factor(sprintf("%s.%s", group, rep)))
     ]
   } else {
 
   }
 }
+
 #' read_rsem
 #' @import tximport
-read_rsem <- function(sample_sheet) {
+read_rsem <- function(sample_sheet, rna_level = c("ensembl_gene_id", "ensembl_transcript_id")) {
+  rna_level <- c("ensembl_gene_id" = "genes", "ensembl_transcript_id" = "isoforms")[rna_level][1]
   if (!all(c("rnaseq_path", "Sample_ID") %in% colnames(sample_sheet))) {
     stop("sample_sheet must contain columns \"rnaseq_path\" and \"Sample_ID\"!")
   }
+  rsem_files <- `names<-`(sample_sheet[["rnaseq_path"]], sample_sheet[["Sample_ID"]])
+
   txi_counts <- tximport::tximport(
-    files = setNames(sample_sheet[["rnaseq_path"]], sample_sheet[["Sample_ID"]]),
+    files = sub("\\.genes\\.results$", sprintf(".%s.results", rna_level), rsem_files),
     type = "rsem",
-    txIn = FALSE,
-    txOut = FALSE,
+    txIn = rna_level == "transcript",
+    txOut = rna_level == "transcript",
     countsFromAbundance = "no"
   )
   txi_counts$length[txi_counts$length == 0] <- 1
@@ -323,4 +329,140 @@ plot_pca_twas <- function(txi, sample_sheet, pca_vars, n_comp = 10, fig_n_comp =
         )
     })
   )
+}
+
+#' do_twas
+#' @import data.table
+#' @import DESeq2
+#' @import S4Vectors
+#' @import MatrixGenerics
+#' @import utils
+#' @import stats
+do_twas <- function(txi, sample_sheet, model, path, rna_level = c("ensembl_gene_id", "ensembl_transcript_id")) {
+  rna_level <- rna_level[1]
+  if (is.null(model[["covariates"]]) || nchar(model[["covariates"]]) == 0) {
+    covariates <- NULL
+  } else {
+    covariates <- all.vars(stats::as.formula(sprintf(" ~ %s", model[["covariates"]])))
+  }
+
+  form <- stats::as.formula(paste0("~ ", paste(c(model[["raw_trait"]], covariates), collapse = " + ")))
+
+  pheno_dt <- sample_sheet[
+    j = na.exclude(.SD),
+    .SDcols = c("Sample_ID", all.vars(form))
+  ]
+
+  raw_trait <- all.vars(stats::as.formula(paste0("~", model[["raw_trait"]])))
+  if (grepl("factor\\(.+\\)", model[["raw_trait"]])) {
+    pheno_dt[
+      j = c(raw_trait) := lapply(
+        X = .SD,
+        FUN = function(x) {
+          eval(parse(text = sub(raw_trait, "x", model[["raw_trait"]])))
+        }
+      ),
+      .SDcols = c(raw_trait)
+    ]
+    model[["raw_trait"]] <- raw_trait
+    form <- stats::as.formula(paste0("~ ", paste(c(model[["raw_trait"]], covariates), collapse = " + ")))
+  }
+
+  trait_values <- pheno_dt[[model[["raw_trait"]]]]
+
+  dds_counts <- lapply(
+    X = txi,
+    .sample = as.character(pheno_dt[["Sample_ID"]]),
+    FUN = function(.l, .samples) if (is.matrix(.l)) .l[, .samples] else .l
+  )
+
+  message("Performing DESeq2 regression ...")
+
+  dds <- DESeq2::DESeqDataSetFromTximport(txi = dds_counts, colData = pheno_dt, design = form)
+  dds <- dds[
+    MatrixGenerics::rowVars(DESeq2::counts(dds)) != 0 &
+      rowMeans(DESeq2::counts(dds)) > 1 &
+      MatrixGenerics::rowMedians(DESeq2::counts(dds)) > 0,
+  ]
+  stats_dds <- DESeq2::replaceOutliers(
+    object = DESeq2::nbinomWaldTest(
+      object = DESeq2::estimateDispersions(DESeq2::estimateSizeFactors(dds)),
+      maxit = 1000
+    ),
+    minReplicates = ncol(dds)
+  )
+
+  is_issue <- data.table::data.table(
+    x = rownames(dds),
+    converge = S4Vectors::mcols(stats_dds)$betaConv
+  )
+  data.table::setnames(x = is_issue, old = "x", new = rna_level)
+
+  if (is.factor(trait_values)) {
+    results_dt <- data.table::rbindlist(apply(
+      X = utils::combn(levels(trait_values), 2),
+      MARGIN = 2,
+      .trait = raw_trait,
+      .dds = stats_dds,
+      FUN = function(.contrast, .trait, .dds) {
+        results_dds <- DESeq2::results(
+          object = .dds,
+          contrast = c(.trait, .contrast[2], .contrast[1]),
+          pAdjustMethod = "BH",
+          independentFiltering = FALSE,
+          cooksCutoff = FALSE
+        )
+        results_dt <- data.table::as.data.table(results_dds, keep.rownames = rna_level)
+        data.table::setnames(results_dt, old = "padj", new = "fdr")
+        results_dt[
+          j = `:=`("contrast" = sprintf("%s: %s Vs. %s (ref)", .trait, .contrast[2], .contrast[1]))
+        ]
+        results_dt
+      }
+    ))
+  } else {
+    results_dds <- DESeq2::results(
+      object = stats_dds,
+      name = raw_trait,
+      pAdjustMethod = "BH",
+      independentFiltering = FALSE,
+      cooksCutoff = FALSE
+    )
+    results_dt <- data.table::as.data.table(results_dds, keep.rownames = rna_level)
+    data.table::setnames(results_dt, old = "padj", new = "fdr")
+    results_dt[j = `:=`("contrast" = raw_trait)]
+  }
+
+  results_dt[j = `:=`("Trait" = raw_trait, "n" = ncol(stats_dds))]
+
+  results_avg_tpm <- Reduce(
+    f = function(x, y) merge(x, y, by = rna_level, all.x = TRUE),
+    x = lapply(
+      X = levels(trait_values),
+      FUN = function(gl) {
+        data.table::setnames(
+          x = data.table::as.data.table(
+            x = rowMeans(dds_counts[["abundance"]][, trait_values %in% gl]),
+            keep.rownames = TRUE
+          ),
+          new = c(rna_level, sprintf("TPM_%s", gl))
+        )
+      }
+    ),
+    init = merge(x = results_dt, y = is_issue, by = rna_level)
+  )
+
+  results_file <- sprintf("%s/twas_%s_%s.csv.gz", path, model[["raw_trait"]], model[["tar_group"]])
+  dir.create(
+    path = dirname(results_file),
+    recursive = TRUE,
+    mode = "0755",
+    showWarnings = FALSE
+  )
+
+  data.table::fwrite(x = results_avg_tpm, file = results_file)
+
+  message(sprintf("Writing results to \"%s\"!", results_file))
+
+  results_file
 }

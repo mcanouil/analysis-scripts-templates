@@ -43,28 +43,33 @@ tar_twas <- list(
       data.frame(
         pretty_trait = c("Case/Control"),
         raw_trait = c("group"),
-        covariates = c(
-          "",
-          paste(c("replicate"), collapse = " + ")
-        )
+        covariates = c(""),
+        rna_level = c("ensembl_gene_id", "ensembl_transcript_id")[1]
       ),
-      pretty_trait, raw_trait, covariates
+      pretty_trait, raw_trait, covariates, rna_level
     )),
     packages = "dplyr",
     iteration = "group"
   ),
   tar_target(twas_tximport,
-    command = read_rsem(twas_sample_sheet_qc),
+    command = read_rsem(
+      sample_sheet = twas_sample_sheet_qc,
+      rna_level = twas_models[["rna_level"]]
+    ),
+    pattern = map(twas_models),
+    iteration = "list",
     packages = c("tximport", "readr")
   ),
   tar_target(twas_pca_plots,
     command = plot_pca_twas(
       txi = twas_tximport,
       sample_sheet = twas_sample_sheet_qc,
-      pca_vars = c("group", "group.rep"),
+      pca_vars = c("group"),
       n_comp = 10,
       fig_n_comp = 3
     ),
+    pattern = map(twas_models, twas_tximport),
+    iteration = "list",
     packages = c(
       "flashpcaR", "data.table", "ggplot2", "ggtext", "patchwork",
       "scales", "stats", "utils",
@@ -73,18 +78,15 @@ tar_twas <- list(
   ),
   tar_target(twas_results_file,
     command = do_twas(
-      data = twas_sample_sheet_qc[!Status %in% "Exclude"], # phenotypes
+      txi = twas_tximport,
+      sample_sheet = twas_sample_sheet_qc,
       model = twas_models,
-      beta_file = file.path(ma_export_directory, "EPIC_QC_betavalues.csv.gz"),
       path = file.path(output_directory, "twas"),
-      epic_annot_pkg = "IlluminaHumanMethylationEPICanno.ilm10b5.hg38"
+      rna_level = twas_models[["rna_level"]]
     ),
-    pattern = map(twas_models),
+    pattern = map(twas_models, twas_tximport),
     iteration = "list",
-    packages = c(
-      "here", "data.table", "stats", "utils", "future.apply", "limma",
-      "IlluminaHumanMethylationEPICanno.ilm10b5.hg38"
-    ),
+    packages = c("data.table", "DESeq2", "S4Vectors", "MatrixGenerics", "utils", "stats"),
     format = "file"
   ),
   tar_target(twas_results_manhattan,
