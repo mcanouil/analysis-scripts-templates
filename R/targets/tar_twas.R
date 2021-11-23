@@ -59,7 +59,7 @@ tar_twas <- list(
   ),
   tar_target(twas_pca_plots,
     command = plot_pca_twas(
-      data = twas_tximport,
+      txi = twas_tximport,
       sample_sheet = twas_sample_sheet_qc,
       pca_vars = c("group", "group.rep"),
       n_comp = 10,
@@ -67,7 +67,8 @@ tar_twas <- list(
     ),
     packages = c(
       "flashpcaR", "data.table", "ggplot2", "ggtext", "patchwork",
-      "scales", "stats", "utils"
+      "scales", "stats", "utils",
+       "DESeq2", "MatrixGenerics"
     )
   ),
   tar_target(twas_results_file,
