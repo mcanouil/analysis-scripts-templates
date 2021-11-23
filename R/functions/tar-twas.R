@@ -1,82 +1,35 @@
 #' qc_sample_sheet_twas
 #' @import data.table
 qc_sample_sheet_twas <- function(phenotype, run_path) {
-  list.files(
-    path = file.path(run_path, "Output", "RSEM"),
-    pattern = sprintf("^%s.genes.results$", Sample_ID),
-    full.names = TRUE
-  )
-}
+  if (missing(phenotype) || is.null(phenotype))
+    data.table::data.table(
+      rnaseq_path = list.files(
+        path = file.path(run_path, "Output", "RSEM"),
+        pattern = ".genes.results$",
+        full.names = TRUE
+      )
+    )[
+      j = `:=`(
+        Sample_ID = sub(".genes.results$", "", basename(rnaseq_path))
+      )
+    ][
+      j = `:=`(
+        group = factor(sub("-.*", "", Sample_ID), levels = unique(sub("-.*", "", Sample_ID)))
+      )
+    ]
+  } else {
 
-#' get_biomart
-#' @import data.table
-#' @import biomaRt
-#' @import
-get_biomart <- function() {
-  set_ensembl_version <- 98
-
-  mart <- try(useEnsembl(biomart = "ensembl", dataset = organism[["ensembl"]], version = set_ensembl_version), silent = TRUE)
-  if (inherits(mart, "try-error")) {
-    mart <- useEnsembl(biomart = "ensembl", dataset = organism[["ensembl"]], version = set_ensembl_version)
   }
-
-  ensembl_dt <- setDT(getBM(
-    attributes = c(
-      "ensembl_gene_id",
-      "chromosome_name",
-      "start_position",
-      "end_position",
-      "external_gene_name"
-    ),
-    filters = "ensembl_gene_id",
-    values = list(rownames(txi[["counts"]])),
-    mart = mart
-  ))[
-    j = lapply(.SD, function(x) {
-      out <- paste(setdiff(unique(x), ""), collapse = ";")
-      fifelse(out == "", NA_character_, out)
-    }),
-    by = "ensembl_gene_id"
-  ][j = ensembl_version := sprintf("GRCh38-%d", set_ensembl_version)]
-
-  entrez_dt <- setDT(getBM(
-    attributes = c("ensembl_gene_id", "entrezgene_id"),
-    filters = "ensembl_gene_id",
-    values = list(rownames(txi[["counts"]])),
-    mart = mart
-  ))[
-    j = lapply(.SD, function(x) {
-      out <- paste(setdiff(unique(x), ""), collapse = ";")
-      fifelse(out == "", NA_character_, out)
-    }),
-    by = "ensembl_gene_id"
-  ]
-
-  uniprot_dt <- setDT(getBM(
-    attributes = c("ensembl_gene_id", "uniprotswissprot"),
-    filters = "ensembl_gene_id",
-    values = list(rownames(txi[["counts"]])),
-    mart = mart
-  ))[
-    j = lapply(.SD, function(x) {
-      out <- paste(setdiff(unique(x), ""), collapse = ";")
-      fifelse(out == "", NA_character_, out)
-    }),
-    by = "ensembl_gene_id"
-  ]
-
-  annot_dt <- merge(
-    x = ensembl_dt,
-    y = merge(x = entrez_dt, y = uniprot_dt, by = "ensembl_gene_id", all = TRUE),
-    by = "ensembl_gene_id",
-    all.x = TRUE
-  )
 }
+
 
 #' read_rsem
 #' @import tximport
-read_rsem <- function() {
-  txi_counts <- tximport(
+read_rsem <- function(sample_sheet) {
+  if (!all(c("rnaseq_path", "Sample_ID") %in% colnames(sample_sheet))) {
+    stop("sample_sheet must contain columns \"rnaseq_path\" and \"Sample_ID\"!")
+  }
+  txi_counts <- tximport::tximport(
     files = setNames(sample_sheet[["rnaseq_path"]], sample_sheet[["Sample_ID"]]),
     type = "rsem",
     txIn = FALSE,
