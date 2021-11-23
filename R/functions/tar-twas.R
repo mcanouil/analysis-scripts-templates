@@ -74,7 +74,7 @@ plot_pca_twas <- function(txi, sample_sheet, pca_vars, n_comp = 10, fig_n_comp =
   dds <- dds[
     MatrixGenerics::rowVars(DESeq2::counts(dds)) != 0 &
       rowMeans(DESeq2::counts(dds)) > 1 &
-      MatrixGenerics::rowMedians(DESeq2::counts(dds)) > 0, 
+      MatrixGenerics::rowMedians(DESeq2::counts(dds)) > 0,
   ]
 
   txi_counts <- DESeq2::counts(dds)
