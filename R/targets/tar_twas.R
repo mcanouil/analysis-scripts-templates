@@ -31,8 +31,8 @@ tar_setup <- list(
 tar_sample_sheet_qc <- list(
   tar_target(twas_sample_sheet_qc,
     command = qc_sample_sheet_twas(
-      phenotype = phenotypes,
-      methylation = file.path(ma_export_directory, "EPIC_QC_phenotypes.csv")
+      phenotype = NULL,
+      run_path = "/disks/RUN/Run_42/"
     ),
     packages = "data.table"
   )
@@ -44,14 +44,18 @@ tar_twas <- list(
         pretty_trait = c("Case/Control"),
         raw_trait = c("group"),
         covariates = c(
-          paste(c("sex", "age", "bmi"), collapse = " + "),
-          paste(c("sex", "age", "bmi", "cell"), collapse = " + ")
+          "",
+          paste(c("replicate"), collapse = " + ")
         )
       ),
       pretty_trait, raw_trait, covariates
     )),
     packages = "dplyr",
     iteration = "group"
+  ),
+  tar_target(twas_tximport,
+    command = read_rsem(sample_sheet),
+    packages = c("tximport")
   ),
   tar_target(twas_results_file,
     command = do_twas(
