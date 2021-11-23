@@ -285,7 +285,7 @@ plot_pca_twas <- function(txi, sample_sheet, pca_vars, n_comp = 10, fig_n_comp =
                 ggplot2::geom_hline(yintercept = 0, linetype = 2, na.rm = TRUE) +
                 ggplot2::geom_vline(xintercept = 0, linetype = 2, na.rm = TRUE) +
                 ggplot2::geom_point(na.rm = TRUE) +
-                {
+                (
                   if (is.numeric(pca_dfxy[[ivar]])) {
                     ggplot2::scale_colour_viridis_c(
                       name = NULL,
@@ -308,7 +308,7 @@ plot_pca_twas <- function(txi, sample_sheet, pca_vars, n_comp = 10, fig_n_comp =
                       }
                     )
                   }
-                } +
+                ) +
                 ggplot2::theme(
                   plot.title.position = "plot",
                   plot.caption.position = "plot",
