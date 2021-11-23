@@ -30,6 +30,7 @@ Script templates to work with omics datasets.
   - [tar-qc\_idats.R](R/functions/tar-qc_idats.R)
   - [tar-qc\_plink.R](R/functions/tar-qc_plink.R)
   - [tar-sub\_chunk.R](R/functions/tar-sub_chunk.R)
+  - [tar-twas.R](R/functions/tar-twas.R)
   - [tar-vep.R](R/functions/tar-vep.R)
 
 ### R/scripts
@@ -63,6 +64,7 @@ Script templates to work with omics datasets.
   - [tar\_meqtl.R](R/targets/tar_meqtl.R)
   - [tar\_methylation.R](R/targets/tar_methylation.R)
   - [tar\_ora.R](R/targets/tar_ora.R)
+  - [tar\_twas.R](R/targets/tar_twas.R)
   - [tar\_vep.R](R/targets/tar_vep.R)
 
 ## Rmarkdown
