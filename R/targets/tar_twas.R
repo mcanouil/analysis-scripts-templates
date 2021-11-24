@@ -76,13 +76,29 @@ tar_twas <- list(
        "DESeq2", "MatrixGenerics"
     )
   ),
+  tar_target(twas_biomart,
+    command = get_biomart_information(
+      ensembl_id = rownames(twas_tximport[["counts"]]),
+      rna_level = twas_models[["rna_level"]],
+      organism = "hsapiens_gene_ensembl",
+      version = unique(sub(
+        pattern = ".*Ensembl-([0-9]+)\\.genes\\.results$",
+        replacement = "\\1",
+        x = basename(twas_sample_sheet_qc[["rnaseq_path"]])
+      ))
+    ),
+    pattern = map(twas_models, twas_tximport),
+    iteration = "list",
+    packages = c("biomaRt", "data.table")
+  ),
   tar_target(twas_results_file,
     command = do_twas(
       txi = twas_tximport,
       sample_sheet = twas_sample_sheet_qc,
       model = twas_models,
       path = file.path(output_directory, "twas"),
-      rna_level = twas_models[["rna_level"]]
+      rna_level = twas_models[["rna_level"]],
+      biomart = twas_biomart
     ),
     pattern = map(twas_models, twas_tximport),
     iteration = "list",

@@ -338,7 +338,7 @@ plot_pca_twas <- function(txi, sample_sheet, pca_vars, n_comp = 10, fig_n_comp =
 #' @import MatrixGenerics
 #' @import utils
 #' @import stats
-do_twas <- function(txi, sample_sheet, model, path, rna_level = c("ensembl_gene_id", "ensembl_transcript_id")) {
+do_twas <- function(txi, sample_sheet, model, path, rna_level = c("ensembl_gene_id", "ensembl_transcript_id"), biomart) {
   rna_level <- rna_level[1]
   if (is.null(model[["covariates"]]) || nchar(model[["covariates"]]) == 0) {
     covariates <- NULL
@@ -460,7 +460,14 @@ do_twas <- function(txi, sample_sheet, model, path, rna_level = c("ensembl_gene_
     showWarnings = FALSE
   )
 
-  data.table::fwrite(x = results_avg_tpm, file = results_file)
+  if (is.null(biomart) || missing(biomart)) {
+    data.table::fwrite(x = results_avg_tpm[order(fdr)], file = results_file)
+  } else {
+    data.table::fwrite(
+      x =  merge(x = results_avg_tpm, y = biomart, by = rna_level, all.x = TRUE)[order(fdr)],
+      file = results_file
+    )
+  }
 
   message(sprintf("Writing results to \"%s\"!", results_file))
 
