@@ -3,7 +3,6 @@
 #' @import biomaRt
 #' @import httr
 get_biomart_information <- function(
-  txi,
   ensembl_id,
   rna_level = c("ensembl_gene_id", "ensembl_transcript_id"),
   organism = "hsapiens_gene_ensembl",
@@ -25,13 +24,6 @@ get_biomart_information <- function(
   if (inherits(mart, "try-error")) mart <- eval(get_mart)
   ensembl_build_version <- sprintf("GRCh%d-%s", build, version)
 
-  if (missing(ensembl_id) || is.null(ensembl_id)) {
-    if (any(grepl("counts", names(txi)))) {
-      ensembl_id <- rownames(txi[["counts"]])
-    } else {
-      ensembl_id <- rownames(unlist(txi, recursive = FALSE)[["counts"]])
-    }
-  }
   list_unique_gene <- list(sub("\\..*$", "", unique(ensembl_id)))
 
   format_columns <- function(x) {
