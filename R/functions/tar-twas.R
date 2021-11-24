@@ -463,6 +463,11 @@ do_twas <- function(txi, sample_sheet, model, path, rna_level = c("ensembl_gene_
   if (is.null(biomart) || missing(biomart)) {
     data.table::fwrite(x = results_avg_tpm[order(fdr)], file = results_file)
   } else {
+    results_avg_tpm[
+      j = c(sprintf("ori_%s", rna_level)) := list(get(rna_level))
+    ][
+      j = c(rna_level) := list(sub("\\..*$", "", get(rna_level)))
+    ]
     data.table::fwrite(
       x =  merge(x = results_avg_tpm, y = biomart, by = rna_level, all.x = TRUE)[order(fdr)],
       file = results_file

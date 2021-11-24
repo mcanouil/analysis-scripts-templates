@@ -100,7 +100,7 @@ tar_twas <- list(
       rna_level = twas_models[["rna_level"]],
       biomart = twas_biomart
     ),
-    pattern = map(twas_models, twas_tximport),
+    pattern = map(twas_models, twas_tximport, twas_biomart),
     iteration = "list",
     packages = c("data.table", "DESeq2", "S4Vectors", "MatrixGenerics", "utils", "stats"),
     format = "file"
