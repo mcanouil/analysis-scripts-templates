@@ -20,6 +20,7 @@ Script templates to work with omics datasets.
 
 ### R/functions
 
+  - [tar-biomart.R](R/functions/tar-biomart.R)
   - [tar-crossmap.R](R/functions/tar-crossmap.R)
   - [tar-ewas.R](R/functions/tar-ewas.R)
   - [tar-gwas.R](R/functions/tar-gwas.R)
