@@ -10,7 +10,7 @@ library(data.table)
 
 
 ### project setup ==================================================================================
-# Functions/scripts required: tar-twas.R, tar-pval_trans.R
+# Functions/scripts required: tar-twas.R, tar-biomart.R, tar-pval_trans.R
 invisible(sapply(list.files(here("scripts"), pattern = "^tar-.*R$", full.names = TRUE), source, echo = FALSE))
 
 # plan(future.callr::callr, workers = 40)
