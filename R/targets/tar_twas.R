@@ -89,7 +89,7 @@ tar_twas <- list(
     ),
     pattern = map(twas_models, twas_tximport),
     iteration = "list",
-    packages = c("biomaRt", "data.table")
+    packages = c("biomaRt", "httr", "data.table")
   ),
   tar_target(twas_results_file,
     command = do_twas(
