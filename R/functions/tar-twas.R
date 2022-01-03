@@ -478,3 +478,80 @@ do_twas <- function(txi, sample_sheet, model, path, rna_level = c("ensembl_gene_
 
   results_file
 }
+
+#' plot_volcano_twas
+#' @import ggplot2
+#' @import ggtext
+#' @import data.table
+#' @import ggrepel
+#' @import stats
+plot_volcano_twas <- function(file, model) {
+  raw_trait <- all.vars(stats::as.formula(paste0("~", model[["raw_trait"]])))
+
+  dt <- data.table::fread(file)[
+    j = gene_label_min := data.table::fifelse(
+      test = pvalue == min(pvalue, na.rm = TRUE) &
+        !is.na(UCSC_RefGene_Name) &
+        !UCSC_RefGene_Name %in% c("", "NA"),
+      yes = paste(unique(unlist(strsplit(gsub(",", ";", UCSC_RefGene_Name), ";"))), collapse = ";"),
+      no = NA_character_
+    ),
+    by = "UCSC_RefGene_Name"
+  ][
+    i = pvalue > 0.05,
+    j = pvalue := NA_real_
+  ][[
+    j = c("log2FoldChange", "pvalue", "gene_label_min")
+  ][order(pvalue)]
+
+  if (dt[!is.na(gene_label_min), .N] > 10) {
+    dt[which(!is.na(gene_label_min))[-c(1:10)], gene_label_min := NA_character_]
+  }
+
+  alpha <- 0.05 / nrow(dt)
+
+  ggplot2::ggplot(dt) +
+    ggplot2::aes(
+      x = .data[["log2FoldChange"]],
+      y = .data[["pvalue"]],
+      colour = abs(.data[["log2FoldChange"]])
+    ) +
+    ggplot2::geom_vline(xintercept = 0, linetype = 2) +
+    ggplot2::geom_point(size = 0.60) +
+    ggplot2::annotate(
+      geom = "rect",
+      xmin = -Inf, xmax = Inf, ymin = 1, ymax = alpha,
+      fill = "#b22222", alpha = 0.2, colour = NA,
+      na.rm = TRUE
+    ) +
+    ggplot2::geom_hline(yintercept = alpha, linetype = 2, colour = "#b22222") +
+    ggplot2::scale_colour_viridis_c(trans = "sqrt", limits = c(0, NA)) +
+    ggplot2::scale_y_continuous(
+      trans = pval_trans(md = TRUE),
+      expand = ggplot2::expansion(mult = c(0, 0.2))
+    ) +
+    ggplot2::coord_cartesian(ylim = c(0.05, NA)) +
+    ggrepel::geom_label_repel(
+      mapping = ggplot2::aes(label = .data[["gene_label_min"]]),
+      show.legend = FALSE,
+      min.segment.length = 0,
+      size = 2.5,
+      na.rm = TRUE,
+      max.overlaps = Inf
+    ) +
+    ggplot2::labs(
+      x = "log<sub>2</sub>(Fold Change)",
+      y = "P-value",
+      colour = "log<sub>2</sub>(Fold Change)",
+      title = model[["pretty_trait"]],
+      subtitle = toupper(paste(raw_trait, "= ", model[["covariates"]]))
+    ) +
+    ggplot2::theme(
+      plot.title.position = "plot",
+      plot.caption.position = "plot",
+      plot.title = ggtext::element_markdown(),
+      plot.subtitle = ggtext::element_markdown(face = "italic"),
+      axis.text.y = ggtext::element_markdown(),
+      legend.position = "none"
+    )
+}
