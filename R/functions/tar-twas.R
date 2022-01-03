@@ -496,7 +496,7 @@ plot_volcano_twas <- function(file, model) {
       yes = paste(unique(unlist(strsplit(gsub(",", ";", UCSC_RefGene_Name), ";"))), collapse = ";"),
       no = NA_character_
     ),
-    by = "UCSC_RefGene_Name"
+    by = c("UCSC_RefGene_Name", "contrast")
   ][
     i = pvalue > 0.05,
     j = pvalue := NA_real_
@@ -504,8 +504,12 @@ plot_volcano_twas <- function(file, model) {
     j = c("log2FoldChange", "pvalue", "gene_label_min")
   ][order(pvalue)]
 
-  if (dt[!is.na(gene_label_min), .N] > 10) {
-    dt[which(!is.na(gene_label_min))[-c(1:10)], gene_label_min := NA_character_]
+  if (any(dt[!is.na(gene_label_min), .N > 10, by = "contrast"][["V1"]])) {
+    dt[
+      i = which(!is.na(gene_label_min))[-c(1:10)],
+      j = gene_label_min := NA_character_;
+      by = "contrast"
+    ]
   }
 
   alpha <- 0.05 / nrow(dt)
