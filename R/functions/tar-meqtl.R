@@ -115,7 +115,7 @@ qc_sample_sheet_meqtl <- function(phenotype, methylation, exclusion, relatedness
 #' do_meqtl
 #' @import data.table
 #' @import IlluminaHumanMethylationEPICanno.ilm10b5.hg38
-#' @import future_apply
+#' @import future.apply
 #' @import utils
 do_meqtl <- function(
   phenotype,
@@ -263,7 +263,7 @@ do_meqtl <- function(
   for (ichr in sprintf("chr%02d", 1:22)) {
     local({
       for (ianalysis in c("nominal", "permutation")) {
-        future_apply::future_lapply(
+        future.apply::future_lapply(
           X = seq_len(n_chunk),
           future.globals = FALSE,
           ivcf = list_vcfs[ichr],
