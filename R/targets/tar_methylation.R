@@ -6,7 +6,24 @@ library(data.table)
 # library(future)
 # library(future.callr)
 
-# targets::tar_renv(extras = "visNetwork", path = "scripts/_dependencies.R")
+# targets::tar_renv(extras = c("visNetwork", "umr1283"), path = "scripts/_dependencies.R")
+
+# options(configure.args = "--disable-threading"); renv::install("bmbolstad/preprocessCore", force = TRUE)
+# renv::hydrate()
+# renv::install(c(
+#   "gabraham/flashpca/flashpcaR",
+#   "RefFreeEWAS@2.2",
+#   "bioc::sva",
+#   "achilleasNP/IlluminaHumanMethylationEPICmanifest",
+#   "bioc::ENmix",
+#   "bioc::minfi",
+#   "bioc::IlluminaHumanMethylation450kmanifest",
+#   "bioc::ChAMPdata",
+#   "achilleasNP/IlluminaHumanMethylationEPICanno.ilm10b5.hg38",
+#   "bioc::FlowSorted.CordBloodCombined.450k",
+#   "bioc::illuminaio",
+#   "bioc::FlowSorted.Blood.EPIC"
+# ))
 
 
 ### project setup ==================================================================================
