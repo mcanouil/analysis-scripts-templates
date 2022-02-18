@@ -10,7 +10,7 @@ library(data.table)
 
 
 ### project setup ==================================================================================
-# Functions/scripts required: tar-qc_idats.R, tar-pval_trans.R
+# Functions/scripts required: tar-qc_idats.R, tar-pval_trans.R, tar-clean_sample_sheet.R
 invisible(sapply(list.files(here("scripts"), pattern = "^tar-.*R$", full.names = TRUE), source, echo = FALSE))
 
 # plan(future.callr::callr, workers = 40)
@@ -30,9 +30,9 @@ tar_setup <- list( # Setup project
     format = "file"
   ),
   tar_target(ma_csv,
-    command = ma_sample_sheet,
+    command = clean_sample_sheet(sample_sheet = ma_sample_sheet, design = NULL),
     format = "file",
-    packages = "data.table"
+    packages = c("data.table", "readxl", "here")
   )
 )
 
