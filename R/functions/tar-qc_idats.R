@@ -791,8 +791,8 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
       pca_methylation <- pca_methylation[rowSums(is.na(pca_methylation)) == 0, ]
       pca_phenotypes <- phenotypes[Sample_ID %in% colnames(pca_methylation)]
 
-      n_comp <- min(10, ncol(pca_methylation))
-      fig_n_comp <- min(3, ncol(pca_methylation))
+      n_comp <- min(c(10, max(c(3, ncol(pca_methylation) - 5))))
+      fig_n_comp <- min(c(3, n_comp))
 
       keep_technical <- names(which(sapply(pca_phenotypes[
         j = lapply(.SD, function(x) {
@@ -815,7 +815,7 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
       pca_res <- flashpcaR::flashpca(
         X = t(pca_methylation),
         stand = "sd",
-        ndim = min(c(n_comp, max(c(3, ncol(pca_methylation) - 5))))
+        ndim = n_comp
       )
 
       pca_dfxy <- data.table::as.data.table(pca_res[["vectors"]], keep.rownames = "Sample_ID")
