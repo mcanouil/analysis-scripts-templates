@@ -812,7 +812,11 @@ mset_pca_plot <- function(data, normalised_mset, pca_vars) {
       }
       if (length(keep_technical) == 0) return(NULL)
 
-      pca_res <- flashpcaR::flashpca(X = t(pca_methylation), stand = "sd", ndim = n_comp)
+      pca_res <- flashpcaR::flashpca(
+        X = t(pca_methylation),
+        stand = "sd",
+        ndim = min(c(n_comp, max(c(3, ncol(pca_methylation) - 5))))
+      )
 
       pca_dfxy <- data.table::as.data.table(pca_res[["vectors"]], keep.rownames = "Sample_ID")
       data.table::setnames(
