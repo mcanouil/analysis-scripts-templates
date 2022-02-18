@@ -17,6 +17,13 @@ clean_sample_sheet <- function(sample_sheet, design = NULL) {
       all.x = TRUE
     )
   }
+
+  dir.create(
+    path = here::here("outputs", "dna_design"),
+    recursive = TRUE,
+    showWarnings = FALSE,
+    mode = "0775"
+  )
   data.table::fwrite(
     x = tmp,
     file = here::here("outputs", "dna_design", "epic_design_sheet.csv")
