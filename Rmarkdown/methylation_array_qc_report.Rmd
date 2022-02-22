@@ -339,6 +339,7 @@ if (
       axis.text.y.right = ggtext::element_markdown()
     )
   }
+  print(p)
 }
 ```
 
