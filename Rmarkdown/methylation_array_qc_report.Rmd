@@ -333,7 +333,12 @@ if (
 ) {
   cat("No cell tissue was provided or no available reference set (R packages).\n")
 } else {
-  tar_read(ma_cell_plot)
+  p <- tar_read(ma_cell_plot)
+  if (inherits(p[[1]]$theme$axis.text.y.right, "element_text")) {
+    p[[1]] <- p[[1]] + theme(
+      axis.text.y.right = ggtext::element_markdown()
+    )
+  }
 }
 ```
 
