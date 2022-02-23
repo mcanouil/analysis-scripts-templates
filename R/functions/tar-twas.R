@@ -396,7 +396,8 @@ do_twas <- function(txi, sample_sheet, model, path, rna_level = c("ensembl_gene_
       MARGIN = 2,
       .trait = raw_trait,
       .dds = stats_dds,
-      FUN = function(.contrast, .trait, .dds) {
+      .rna_level = rna_level,
+      FUN = function(.contrast, .trait, .dds, .rna_level) {
         results_dds <- DESeq2::results(
           object = .dds,
           contrast = c(.trait, .contrast[2], .contrast[1]),
@@ -404,7 +405,7 @@ do_twas <- function(txi, sample_sheet, model, path, rna_level = c("ensembl_gene_
           independentFiltering = FALSE,
           cooksCutoff = FALSE
         )
-        results_dt <- data.table::as.data.table(results_dds, keep.rownames = rna_level)
+        results_dt <- data.table::as.data.table(results_dds, keep.rownames = .rna_level)
         data.table::setnames(results_dt, old = "padj", new = "fdr")
         results_dt[
           j = `:=`("contrast" = sprintf("%s: %s Vs. %s (ref)", .trait, .contrast[2], .contrast[1]))
@@ -423,6 +424,46 @@ do_twas <- function(txi, sample_sheet, model, path, rna_level = c("ensembl_gene_
     results_dt <- data.table::as.data.table(results_dds, keep.rownames = rna_level)
     data.table::setnames(results_dt, old = "padj", new = "fdr")
     results_dt[j = `:=`("contrast" = raw_trait)]
+  }
+
+  if (
+    any(grepl(":", covariates)) &
+      any(strsplit(
+        x = grep(":", covariates, value = TRUE),
+        split = ":"
+      )[[1]] %in% raw_trait)
+  ) {
+    results_dt <- data.table::rbindlist(lapply(
+      X = grep(
+        pattern = sprintf(
+          "^%s.*$",
+          paste(
+            sort(strsplit(
+              x = grep(":", covariates, value = TRUE),
+              split = ":"
+            )[[1]]),
+            collapse = ".*\\."
+          )
+        ),
+        x = DESeq2::resultsNames(stats_dds),
+        value = TRUE
+      ),
+      .dds = stats_dds,
+      .rna_level = rna_level,
+      FUN = function(.int_var, .dds, .rna_level) {
+        results_dds <- DESeq2::results(
+          object = .dds,
+          name = .int_var,
+          pAdjustMethod = "BH",
+          independentFiltering = FALSE,
+          cooksCutoff = FALSE
+        )
+        results_dt <- data.table::as.data.table(results_dds, keep.rownames = .rna_level)
+        data.table::setnames(results_dt, old = "padj", new = "fdr")
+        results_dt[j = `:=`("contrast" = .int_var)]
+        results_dt
+      }
+    ))
   }
 
   results_dt[j = `:=`("Trait" = raw_trait, "n" = ncol(stats_dds))]
