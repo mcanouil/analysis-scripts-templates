@@ -523,14 +523,16 @@ plot_volcano_twas <- function(file, model) {
   raw_trait <- all.vars(stats::as.formula(paste0("~", model[["raw_trait"]])))
 
   dt <- data.table::fread(file)[
+    grepl(sprintf("%s: ", model[["raw_trait"]]), contrast)
+  ][
     j = gene_label_min := data.table::fifelse(
       test = pvalue == min(pvalue, na.rm = TRUE) &
-        !is.na(UCSC_RefGene_Name) &
-        !UCSC_RefGene_Name %in% c("", "NA"),
-      yes = paste(unique(unlist(strsplit(gsub(",", ";", UCSC_RefGene_Name), ";"))), collapse = ";"),
+        !is.na(external_gene_name) &
+        !external_gene_name %in% c("", "NA"),
+      yes = paste(unique(unlist(strsplit(gsub(",", ";", external_gene_name), ";"))), collapse = ";"),
       no = NA_character_
     ),
-    by = c("UCSC_RefGene_Name", "contrast")
+    by = c("external_gene_name", "contrast")
   ][
     i = pvalue > 0.05,
     j = pvalue := NA_real_
@@ -554,7 +556,7 @@ plot_volcano_twas <- function(file, model) {
 
   alpha <- 0.05 / nrow(dt)
 
-  ggplot2::ggplot(dt) +
+  p <- ggplot2::ggplot(dt) +
     ggplot2::aes(
       x = .data[["log2FoldChange"]],
       y = .data[["pvalue"]],
@@ -588,7 +590,14 @@ plot_volcano_twas <- function(file, model) {
       y = "P-value",
       colour = "log<sub>2</sub>(Fold Change)",
       title = model[["pretty_trait"]],
-      subtitle = toupper(paste(raw_trait, "= ", model[["covariates"]]))
+      subtitle = toupper(
+        sprintf(
+          "%s = <b>%s</b> + %s",
+          sub("_id$", "", rna_level),
+          raw_trait,
+          model[["covariates"]]
+        )
+      )
     ) +
     ggplot2::theme(
       plot.title.position = "plot",
@@ -598,4 +607,13 @@ plot_volcano_twas <- function(file, model) {
       axis.text.y = ggtext::element_markdown(),
       legend.position = "none"
     )
+
+  if (data.table::uniqueN(dt[["contrast"]]) > 1) {
+    p <- p + ggplot2::facet_grid(
+      cols = ggplot2::vars(contrast),
+      labeller = ggplot2::labeller(.cols = function(.x) sub(".*: ", "", .x))
+    )
+  }
+
+  p
 }
