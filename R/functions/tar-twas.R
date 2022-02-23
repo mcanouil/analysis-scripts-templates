@@ -343,7 +343,7 @@ do_twas <- function(txi, sample_sheet, model, path, rna_level = c("ensembl_gene_
   if (is.null(model[["covariates"]]) || nchar(model[["covariates"]]) == 0) {
     covariates <- NULL
   } else {
-    covariates <- all.vars(stats::as.formula(sprintf(" ~ %s", model[["covariates"]])))
+    covariates <- unlist(strsplit(model[["covariates"]], " + ", fixed = TRUE))
   }
 
   form <- stats::as.formula(paste0("~ ", paste(c(model[["raw_trait"]], covariates), collapse = " + ")))
