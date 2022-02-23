@@ -507,7 +507,7 @@ plot_volcano_twas <- function(file, model) {
   if (any(dt[!is.na(gene_label_min), .N > 10, by = "contrast"][["V1"]])) {
     dt[
       i = which(!is.na(gene_label_min))[-c(1:10)],
-      j = gene_label_min := NA_character_;
+      j = gene_label_min := NA_character_,
       by = "contrast"
     ]
   }
