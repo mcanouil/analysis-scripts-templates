@@ -126,18 +126,18 @@ tar_twas <- list(
     pattern = map(twas_models, twas_results_file),
     iteration = "list",
     packages = c("ggplot2", "ggtext", "data.table", "stats")
-  ),
-  tar_render(twas_report,
-    path = here("slides/twas_report.Rmd"),
-    output_dir = here("reports"),
-    packages = c(
-      "xaringan",
-      "here", "knitr", "ragg", "ggplot2", "ggtext",
-      "patchwork", "data.table", "gt", "scales",
-      "showtext", "svglite", "katex",
-      "targets", "bacon", "utils"
-    )
-  )
+  )#,
+  # tar_render(twas_report,
+  #   path = here("slides/twas_report.Rmd"),
+  #   output_dir = here("reports"),
+  #   packages = c(
+  #     "xaringan",
+  #     "here", "knitr", "ragg", "ggplot2", "ggtext",
+  #     "patchwork", "data.table", "gt", "scales",
+  #     "showtext", "svglite", "katex",
+  #     "targets", "bacon", "utils"
+  #   )
+  # )
 )
 
 list(
