@@ -77,7 +77,7 @@ tar_twas <- list(
     packages = c(
       "flashpcaR", "data.table", "ggplot2", "ggtext", "patchwork",
       "scales", "stats", "utils",
-       "DESeq2", "MatrixGenerics"
+      "DESeq2", "MatrixGenerics"
     )
   ),
   tar_target(twas_biomart,
