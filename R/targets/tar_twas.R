@@ -7,6 +7,7 @@ library(data.table)
 # library(future.callr)
 
 # targets::tar_renv(extras = "visNetwork", path = "scripts/_dependencies.R")
+renv::install("gabraham/flashpca/flashpcaR")
 
 
 ### project setup ==================================================================================
