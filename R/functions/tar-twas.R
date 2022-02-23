@@ -528,9 +528,9 @@ do_twas <- function(txi, sample_sheet, model, path, rna_level = c("ensembl_gene_
 plot_volcano_twas <- function(file, model) {
   raw_trait <- all.vars(stats::as.formula(paste0("~", model[["raw_trait"]])))
 
-  dt <- data.table::fread(file)[
-    grepl(sprintf("%s: ", model[["raw_trait"]]), contrast)
-  ][
+  dt <- data.table::fread(file)
+  rna_level <- names(dt)[1]
+  dt <- dt[
     j = gene_label_min := data.table::fifelse(
       test = pvalue == min(pvalue, na.rm = TRUE) &
         !is.na(external_gene_name) &
