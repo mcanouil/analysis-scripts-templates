@@ -1,7 +1,6 @@
 #' qc_sample_sheet_twas
 #' @import data.table
 qc_sample_sheet_twas <- function(phenotype, run_path) {
-  if (missing(phenotype) || is.null(phenotype)) {
   data.table::data.table(
     rnaseq_path = list.files(
       path = file.path(run_path, "Output", "RSEM"),
@@ -12,16 +11,9 @@ qc_sample_sheet_twas <- function(phenotype, run_path) {
     j = `:=`(Sample_ID = sub(".genes.results$", "", basename(rnaseq_path)))
   ][
     j = `:=`(
-        group = factor(x = sub("-.*", "", Sample_ID), levels = c("bsa", "palmitate"))
-      )
-    ][
-      j = `:=`(rep = sub("^[^-]+-(r[^-]+).*", "\\1", Sample_ID))
-    ][
-      j = `:=`(group.rep = factor(sprintf("%s.%s", group, rep)))
-    ]
-  } else {
-
-  }
+      group = "something"
+    )
+  ]
 }
 
 #' read_rsem
@@ -280,7 +272,7 @@ plot_pca_twas <- function(txi, sample_sheet, pca_vars, n_comp = 10, fig_n_comp =
             X = utils::combn(sprintf("PC%02d", seq_len(fig_n_comp)), 2),
             MARGIN = 2,
             FUN = function(x) {
-              ggplot2::ggplot(data = pca_dfxy[j = .SD, .SDcols = c(ivar, x)]) +
+              ggplot2::ggplot(data = pca_dfxy[j = .SD, .SDcols = c("Sample_ID", ivar, x)]) +
                 ggplot2::aes(x = .data[[x[1]]], y = .data[[x[2]]], colour = .data[[ivar]]) +
                 ggplot2::geom_hline(yintercept = 0, linetype = 2, na.rm = TRUE) +
                 ggplot2::geom_vline(xintercept = 0, linetype = 2, na.rm = TRUE) +
