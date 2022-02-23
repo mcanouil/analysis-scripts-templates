@@ -610,6 +610,7 @@ plot_volcano_twas <- function(file, model) {
       plot.caption.position = "plot",
       plot.title = ggtext::element_markdown(),
       plot.subtitle = ggtext::element_markdown(face = "italic"),
+      axis.text.x = ggtext::element_markdown(),
       axis.text.y = ggtext::element_markdown(),
       legend.position = "none"
     )
