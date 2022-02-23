@@ -11,7 +11,10 @@ library(future.callr)
 
 ### project setup ==================================================================================
 # Functions/scripts required: tar-meqtl.R,
-invisible(sapply(list.files(here("scripts"), pattern = "^tar-.*R$", full.names = TRUE), source, echo = FALSE))
+invisible(sapply(
+  X = list.files(here("scripts", "tar-utils"), pattern = "^tar-.*R$", full.names = TRUE),
+  FUN = source, echo = FALSE
+))
 
 plan(future.callr::callr, workers = 3)
 # plan(multicore, workers = 40)
