@@ -7,7 +7,9 @@ library(data.table)
 # library(future.callr)
 
 # targets::tar_renv(extras = "visNetwork", path = "scripts/_dependencies.R")
-renv::install("gabraham/flashpca/flashpcaR")
+# renv::install("gabraham/flashpca/flashpcaR")
+# renv::install(c("bioc::S4Vectors", "bioc::biomaRt", "bioc::tximport", "bioc::DESeq2", "bioc::MatrixGenerics"))
+# renv::hydrate()
 
 
 ### project setup ==================================================================================
