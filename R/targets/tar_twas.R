@@ -111,23 +111,11 @@ tar_twas <- list(
     packages = c("data.table", "DESeq2", "S4Vectors", "MatrixGenerics", "utils", "stats"),
     format = "file"
   ),
-  tar_target(twas_results_manhattan,
-    command = plot_manhattan_twas(file = twas_results_file, model = twas_models),
-    pattern = map(twas_models, twas_results_file),
-    iteration = "list",
-    packages = c("ggplot2", "ggtext", "data.table", "ggrepel", "scales")
-  ),
   tar_target(twas_results_volcano,
     command = plot_volcano_twas(file = twas_results_file, model = twas_models),
     pattern = map(twas_models, twas_results_file),
     iteration = "list",
     packages = c("ggplot2", "ggtext", "data.table", "ggrepel", "scales")
-  ),
-  tar_target(twas_results_pp,
-    command = plot_pp_twas(file = twas_results_file, model = twas_models),
-    pattern = map(twas_models, twas_results_file),
-    iteration = "list",
-    packages = c("ggplot2", "ggtext", "data.table", "stats")
   )#,
   # tar_render(twas_report,
   #   path = here("slides/twas_report.Rmd"),
