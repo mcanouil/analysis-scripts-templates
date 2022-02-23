@@ -2,16 +2,16 @@
 #' @import data.table
 qc_sample_sheet_twas <- function(phenotype, run_path) {
   if (missing(phenotype) || is.null(phenotype)) {
-    data.table::data.table(
-      rnaseq_path = list.files(
-        path = file.path(run_path, "Output", "RSEM"),
-        pattern = ".genes.results$",
-        full.names = TRUE
-      )
-    )[
-      j = `:=`(Sample_ID = sub(".genes.results$", "", basename(rnaseq_path)))
-    ][
-      j = `:=`(
+  data.table::data.table(
+    rnaseq_path = list.files(
+      path = file.path(run_path, "Output", "RSEM"),
+      pattern = ".genes.results$",
+      full.names = TRUE
+    )
+  )[
+    j = `:=`(Sample_ID = sub(".genes.results$", "", basename(rnaseq_path)))
+  ][
+    j = `:=`(
         group = factor(x = sub("-.*", "", Sample_ID), levels = c("bsa", "palmitate"))
       )
     ][
