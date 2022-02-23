@@ -192,7 +192,7 @@ tar_methylation <- list( # Methylation Array (ma)
     )
   ),
   tar_render(ma_qc_report,
-    path = here("scripts/slides/methylation_array_qc_report.Rmd"),
+    path = here("slides/methylation_array_qc_report.Rmd"),
     output_dir = here("reports"),
     params = ma_params,
     packages = c(

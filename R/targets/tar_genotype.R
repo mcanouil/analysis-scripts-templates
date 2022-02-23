@@ -417,7 +417,7 @@ tar_genotype <- list( # Genotype Array (ga)
     error = "continue"
   ),
   tar_render(ga_qc_report,
-    path = here("scripts/slides/genotype_array_qc_report.Rmd"),
+    path = here("slides/genotype_array_qc_report.Rmd"),
     output_dir = here("reports"),
     params = ga_params,
     packages = c(

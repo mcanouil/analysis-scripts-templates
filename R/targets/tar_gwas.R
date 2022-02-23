@@ -104,7 +104,7 @@ tar_gwas <- list(
     packages = c("ggplot2", "ggtext", "data.table", "stats")
   ),
   tar_render(gwas_report,
-    path = here("scripts/slides/gwas_report.Rmd"),
+    path = here("slides/gwas_report.Rmd"),
     output_dir = here("reports"),
     packages = c(
       "xaringan",

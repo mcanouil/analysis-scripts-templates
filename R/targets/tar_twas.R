@@ -128,7 +128,7 @@ tar_twas <- list(
     packages = c("ggplot2", "ggtext", "data.table", "stats")
   ),
   tar_render(twas_report,
-    path = here("scripts/slides/twas_report.Rmd"),
+    path = here("slides/twas_report.Rmd"),
     output_dir = here("reports"),
     packages = c(
       "xaringan",

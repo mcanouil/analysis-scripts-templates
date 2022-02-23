@@ -92,7 +92,7 @@ tar_ewas <- list(
     packages = c("ggplot2", "ggtext", "data.table", "stats")
   ),
   tar_render(ewas_report,
-    path = here("scripts/slides/ewas_report.Rmd"),
+    path = here("slides/ewas_report.Rmd"),
     output_dir = here("reports"),
     packages = c(
       "xaringan",
