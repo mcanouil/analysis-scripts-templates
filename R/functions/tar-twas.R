@@ -500,7 +500,7 @@ plot_volcano_twas <- function(file, model) {
   ][
     i = pvalue > 0.05,
     j = pvalue := NA_real_
-  ][[
+  ][
     j = c("log2FoldChange", "pvalue", "gene_label_min")
   ][order(pvalue)]
 
