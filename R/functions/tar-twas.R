@@ -433,7 +433,7 @@ do_twas <- function(txi, sample_sheet, model, path, rna_level = c("ensembl_gene_
         split = ":"
       )[[1]] %in% raw_trait)
   ) {
-    results_dt <- data.table::rbindlist(lapply(
+    results_int_dt <- data.table::rbindlist(lapply(
       X = grep(
         pattern = sprintf(
           "^%s.*$",
@@ -464,6 +464,7 @@ do_twas <- function(txi, sample_sheet, model, path, rna_level = c("ensembl_gene_
         results_dt
       }
     ))
+    results_dt <- data.table::rbindlist(list(results_dt, results_int_dt))
   }
 
   results_dt[j = `:=`("Trait" = raw_trait, "n" = ncol(stats_dds))]
