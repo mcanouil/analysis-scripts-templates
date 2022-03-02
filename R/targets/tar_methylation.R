@@ -66,7 +66,7 @@ tar_methylation <- list( # Methylation Array (ma)
       data_directory = ma_run,
       array = "Illumina EPIC",
       annotation = "ilm10b5.hg38",
-      filter_snps = TRUE,
+      filter_snps = FALSE,
       filter_non_cpg = TRUE,
       filter_xy = TRUE,
       filter_multihit = TRUE,

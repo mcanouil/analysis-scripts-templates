@@ -1,4 +1,5 @@
 #' Efficiently import idats files mostly using minfi functions.
+#'
 #' @param directory A `character`. Location of IDAT files, default is the current working directory.
 #' @param csv_file A `character`. Path to the sample sheet (csv files) or
 #'     name of the sample sheet in `directory`.
@@ -13,11 +14,12 @@
 #' @param rgSet A `RGChannelSet` object.
 #' @param echo A `logical`. Should messages be displayed?
 #' @inheritParams qc_idats
-#' @import data.table
-#' @import ChAMPdata
+#'
 #' @return A `list`.
+#'
 #' @export
 #' @import data.table
+#' @import ChAMPdata
 #' @import ENmix
 #' @import minfi
 #' @import utils
@@ -28,7 +30,7 @@ read_idats <- function(
   filter_beads = TRUE,
   bead_cutoff = 0.05,
   filter_non_cpg = TRUE,
-  filter_snps = TRUE,
+  filter_snps = FALSE,
   population = NULL,
   filter_multihit = TRUE,
   filter_xy = TRUE,

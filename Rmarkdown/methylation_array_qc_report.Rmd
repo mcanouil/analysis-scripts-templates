@@ -21,7 +21,7 @@ params:
   data_directory: "/idats"
   array: "Illumina EPIC"
   annotation: "ilm10b4.hg19"
-  filter_snps: TRUE
+  filter_snps: FALSE
   filter_non_cpg: TRUE
   filter_xy: TRUE
   filter_multihit: TRUE
