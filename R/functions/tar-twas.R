@@ -104,9 +104,9 @@ plot_pca_twas <- function(txi, sample_sheet, pca_vars, n_comp = 10, fig_n_comp =
   data.table::setnames(
     x = pca_dfxy,
     old = setdiff(names(pca_dfxy), "Sample_ID"),
-    new = sprintf("PC%02d", as.numeric(gsub("V", "", setdiff(names(pca_dfxy), "Sample_ID"))))
+    new = sprintf("PC%02d", as.numeric(sub("V", "", setdiff(names(pca_dfxy), "Sample_ID"))))
   )
-  pca_dfxy <- merge(x = pca_dfxy, y = sample_sheet, by = "Sample_ID")
+  pca_dfxy <- merge(x = pca_dfxy, y = sample_sheet, by = "Sample_ID", suffixes = c("", "_sample_sheet"))
 
   p_inertia <- ggplot2::ggplot(
     data = data.table::data.table(
