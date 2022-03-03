@@ -143,7 +143,8 @@ do_gwas <- function(
   data.table::fwrite(
     x = dt[j = .SD, .SDcols = "#IID"],
     file = sprintf("%s.samples", basename_file),
-    sep = " "
+    sep = " ",
+    col.names = FALSE
   )
 
   data.table::fwrite(
