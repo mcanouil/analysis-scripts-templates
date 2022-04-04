@@ -28,8 +28,8 @@ read_rsem <- function(sample_sheet, rna_level = c("ensembl_gene_id", "ensembl_tr
   txi_counts <- tximport::tximport(
     files = sub("\\.genes\\.results$", sprintf(".%s.results", rna_level), rsem_files),
     type = "rsem",
-    txIn = rna_level == "transcript",
-    txOut = rna_level == "transcript",
+    txIn = rna_level == "isoforms",
+    txOut = rna_level == "isoforms",
     countsFromAbundance = "no"
   )
   txi_counts$length[txi_counts$length == 0] <- 1
