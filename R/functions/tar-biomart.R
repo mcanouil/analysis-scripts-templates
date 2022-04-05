@@ -23,7 +23,7 @@ get_biomart_information <- function(
   if (inherits(mart, "try-error")) mart <- eval(get_mart)
   ensembl_build_version <- sprintf("GRCh%d-%s", build, version)
 
-  list_unique_gene <- list(sub("\\..*$", "", unique(ensembl_id)))
+  list_unique_gene <- list(sub("\\.[^.]*$", "", unique(ensembl_id)))
 
   format_columns <- function(x) {
     out <- paste(setdiff(unique(x), ""), collapse = ";")
@@ -72,19 +72,25 @@ get_biomart_information <- function(
 
   datasets_exists <- sapply(c("entrez_dt", "uniprot_dt"), exists)
 
+  if (!any(datasets_exists)) return(ensembl_dt)
+
   if (all(datasets_exists)) {
-    merge(
+    return(merge(
       x = ensembl_dt,
       y = merge(x = entrez_dt, y = uniprot_dt, by = rna_level, all = TRUE),
       by = rna_level,
       all.x = TRUE
-    )
-  } else {
-    merge(
-      x = ensembl_dt,
-      y = get(names(which(datasets_exists))),
-      by = rna_level,
-      all.x = TRUE
-    )
+    ))
   }
+
+  merge(
+    x = ensembl_dt,
+    y = switch(names(which(datasets_exists)),
+      "entrez_dt" = entrez_dt,
+      "uniprot_dt" = uniprot_dt,
+      stop("No datasets found!")
+    ),
+    by = rna_level,
+    all.x = TRUE
+  )
 }
