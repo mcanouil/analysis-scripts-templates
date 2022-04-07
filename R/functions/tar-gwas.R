@@ -209,7 +209,7 @@ do_gwas <- function(
           "annotate",
           "--annotations", vep_file,
           "--header-lines", sub("_formatted.tsv.gz", ".header", vep_file),
-          "--columns CHROM,POS,Gene,Symbol,rsid",
+          "--columns CHROM,POS,Gene,Symbol,rsid"
       )
 
       if (!is.null(vep_file) && file.exists(vep_file)) {
