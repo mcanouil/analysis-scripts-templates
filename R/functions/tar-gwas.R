@@ -102,7 +102,7 @@ do_gwas <- function(
   data,
   model,
   vcfs,
-  vep,
+  vep = NULL,
   path,
   bin_path = list(
     bcftools = "/usr/bin/bcftools",
@@ -182,7 +182,7 @@ do_gwas <- function(
       vcf_file <- sprintf("%s__%s", basename_file, basename(vcf))
       results_file <- sub("\\.vcf.gz", "", vcf_file)
 
-      system(paste(
+      cmd <- paste(
         bin_path[["bcftools"]],
           "+fill-tags", vcf,
        "|",
@@ -200,16 +200,32 @@ do_gwas <- function(
           "--annotations", vep_file,
           "--header-lines", sub("_formatted.tsv.gz", ".header", vep_file),
           "--columns CHROM,POS,Gene,Symbol,rsid",
-        "|",
-        bin_path[["bcftools"]],
-          "annotate",
-          "--set-id '%INFO/rsid'",
-        "|",
-        bin_path[["bcftools"]],
-          "annotate",
-          "--set-id +'%CHROM:%POS:%REF:%ALT'",
-          "--output-type z --output", vcf_file
-      ))
+      )
+
+      if (!is.null(vep_file) && file.exists(vep_file)) {
+        cmd <- paste(
+          cmd,
+          "|",
+          bin_path[["bcftools"]],
+            "annotate",
+            "--set-id '%INFO/rsid'",
+          "|",
+          bin_path[["bcftools"]],
+            "annotate",
+            "--set-id +'%CHROM:%POS:%REF:%ALT'",
+            "--output-type z --output", vcf_file
+        )
+      } else {
+        cmd <- paste(
+          cmd,
+          bin_path[["bcftools"]],
+            "annotate",
+            "--set-id '%CHROM:%POS:%REF:%ALT'",
+            "--output-type z --output", vcf_file
+        )
+      }
+
+      system(cmd)
 
       system(paste(
         bin_path[["plink2"]],
