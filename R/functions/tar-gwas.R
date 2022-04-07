@@ -116,14 +116,14 @@ do_gwas <- function(
   vcfs <- vcfs[sub("\\.vcf.gz", "", basename(vcfs)) %in% 1:22]
 
   covariates <- all.vars(as.formula(sprintf(" ~ %s", model[["covariates"]])))
-  dt <- unique(data.table::setnames(
+  dt <- data.table::setnames(
     x = data.table::as.data.table(data)[
-      j = na.exclude(.SD),
+      j = unique(na.exclude(.SD)),
       .SDcols = c("vcf_id", model[["raw_trait"]], covariates)
     ],
     old = "vcf_id",
     new = "#IID"
-  ))
+  )
 
   if (length(sex_covariate <- grep("^sex", covariates, value = TRUE)) > 1) {
     stop(sprintf(
@@ -134,6 +134,9 @@ do_gwas <- function(
   }
 
   model_type <- if (data.table::uniqueN(dt[[model[["raw_trait"]]]]) == 2) {
+    if (0 %in% unique(dt[[raw_trait]])) {
+      stop(sprintf("Binary trait \"%s\" must be coded as 1 or 2!", raw_trait))
+    }
     "logistic"
   } else {
     "linear"
@@ -141,33 +144,40 @@ do_gwas <- function(
   basename_file <- sprintf("%s/%s_%s", tmpdir, model_type, model[["raw_trait"]])
 
   data.table::fwrite(
-    x = dt[j = .SD, .SDcols = "#IID"],
+    x = dt[j = unique(.SD), .SDcols = "#IID"],
     file = sprintf("%s.samples", basename_file),
     sep = " ",
     col.names = FALSE
   )
 
   data.table::fwrite(
-    x = dt[j = .SD, .SDcols = c("#IID", model[["raw_trait"]])],
+    x = dt[j = unique(.SD), .SDcols = c("#IID", model[["raw_trait"]])],
     file = sprintf("%s.pheno", basename_file),
     sep = " "
   )
 
-  data.table::fwrite(
-    x = dt[j = .SD, .SDcols = c("#IID", setdiff(covariates, sex_covariate))],
-    file = sprintf("%s.cov", basename_file),
-    sep = " "
-  )
+  if (length(covariates_not_sex <- setdiff(covariates, sex_covariate)) > 0) {
+    data.table::fwrite(
+      x = dt[j = unique(.SD), .SDcols = c("#IID", setdiff(covariates, sex_covariate))],
+      file = sprintf("%s.cov", basename_file),
+      sep = " "
+    )
+  }
 
-  data.table::fwrite(
-    x = data.table::setnames(
-      x = data.table::copy(dt)[j = .SD, .SDcols = c("#IID", sex_covariate)],
-      old = sex_covariate,
-      new = "SEX"
-    ),
-    file = sprintf("%s.sex", basename_file),
-    sep = " "
-  )
+  if (length(sex_covariate) > 0) {
+    if (0 %in% unique(dt[[sex_covariate]])) {
+      stop("Sex must be coded: '1'/'M'/'m' = male, '2'/'F'/'f' = female, 'NA'/'0' = missing!")
+    }
+    data.table::fwrite(
+      x = data.table::setnames(
+        x = data.table::copy(dt)[j = unique(.SD), .SDcols = c("#IID", sex_covariate)],
+        old = sex_covariate,
+        new = "SEX"
+      ),
+      file = sprintf("%s.sex", basename_file),
+      sep = " "
+    )
+  }
 
   message("Formatting VCFs and performing PLINK2 regression ...")
 
@@ -227,20 +237,20 @@ do_gwas <- function(
 
       system(cmd)
 
-      system(paste(
+      system(paste(c(
         bin_path[["plink2"]],
         "--vcf", vcf_file, "dosage=DS",
         "--mach-r2-filter",
-        "--threads 120",
+        "--threads", threads,
         "--glm sex",
-        "--keep", sprintf("%s.samples", basename_file),
-        "--update-sex", sprintf("%s.sex", basename_file),
-        "--pheno", sprintf("%s.pheno", basename_file),
-        "--covar", sprintf("%s.cov", basename_file),
+        if (file.exists(sprintf("%s.samples", basename_file))) c("--keep", sprintf("%s.samples", basename_file)),
+        if (file.exists(sprintf("%s.sex", basename_file))) c("--update-sex", sprintf("%s.sex", basename_file)),
+        if (file.exists(sprintf("%s.pheno", basename_file))) c("--pheno", sprintf("%s.pheno", basename_file)),
+        if (file.exists(sprintf("%s.cov", basename_file))) c("--covar", sprintf("%s.cov", basename_file)),
         "--covar-variance-standardize",
         "--silent",
         "--out", results_file
-      ))
+      ), collapse = " "))
 
       annot <- data.table::fread(
         cmd = paste(bin_path[["bcftools"]], "view --drop-genotypes", vcf_file),
