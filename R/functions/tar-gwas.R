@@ -198,23 +198,22 @@ do_gwas <- function(
        "|",
         bin_path[["bcftools"]],
           "view",
-          "--min-af 0.05",
-          "--exclude 'INFO/INFO < 0.8'",
+          # "--min-af 0.05",
+          # "--exclude 'INFO/INFO < 0.8'",
           "--min-alleles 2 --max-alleles 2 --types snps",
           "--force-samples",
-          # "--no-update",
-          "--samples-file", sprintf("%s.samples", basename_file),
-       "|",
-        bin_path[["bcftools"]],
-          "annotate",
-          "--annotations", vep_file,
-          "--header-lines", sub("_formatted.tsv.gz", ".header", vep_file),
-          "--columns CHROM,POS,Gene,Symbol,rsid"
+          "--samples-file", sprintf("%s.samples", basename_file)
       )
 
       if (!is.null(vep_file) && file.exists(vep_file)) {
         cmd <- paste(
           cmd,
+          "|",
+          bin_path[["bcftools"]],
+            "annotate",
+            "--annotations", vep_file,
+            "--header-lines", sub("_formatted.tsv.gz", ".header", vep_file),
+            "--columns CHROM,POS,Gene,Symbol,rsid",
           "|",
           bin_path[["bcftools"]],
             "annotate",
@@ -228,9 +227,10 @@ do_gwas <- function(
       } else {
         cmd <- paste(
           cmd,
+          "|",
           bin_path[["bcftools"]],
             "annotate",
-            "--set-id '%CHROM:%POS:%REF:%ALT'",
+            "--set-id +'%CHROM:%POS:%REF:%ALT'",
             "--output-type z --output", vcf_file
         )
       }
