@@ -243,10 +243,10 @@ do_gwas <- function(
         "--mach-r2-filter",
         "--threads", threads,
         "--glm sex",
+        if (file.exists(sprintf("%s.cov", basename_file))) c("--covar", sprintf("%s.cov", basename_file)) else "allow-no-covars",
         if (file.exists(sprintf("%s.samples", basename_file))) c("--keep", sprintf("%s.samples", basename_file)),
         if (file.exists(sprintf("%s.sex", basename_file))) c("--update-sex", sprintf("%s.sex", basename_file)),
         if (file.exists(sprintf("%s.pheno", basename_file))) c("--pheno", sprintf("%s.pheno", basename_file)),
-        if (file.exists(sprintf("%s.cov", basename_file))) c("--covar", sprintf("%s.cov", basename_file)),
         "--covar-variance-standardize",
         "--silent",
         "--out", results_file
