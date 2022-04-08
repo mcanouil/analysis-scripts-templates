@@ -265,7 +265,7 @@ do_gwas <- function(
               FUN = function(x) {
                 all_fields <- strsplit(x, "=")
                 out <- data.table::transpose(all_fields[sapply(all_fields, length) > 1])
-                data.table::setnames(x = data.table::setDT(do.call("rbind", out[-1])), old = out[[1]])
+                data.table::setnames(x = data.table::setDT(do.call("rbind.data.frame", out[-1])), old = out[[1]])
               }
             ),
             use.names = TRUE,
