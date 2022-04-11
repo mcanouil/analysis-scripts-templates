@@ -98,6 +98,7 @@ qc_sample_sheet_gwas <- function(phenotype, exclusion, relatedness, ethnicity) {
 #' @import data.table
 #' @import stats
 #' @import future.apply future_lapply
+#' @import rlang
 do_gwas <- function(
   data,
   model,
@@ -109,6 +110,12 @@ do_gwas <- function(
     plink2 = "plink2"
   )
 ) {
+  dir.create(
+    path = path,
+    recursive = TRUE,
+    mode = "0775",
+    showWarnings = FALSE
+  )
   tmpdir <- file.path(tempdir(), "gwas_plink2", model[["raw_trait"]])
   dir.create(path = tmpdir, recursive = TRUE, mode = "0777")
   on.exit(unlink(tmpdir, recursive = TRUE))
@@ -133,15 +140,24 @@ do_gwas <- function(
     ))
   }
 
-  model_type <- if (data.table::uniqueN(dt[[model[["raw_trait"]]]]) == 2) {
-    if (0 %in% unique(dt[[raw_trait]])) {
-      stop(sprintf("Binary trait \"%s\" must be coded as 1 or 2!", raw_trait))
-    }
-    "logistic"
-  } else {
-    "linear"
+  binary_wrongly_coded <- dt[
+    j = names(which(sapply(
+      X = .SD,
+      FUN = function(.col) {
+        data.table::uniqueN(.col) == 2 && 0 %in% unique(.col)
+      }
+    ))),
+    .SDcols = c(model[["raw_trait"]])
+  ]
+
+  if (length(binary_wrongly_coded) > 0) {
+    stop(
+      "Binary traits must be coded as 1 or 2!\n",
+      sprintf("Please check: \"%s\"", paste(binary_wrongly_coded, collapse = '", "'))
+    )
   }
-  basename_file <- sprintf("%s/%s_%s", tmpdir, model_type, model[["raw_trait"]])
+
+  basename_file <- file.path(tmpdir, rlang::hash(model))
 
   data.table::fwrite(
     x = dt[j = unique(.SD), .SDcols = "#IID"],
@@ -158,7 +174,7 @@ do_gwas <- function(
 
   if (length(covariates_not_sex <- setdiff(covariates, sex_covariate)) > 0) {
     data.table::fwrite(
-      x = dt[j = unique(.SD), .SDcols = c("#IID", setdiff(covariates, sex_covariate))],
+      x = dt[j = unique(.SD), .SDcols = c("#IID", covariates_not_sex)],
       file = sprintf("%s.cov", basename_file),
       sep = " "
     )
@@ -289,12 +305,18 @@ do_gwas <- function(
       )
 
       results <- data.table::setnames(
-        x = data.table::fread(
-          file = list.files(
-            path = dirname(results_file),
-            pattern = sprintf("%s\\..*\\.glm\\..*", basename(results_file)),
-            full.names = TRUE
-          )
+        x = data.table::rbindlist(
+          l = lapply(
+            X = (function(x) `names<-`(x, sub("[^.]*\\.", "", x)))(
+              list.files(
+                path = dirname(results_file),
+                pattern = sprintf("%s\\..*\\.glm\\..*", basename(results_file)),
+                full.names = TRUE
+              )
+            ),
+            FUN = data.table::fread
+          ),
+          idcol = "trait_model"
         ),
         old = function(x) sub("^#", "", x)
       )
@@ -304,7 +326,7 @@ do_gwas <- function(
           x = results[TEST %in% "ADD" & !is.na(P), -c("TEST")],
           y = annot,
           by = c("CHROM", "POS", "ID", "REF", "ALT"), # intersect(names(results), names(annot))
-        )[MAF >= 0.05, .SDcols = !c("QUAL", "FILTER")],
+        )[j = .SD, .SDcols = !c("QUAL", "FILTER")],
         file = sprintf("%s.results.gz", results_file)
       )
 
@@ -312,27 +334,24 @@ do_gwas <- function(
     }
   )
 
-  results_file <- sprintf("%s/gwas_%s_%s.csv.gz", path, model[["raw_trait"]], model[["tar_group"]])
-  dir.create(
-    path = dirname(results_file),
-    recursive = TRUE,
-    mode = "0755",
-    showWarnings = FALSE
-  )
-
   message("Aggregating PLINK2 results ...")
+
+  results_file <- file.path(path, "gwas.csv.gz")
 
   data.table::fwrite(
     x = data.table::setcolorder(
-      x = data.table::rbindlist(lapply(list_results, data.table::fread), use.names = TRUE)[
+      x = data.table::rbindlist(
+        l = lapply(list_results, data.table::fread),
+        use.names = TRUE
+      )[
         j = `:=`(
           FDR = stats::p.adjust(P, method = "BH"),
           Bonferroni = stats::p.adjust(P, method = "bonferroni"),
-          trait = model[["pretty_trait"]],
-          covariates = model[["covariates"]]
-        )
+          covariates = covariates
+        ),
+        by = "trait_model"
       ][order(P)],
-      neworder = c("trait", "covariates")
+      neworder = c("trait_model", "covariates")
     ),
     file = results_file
   )
