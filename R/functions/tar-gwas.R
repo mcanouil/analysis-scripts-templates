@@ -97,7 +97,8 @@ qc_sample_sheet_gwas <- function(phenotype, exclusion, relatedness, ethnicity) {
 #' do_gwas
 #' @import data.table
 #' @import stats
-#' @import future.apply future_lapply
+#' @import utils
+#' @import future.apply
 #' @import rlang
 do_gwas <- function(
   data,
