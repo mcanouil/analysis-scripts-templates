@@ -182,7 +182,7 @@ do_gwas <- function(
   }
 
   if (length(sex_covariate) > 0) {
-    if (0 %in% unique(dt[[sex_covariate]])) {
+    if (length(sex_levels <- unique(dt[[sex_covariate]])) == 2 & 0 %in% sex_levels) {
       stop("Sex must be coded: '1'/'M'/'m' = male, '2'/'F'/'f' = female, 'NA'/'0' = missing!")
     }
     data.table::fwrite(
