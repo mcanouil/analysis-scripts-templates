@@ -273,33 +273,37 @@ do_gwas <- function(
         cmd = paste(bin_path[["bcftools"]], "view --drop-genotypes", vcf_file),
         skip = "#CHROM"
       )
-      annot <- annot[
-        j = list(
-          .SD,
-          data.table::rbindlist(
-            l = lapply(
-              X = strsplit(INFO, ";"),
-              FUN = function(x) {
-                all_fields <- strsplit(x, "=")
-                out <- data.table::transpose(all_fields[sapply(all_fields, length) > 1])
-                data.table::setnames(x = data.table::setDT(do.call("rbind.data.frame", out[-1])), old = out[[1]])
-              }
-            ),
-            use.names = TRUE,
-            fill = TRUE
-          )[
-            j = lapply(.SD, function(x) {
-              xout <- as.character(x)
-              data.table::fifelse(
-                test = xout %in% c(".", "-"),
-                yes = NA_character_,
-                no = xout
-              )
-            })
-          ]
-        ),
-        .SDcols = !c("INFO", "QUAL", "FILTER")
-      ]
+
+      if (grepl("INFO", names(annot))) {
+        annot <- annot[
+          j = list(
+            .SD,
+            data.table::rbindlist(
+              l = lapply(
+                X = strsplit(INFO, ";"),
+                FUN = function(x) {
+                  all_fields <- strsplit(x, "=")
+                  out <- data.table::transpose(all_fields[sapply(all_fields, length) > 1])
+                  data.table::setnames(x = data.table::setDT(do.call("rbind.data.frame", out[-1])), old = out[[1]])
+                }
+              ),
+              use.names = TRUE,
+              fill = TRUE
+            )[
+              j = lapply(.SD, function(x) {
+                xout <- as.character(x)
+                data.table::fifelse(
+                  test = xout %in% c(".", "-"),
+                  yes = NA_character_,
+                  no = xout
+                )
+              })
+            ]
+          ),
+          .SDcols = !c("INFO", "QUAL", "FILTER")
+        ]
+      }
+
       data.table::setnames(
         x = annot,
         old = function(x) sub("^\\.SD\\.\\.*", "", x)
