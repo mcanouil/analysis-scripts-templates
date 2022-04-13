@@ -104,8 +104,8 @@ do_gwas <- function(
   data,
   model,
   vcfs,
-  vep = NULL,
   path,
+  vep = NULL,
   bin_path = list(
     bcftools = "/usr/bin/bcftools",
     plink2 = "plink2"
