@@ -111,6 +111,21 @@ do_gwas <- function(
     plink2 = "plink2"
   )
 ) {
+  INFO <- TEST <- P <- NULL # "no visible binding for global variable" from `data.table` syntax
+  path <- normalizePath(path)
+
+  plink_version <- try(
+    expr = system(sprintf("%s --version", bin_path[["plink2"]]), intern = TRUE),
+    silent = TRUE
+  )
+  if (inherits(plink_version, "try-error")) stop("Please check PLINK binary path!")
+
+  bcftools_version <- try(
+    expr = system(sprintf("%s --version", bin_path[["bcftools"]]), intern = TRUE)[1],
+    silent = TRUE
+  )
+  if (inherits(bcftools_version, "try-error")) stop("Please check BCFTools binary path!")
+
   dir.create(
     path = path,
     recursive = TRUE,
@@ -118,7 +133,7 @@ do_gwas <- function(
     showWarnings = FALSE
   )
   tmpdir <- file.path(tempdir(), "gwas_plink2", model[["raw_trait"]])
-  dir.create(path = tmpdir, recursive = TRUE, mode = "0777")
+  dir.create(path = tmpdir, recursive = TRUE, mode = "0775")
   on.exit(unlink(tmpdir, recursive = TRUE))
 
   vcfs <- vcfs[sub("\\.vcf.gz", "", basename(vcfs)) %in% 1:22]
@@ -197,14 +212,34 @@ do_gwas <- function(
   }
 
   message("Formatting VCFs and performing PLINK2 regression ...")
-
-  list_results <- future.apply::future_lapply(
+  if (nzchar(system.file(package = "future.apply"))) {
+    gwas_lapply <- function(X, basename_file, vep_file, bin_path, FUN) {
+      future.apply::future_lapply(
+        X = X,
+        basename_file = basename_file,
+        vep_file = vep_file,
+        bin_path = bin_path,
+        future.globals = FALSE,
+        future.packages = "data.table",
+        FUN = FUN
+      )
+    }
+  } else {
+    gwas_lapply <- function(X, basename_file, vep_file, bin_path, FUN) {
+      lapply(
+        X = X,
+        basename_file = basename_file,
+        vep_file = vep_file,
+        bin_path = bin_path,
+        FUN = FUN
+      )
+    }
+  }
+  list_results <- gwas_lapply(
     X = vcfs,
     basename_file = basename_file,
     vep_file = vep,
     bin_path = bin_path,
-    future.globals = FALSE,
-    future.packages = "data.table",
     FUN = function(vcf, basename_file, vep_file, bin_path) {
       vcf_file <- sprintf("%s__%s", basename_file, basename(vcf))
       results_file <- sub("\\.vcf.gz", "", vcf_file)
@@ -215,8 +250,8 @@ do_gwas <- function(
        "|",
         bin_path[["bcftools"]],
           "view",
-          # "--min-af 0.05",
-          # "--exclude 'INFO/INFO < 0.8'",
+          "--min-af 0.05",
+          "--exclude 'INFO/INFO < 0.8'",
           "--min-alleles 2 --max-alleles 2 --types snps",
           "--force-samples",
           "--samples-file", sprintf("%s.samples", basename_file)
@@ -269,12 +304,15 @@ do_gwas <- function(
         "--out", results_file
       ), collapse = " "))
 
-      annot <- data.table::fread(
-        cmd = paste(bin_path[["bcftools"]], "view --drop-genotypes", vcf_file),
-        skip = "#CHROM"
+      annot <- data.table::setnames(
+        x = data.table::fread(
+          cmd = paste(bin_path[["bcftools"]], "view --drop-genotypes", vcf_file),
+          skip = "#CHROM"
+        ),
+        old = function(x) sub("^#", "", x)
       )
 
-      if (grepl("INFO", names(annot))) {
+      if (any(grepl("^INFO$", names(annot)))) {
         annot <- annot[
           j = list(
             .SD,
@@ -300,8 +338,12 @@ do_gwas <- function(
               })
             ]
           ),
-          .SDcols = !c("INFO", "QUAL", "FILTER")
+          .SDcols = !intersect(c("INFO", "QUAL", "FILTER"), names(annot))
         ]
+      }
+
+      if (length(qual_filter_cols <- intersect(c("QUAL", "FILTER"), names(annot))) > 0) {
+        annot <- annot[j = .SD, .SDcols = !c(qual_filter_cols)]
       }
 
       data.table::setnames(
@@ -324,16 +366,18 @@ do_gwas <- function(
           idcol = "trait_model"
         ),
         old = function(x) sub("^#", "", x)
-      )
+      )[TEST %in% "ADD" & !is.na(P), -c("TEST")]
 
       data.table::fwrite(
         x = data.table::merge.data.table(
-          x = results[TEST %in% "ADD" & !is.na(P), -c("TEST")],
+          x = results,
           y = annot,
           by = c("CHROM", "POS", "ID", "REF", "ALT"), # intersect(names(results), names(annot))
-        )[j = .SD, .SDcols = !c("QUAL", "FILTER")],
+          all.x = TRUE
+        ),
         file = sprintf("%s.results.gz", results_file)
       )
+      message(sprintf("Results written in '%.results.gz'", results_file))
 
       sprintf("%s.results.gz", results_file)
     }
