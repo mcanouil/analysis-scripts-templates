@@ -1,0 +1,442 @@
+---
+title: '`r targets::tar_read(project)`'
+subtitle: "Transcriptome-Wide Association Studies"
+author: '`r targets::tar_read(author)`'
+institute: "_Inserm U1283 / CNRS UMR8199 / Institut Pasteur de Lille / Université de Lille_"
+date: '`r format(Sys.time(), "%A, the %d of %B, %Y")`'
+output:
+  xaringan::moon_reader:
+    self_contained: true
+    mathjax: null
+    css: [assets/umr1283_8199.css, https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.css]
+    includes:
+      in_header: assets/_scripts.html
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      ratio: "16:9"
+      countIncrementalSlides: false
+---
+
+class: part-slide
+
+```{r setup, include = FALSE}
+options("width" = 110)
+options(htmltools.dir.version = FALSE)
+
+
+### Load Packages ==================================================================================
+suppressPackageStartupMessages({
+  library(here)
+  library(knitr)
+
+  library(data.table)
+
+  library(ragg)
+  library(svglite)
+  library(showtext)
+
+  library(ggplot2)
+  library(ggtext)
+  library(patchwork)
+  library(scales)
+
+  library(gt)
+
+  library(targets)
+  library(katex)
+
+  library(bacon)
+  library(utils)
+})
+```
+
+```{r setup-knitr, include = FALSE}
+opts_chunk$set(
+  warning = FALSE,
+  message = FALSE,
+  eval = TRUE, # Default: TRUE
+  include = TRUE, # Default: TRUE
+  echo = FALSE, # Default: TRUE
+  width = getOption("width"),
+  comment = "#>",
+  fig.align = "center",
+  fig.width = 11.5, # Default: 7
+  fig.height = 5.75,  # Default: 7
+  dpi = 150, # Default: 72
+  # dev = "ragg_png"
+  dev = "svg"
+)
+```
+
+```{r setup-ggplot2, file = "assets/setup-ggplot2.R", include = FALSE}
+```
+
+```{r setup-gt, file = "assets/setup-gt.R", include = FALSE}
+```
+
+```{r functions, include = FALSE}
+eq <- function(tex, d = FALSE, ...) katex::katex_html(tex = tex, displayMode = d, ..., output = "html")
+
+source(here("scripts/tar-utils/tar-pval_trans.R"))
+
+col_numeric_trans <- function(
+  palette, domain, na.color = "#808080", alpha = FALSE, reverse = FALSE, trans = NULL
+) {
+  rng <- NULL
+  if (length(domain) > 0) {
+    rng <- range(domain, na.rm = TRUE)
+    if (!all(is.finite(rng))) {
+      stop("Wasn't able to determine range of domain")
+    }
+  }
+  pf <- scales:::safePaletteFunc(palette, na.color, alpha)
+  scales:::withColorAttr("numeric", list(na.color = na.color), function(x) {
+    x <- trans(x)
+    if (length(x) == 0 || all(is.na(x))) {
+      return(pf(x))
+    }
+    if (is.null(rng)) {
+      rng <- range(x, na.rm = TRUE)
+    }
+    rescaled <- scales::rescale(x, from = rng)
+    if (any(rescaled < 0 | rescaled > 1, na.rm = TRUE)) {
+      warning("Some values were outside the color scale and will be treated as NA", call. = FALSE)
+    }
+    if (reverse) {
+      rescaled <- 1 - rescaled
+    }
+    pf(rescaled)
+  })
+}
+```
+
+```{r tar-read, include = FALSE}
+```
+
+# Methods
+
+---
+
+# Sofware & Parameters
+
+* Linear regression based association analysis using `DESeq2`:
+  * `DESeq2::nbinomWaldTest`, Waldt test.
+  * `DESeq2::results`, comparisons extraction.
+  * `stats::p.adjust(method = "BH")`, false discovery rate (FDR) by Benjamini-Hochberg.
+
+* Software:
+    * R ` `r paste0(R.version$major, ".", R.version$minor)` ` ([www.r-project.org](https://www.r-project.org/))
+
+* R packages:
+    * `DESeq2` ` `r as.character(packageVersion("DESeq2"))` `
+        - [https://bioconductor.org/packages/DESeq2/](https://bioconductor.org/packages/DESeq2/)
+    * `bacon` ` `r as.character(packageVersion("bacon"))` `
+        - [https://bioconductor.org/packages/bacon/](https://bioconductor.org/packages/bacon/)
+
+```{r models-data, include = FALSE}
+df_models <- setDT(tar_read(twas_models))[
+  j = pretty_trait := factor(pretty_trait, levels = unique(pretty_trait))
+][
+  j = eq := {
+    fmt_covariates <- unlist(strsplit(x = covariates, split = " \\+ "))
+    if (any(grepl("^PC[0-9]+$", fmt_covariates))) {
+      fmt_pcs <- sprintf("PC_%s", paste(
+        range(
+          as.numeric(sub("PC", "", grep("^PC[0-9]+$", fmt_covariates, value = TRUE)))
+        ),
+        collapse = "-"
+      ))
+      sprintf(
+        "\\bold{M_{value}} = \\bold{%s} + %s",
+        all.vars(as.formula(paste0("~", raw_trait))),
+        paste(
+          sub(
+            "^(.*_)([^_]+)$", "\\1{\\2}",
+            c(fmt_covariates[-grep("^PC[0-9]+$", fmt_covariates)], fmt_pcs)
+          ),
+          collapse = " + "
+        )
+      )
+    } else {
+      sprintf(
+        "\\bold{M_{value}} = \\bold{%s} + %s",
+        all.vars(as.formula(paste0("~", raw_trait))),
+        paste(
+          sub(
+            "^(.*_)([^_]+)$", "\\1{\\2}",
+            fmt_covariates
+          ),
+          collapse = " + "
+        )
+      )
+    }
+  },
+  by = "tar_group"
+][order(pretty_trait, tar_group)]
+
+pp_models <- df_models[
+  j = list(
+    pp = list(
+      ggplot(
+        data = rbindlist(lapply(
+          X = sprintf("%s (%s)", pretty_trait, tar_group),
+          FUN = function(imodel) {
+            fread(
+              file = unlist(tar_read(
+                name = twas_results_file,
+                branches = as.numeric(sub(".*\\((.*)\\)", "\\1", imodel))
+              ))
+            )[
+              order(pvalue)
+            ][
+              j = `:=`(
+                "exppval" = (1:.N - 0.5) / .N,
+                "labels" = paste0(
+                  "&lambda;<sub>gc</sub> = ",
+                  format(median(qnorm(pvalue / 2)^2, na.rm = TRUE) / qchisq(0.5, df = 1), digits = 3, nsmall = 3)
+                ),
+                "model" = imodel
+              )
+            ]
+          }
+        ))
+      ) +
+        aes(
+          x = .data[["exppval"]],
+          y = .data[["pvalue"]],
+          colour = sprintf("%s: %s", .data[["model"]], .data[["labels"]]),
+          shape = sprintf("%s: %s", .data[["model"]], .data[["labels"]])
+        ) +
+        geom_abline(intercept = 0, slope = 1, colour = "black", linetype = 2) +
+        geom_point(size = 0.60) +
+        scale_x_continuous(
+          trans = pval_trans(md = TRUE),
+          expand = expansion(c(0, 0.2)),
+          limits = c(1, NA)
+        ) +
+        scale_y_continuous(
+          trans = pval_trans(md = TRUE),
+          expand = expansion(c(0, 0.2)),
+          limits = c(1, NA)
+        ) +
+        scale_colour_viridis_d(begin = 0.15, end = 0.85) +
+        scale_shape_manual(values = rep(1:5, 3)) +
+        guides(shape = guide_legend(override.aes = list(size = 2))) +
+        labs(
+          x = "Expected P-value",
+          y = "Observed P-value",
+          colour = NULL,
+          shape = NULL
+        ) +
+        theme(
+          plot.title.position = "plot",
+          plot.caption.position = "plot",
+          plot.title = element_markdown(),
+          plot.subtitle = element_markdown(face = "italic"),
+          axis.text.x = element_markdown(),
+          axis.text.y = element_markdown(),
+          legend.position = c(0.99, 0.01),
+          legend.justification = c("right", "bottom"),
+          legend.box.just = "right",
+          legend.text = element_markdown(),
+          legend.margin = margin(1.5, 1.5, 1.5, 1.5),
+          legend.spacing.x = unit(1.5, "pt"),
+          legend.spacing.y = unit(1.5, "pt")
+        )
+    )
+  ),
+  by = "pretty_trait"
+]
+
+bc_models <- df_models[
+  j = list(
+    bc = list(
+      rbindlist(lapply(
+        X = sprintf("%s (%s)", pretty_trait, tar_group),
+        FUN = function(imodel) {
+          bc <- bacon(fread(
+            file = unlist(tar_read(
+              name = twas_results_file,
+              branches = as.numeric(sub(".*\\((.*)\\)", "\\1", imodel))
+            )),
+            select = "stat"
+          ))
+          data.table(
+            "Model" = imodel,
+            "Inflation" = inflation(bc),
+            "Bias" = bias(bc)
+          )
+        }
+      ))[
+        j = "Rank" := rank(rowMeans(cbind(abs(1 - Inflation), abs(Bias))))
+      ]
+    )
+  ),
+  by = "pretty_trait"
+]
+```
+
+---
+class: part-slide
+
+# Models
+
+```{r print-models-pp, results = "asis", dev = "ragg_png", fig.height = 10, dpi = 120}
+for (itrait in unique(df_models[["pretty_trait"]])) {
+  cat(sprintf("\n\n---\n\n#  %s\n\n", itrait))
+  for (igroup in unique(df_models[pretty_trait %in% itrait, tar_group])) {
+    cat(sprintf("\n1. %s\n", eq(
+      tex = df_models[df_models[["tar_group"]] %in% igroup, ][["eq"]],
+      d = FALSE
+    )))
+  }
+  cat("\n\n")
+  cat(sprintf("---\n\n# %s\n\n", itrait))
+  cat(".pull-left[\n\n")
+  cat(sprintf(
+    "Estimates were obtained using the bioconductor R package <code>bacon</code> v%s (doi:%s).\n\n",
+    as.character(packageVersion("bacon")),
+    '<a href="https://doi.org/10.18129/B9.bioc.bacon">10.18129/B9.bioc.bacon</a>'
+  ))
+  cat("\n\n")
+  print(
+    gt(
+      data = bc_models[pretty_trait %in% itrait, bc][[1]],
+      rowname_col = "Model"
+    ) %>%
+      umr() %>%
+      tab_options(
+        column_labels.background.color = "#2a9bd3",
+        stub.background.color = "#2a9bd3"
+      ) %>%
+      # fmt_scientific(columns = "Minimum Corrected P-value", decimals = 2) %>%
+      fmt_number(columns = c("Inflation", "Bias"), n_sigfig = 3) %>%
+      data_color(
+        columns = "Inflation",
+        colors = col_numeric_trans(palette = "plasma", domain = NULL, trans = function(x) abs(1 - x))
+      ) %>%
+      data_color(
+        columns = "Bias",
+        colors = col_numeric_trans(palette = "plasma", domain = NULL, reverse = TRUE, trans = abs)
+      ) %>%
+      cols_align("center")
+  )
+  cat("\n\n]\n\n.pull-right[\n\n")
+  print(pp_models[pretty_trait %in% itrait, pp][[1]])
+  cat("\n\n]\n\n")
+}
+rm(pp_models, bc_models)
+```
+
+---
+class: part-slide
+
+# Results
+
+```{r print-models-results, results = "asis", dev = "ragg_png", fig.height = 5.50}
+for (igroup in df_models[["tar_group"]]) {
+  cat("\n\n---\n\n")
+  cat(sprintf(
+    "# `%s (%s)`<i style='font-size:50%%;'> - Volcano Plot</i>\n",
+    df_models[tar_group %in% igroup, pretty_trait], igroup
+  ))
+  cat(eq(tex = sprintf("\\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
+  cat("\n")
+  print(
+    tar_read(twas_results_volcano, branches = igroup)[[1]] +
+      theme(
+        plot.title = element_blank(),
+        plot.subtitle = element_blank()
+      )
+  )
+  cat("\n")
+
+  cat("\n\n---\n\n")
+  cat(sprintf(
+    "# `%s (%s)` - Top 10 Loci\n",
+    df_models[tar_group %in% igroup, pretty_trait], igroup
+  ))
+  cat(eq(tex = sprintf("\\footnotesize %s", df_models[tar_group %in% igroup, eq]), d = TRUE))
+  cat("\n")
+  dt <- fread(
+    file = tar_read(twas_results_file, branches = igroup)[[1]]
+  )[
+    UCSC_RefGene_Name != "" & !is.na(UCSC_RefGene_Name) & pvalue < 0.05
+  ][
+    j = Symbol := paste(unique(unlist(strsplit(gsub(",", ";", UCSC_RefGene_Name), ";"))), collapse = ";"),
+    by = "UCSC_RefGene_Name"
+  ][
+    j = list(
+      CpGs = .N,
+      CpG = CpG[pvalue == min(pvalue)],
+      EFFECT = estimate[pvalue == min(pvalue)],
+      P = min(pvalue),
+      FDR = fdr[pvalue == min(pvalue)],
+      MAVG = avgmvalue_meth[pvalue == min(pvalue)],
+      N = n[pvalue == min(pvalue)]
+    ),
+    by = list("Gene" = gsub(",", "/", Symbol))
+  ][
+    order(P),
+    .SD[1:10]
+  ]
+  print(
+    gt(
+      data = dt,
+      rowname_col = "Gene"
+    ) %>%
+      umr() %>%
+      tab_options(
+        column_labels.background.color = "#2a9bd3",
+        stub.background.color = "#2a9bd3"
+      ) %>%
+      tab_style(
+        style = cell_text(style = "italic"),
+        locations = cells_stub()
+      ) %>%
+      fmt_scientific(columns = c("P", "FDR"), decimals = 2) %>%
+      fmt_number(columns = c("EFFECT", "MAVG"), n_sigfig = 3) %>%
+      fmt_number(columns = c("N"), decimals = 0) %>%
+      fmt(columns = "CpG", fns = function(x) gsub(";", "<br>", x)) %>%
+      data_color(
+        columns = "CpGs",
+        colors = col_numeric(palette = "plasma", domain = NULL)
+      ) %>%
+      data_color(
+        columns = "P",
+        colors = col_numeric(palette = "viridis", domain = NULL, reverse = TRUE)
+      ) %>%
+      data_color(
+        columns = "EFFECT",
+        colors = col_numeric(palette = "plasma", domain = NULL)
+      ) %>%
+      cols_align("center") %>%
+      tab_source_note(
+        source_note = html(
+          paste(
+            "<b>CpGs</b>, the number of nominally significant CpGs at the locus (&alpha; = 0.05)",
+            "<b>CpG</b>, the CpG ID of the best CpG at the locus",
+            "<b>EFFECT</b>, the estimate from <code>limma</code>",
+            "<b>P</b>, the p-value from <code>limma</code>",
+            "<b>FDR</b>, the false discovery rate from Benjamini-Hochberg method",
+            "<b>MAVG</b>, the average M-value",
+            "<b>N</b>, the number of individuals.",
+            sep = "; "
+          )
+        )
+      ) %>%
+      tab_options(table.font.size = if (max(nchar(dt[["Gene"]])) > 20) "12px" else "14px")
+  )
+  cat("\n")
+}
+```
+
+---
+class: part-slide
+
+.center[
+<a href="https://www.good.cnrs.fr/" target="_blank"><img src="https://raw.githubusercontent.com/mcanouil/hex-stickers/main/SVG/umr1283_8199.svg" width = "200px"/></br>
+<i style="font-size: 200%">www.good.cnrs.fr</i>
+</a>
+]
