@@ -120,6 +120,10 @@ col_numeric_trans <- function(
 
 # Sofware & Parameters
 
+<!--
+* Tissue: ` `r tar_read(ma_params)[["cell_tissue"]]` `
+-->
+
 * Linear regression based association analysis using `DESeq2`:
   * `DESeq2::nbinomWaldTest`, Waldt test.
   * `DESeq2::results`, comparisons extraction.
@@ -131,8 +135,6 @@ col_numeric_trans <- function(
 * R packages:
     * `DESeq2` ` `r as.character(packageVersion("DESeq2"))` `
         - [https://bioconductor.org/packages/DESeq2/](https://bioconductor.org/packages/DESeq2/)
-    * `bacon` ` `r as.character(packageVersion("bacon"))` `
-        - [https://bioconductor.org/packages/bacon/](https://bioconductor.org/packages/bacon/)
 
 ```{r models-data, include = FALSE}
 df_models <- setDT(tar_read(twas_models))[
@@ -362,29 +364,24 @@ for (igroup in df_models[["tar_group"]]) {
   dt <- fread(
     file = tar_read(twas_results_file, branches = igroup)[[1]]
   )[
-    UCSC_RefGene_Name != "" & !is.na(UCSC_RefGene_Name) & pvalue < 0.05
+    external_gene_name != "" & !is.na(external_gene_name) & pvalue < 0.05
   ][
-    j = Symbol := paste(unique(unlist(strsplit(gsub(",", ";", UCSC_RefGene_Name), ";"))), collapse = ";"),
-    by = "UCSC_RefGene_Name"
+    j = Symbol := paste(unique(unlist(strsplit(gsub(",", ";", external_gene_name), ";"))), collapse = ";"),
+    by = "external_gene_name"
   ][
-    j = list(
-      CpGs = .N,
-      CpG = CpG[pvalue == min(pvalue)],
-      EFFECT = estimate[pvalue == min(pvalue)],
-      P = min(pvalue),
-      FDR = fdr[pvalue == min(pvalue)],
-      MAVG = avgmvalue_meth[pvalue == min(pvalue)],
-      N = n[pvalue == min(pvalue)]
-    ),
-    by = list("Gene" = gsub(",", "/", Symbol))
-  ][
-    order(P),
+    order(pvalue),
     .SD[1:10]
   ]
   print(
     gt(
-      data = dt,
-      rowname_col = "Gene"
+      data = setnames(
+        x = dt[
+          j = .SD,
+          .SDcols = c("Symbol", "baseMean", "log2FoldChange", "lfcSE", "pvalue", "fdr", "n", "ensembl_gene_id")
+        ],
+        old = toupper
+      ),
+      rowname_col = toupper("Symbol")
     ) %>%
       umr() %>%
       tab_options(
@@ -395,38 +392,32 @@ for (igroup in df_models[["tar_group"]]) {
         style = cell_text(style = "italic"),
         locations = cells_stub()
       ) %>%
-      fmt_scientific(columns = c("P", "FDR"), decimals = 2) %>%
-      fmt_number(columns = c("EFFECT", "MAVG"), n_sigfig = 3) %>%
-      fmt_number(columns = c("N"), decimals = 0) %>%
-      fmt(columns = "CpG", fns = function(x) gsub(";", "<br>", x)) %>%
+      fmt_scientific(columns = toupper(c("pvalue", "fdr")), decimals = 2) %>%
+      fmt_number(columns = toupper(c("baseMean"))) %>%
+      fmt_number(columns = toupper(c("log2FoldChange", "lfcSE")), n_sigfig = 3, decimals = 2) %>%
+      fmt_number(columns = toupper(c("n")), decimals = 0) %>%
       data_color(
-        columns = "CpGs",
-        colors = col_numeric(palette = "plasma", domain = NULL)
-      ) %>%
-      data_color(
-        columns = "P",
+        columns = toupper("pvalue"),
         colors = col_numeric(palette = "viridis", domain = NULL, reverse = TRUE)
       ) %>%
       data_color(
-        columns = "EFFECT",
+        columns = toupper("log2FoldChange"),
         colors = col_numeric(palette = "plasma", domain = NULL)
       ) %>%
       cols_align("center") %>%
       tab_source_note(
         source_note = html(
           paste(
-            "<b>CpGs</b>, the number of nominally significant CpGs at the locus (&alpha; = 0.05)",
-            "<b>CpG</b>, the CpG ID of the best CpG at the locus",
-            "<b>EFFECT</b>, the estimate from <code>limma</code>",
-            "<b>P</b>, the p-value from <code>limma</code>",
+            "<b>LOG2FOLDCHANGE</b>, the estimate from <code>DESeq2</code>",
+            "<b>PVALUE</b>, the p-value from <code>DESeq2</code>",
             "<b>FDR</b>, the false discovery rate from Benjamini-Hochberg method",
-            "<b>MAVG</b>, the average M-value",
+            "<b>BASEMEAN</b>, the normalised counts from <code>DESeq2</code>",
             "<b>N</b>, the number of individuals.",
             sep = "; "
           )
         )
       ) %>%
-      tab_options(table.font.size = if (max(nchar(dt[["Gene"]])) > 20) "12px" else "14px")
+      tab_options(table.font.size = if (max(nchar(dt[["Symbol"]])) > 20) "12px" else "14px")
   )
   cat("\n")
 }
