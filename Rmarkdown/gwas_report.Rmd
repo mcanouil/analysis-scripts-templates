@@ -32,7 +32,7 @@ suppressPackageStartupMessages({
 
   library(data.table)
 
-  # library(ragg)
+  library(ragg)
   library(svglite)
   library(showtext)
 

@@ -32,7 +32,7 @@ suppressPackageStartupMessages({
 
   library(data.table)
 
-  # library(ragg)
+  library(ragg)
   library(svglite)
   library(showtext)
 
@@ -157,6 +157,9 @@ epic_annot_pkg_urls <- paste(sprintf("\n-  [%s](%s)", epic_annot_pkg_urls, epic_
 
     * `limma` ` `r as.character(packageVersion("limma"))` `
         - [https://bioconductor.org/packages/limma/](https://bioconductor.org/packages/limma/)
+
+    * `bacon` ` `r as.character(packageVersion("bacon"))` `
+        - [https://bioconductor.org/packages/bacon/](https://bioconductor.org/packages/bacon/)
 
 ```{r models-data, include = FALSE}
 df_models <- setDT(tar_read(ewas_models))[
