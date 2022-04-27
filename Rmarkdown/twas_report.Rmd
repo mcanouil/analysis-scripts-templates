@@ -135,6 +135,21 @@ col_numeric_trans <- function(
 * R packages:
     * `DESeq2` ` `r as.character(packageVersion("DESeq2"))` `
         - [https://bioconductor.org/packages/DESeq2/](https://bioconductor.org/packages/DESeq2/)
+    * `bacon` ` `r as.character(packageVersion("bacon"))` `
+        - [https://bioconductor.org/packages/bacon/](https://bioconductor.org/packages/bacon/)
+
+---
+class: part-slide
+
+# Principal Component Analysis
+
+```{r pca-plots, results = "asis", dev = "ragg_png", fig.height = 10, dpi = 120}
+for (pgg in tar_read(twas_pca_plots, branches = 1)[[1]]) {
+  cat("---\n\n# Quality-Control Pre-analysis\n\n")
+  print(pgg)
+  cat("\n\n")
+}
+```
 
 ```{r models-data, include = FALSE}
 df_models <- setDT(tar_read(twas_models))[
