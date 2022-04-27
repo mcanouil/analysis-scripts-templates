@@ -44,15 +44,15 @@ tar_sample_sheet_qc <- list(
   )
 )
 tar_twas <- list(
+  tar_target(twas_rna_level, c("ensembl_gene_id", "ensembl_transcript_id")[1]),
   tar_target(twas_models,
     command = tar_group(dplyr::group_by(
       data.frame(
         pretty_trait = c("Case/Control"),
         raw_trait = c("group"),
-        covariates = c(""),
-        rna_level = c("ensembl_gene_id", "ensembl_transcript_id")[1]
+        covariates = c("")
       ),
-      pretty_trait, raw_trait, covariates, rna_level
+      pretty_trait, raw_trait, covariates
     )),
     packages = "dplyr",
     iteration = "group"
@@ -60,9 +60,9 @@ tar_twas <- list(
   tar_target(twas_tximport,
     command = read_rsem(
       sample_sheet = twas_sample_sheet_qc,
-      rna_level = twas_models[["rna_level"]]
+      rna_level = twas_rna_level
     ),
-    pattern = map(twas_models),
+    pattern = map(twas_rna_level),
     iteration = "list",
     packages = c("tximport", "readr")
   ),
@@ -74,7 +74,7 @@ tar_twas <- list(
       n_comp = 10,
       fig_n_comp = 3
     ),
-    pattern = map(twas_models, twas_tximport),
+    pattern = map(twas_tximport, twas_rna_level),
     iteration = "list",
     packages = c(
       "flashpcaR", "data.table", "ggplot2", "ggtext", "patchwork",
@@ -85,7 +85,7 @@ tar_twas <- list(
   tar_target(twas_biomart,
     command = get_biomart_information(
       ensembl_id = rownames(twas_tximport[["counts"]]),
-      rna_level = twas_models[["rna_level"]],
+      rna_level = twas_rna_level,
       organism = "hsapiens_gene_ensembl",
       version = unique(sub(
         pattern = ".*Ensembl-([0-9]+)\\.genes\\.results$",
@@ -93,7 +93,7 @@ tar_twas <- list(
         x = basename(twas_sample_sheet_qc[["rnaseq_path"]])
       ))
     ),
-    pattern = map(twas_models, twas_tximport),
+    pattern = map(twas_rna_level, twas_tximport),
     iteration = "list",
     packages = c("biomaRt", "httr", "data.table")
   ),
@@ -103,10 +103,10 @@ tar_twas <- list(
       sample_sheet = twas_sample_sheet_qc,
       model = twas_models,
       path = file.path(output_directory, "twas"),
-      rna_level = twas_models[["rna_level"]],
+      rna_level = twas_rna_level,
       biomart = twas_biomart
     ),
-    pattern = map(twas_models, twas_tximport, twas_biomart),
+    pattern = cross(twas_models, map(twas_rna_level, twas_tximport, twas_biomart)),
     iteration = "list",
     packages = c("data.table", "DESeq2", "S4Vectors", "MatrixGenerics", "utils", "stats"),
     format = "file"
@@ -116,18 +116,18 @@ tar_twas <- list(
     pattern = map(twas_models, twas_results_file),
     iteration = "list",
     packages = c("ggplot2", "ggtext", "data.table", "ggrepel", "scales")
-  )#,
-  # tar_render(twas_report,
-  #   path = here("slides/twas_report.Rmd"),
-  #   output_dir = here("reports"),
-  #   packages = c(
-  #     "xaringan",
-  #     "here", "knitr", "ragg", "ggplot2", "ggtext",
-  #     "patchwork", "data.table", "gt", "scales",
-  #     "showtext", "svglite", "katex",
-  #     "targets", "bacon", "utils"
-  #   )
-  # )
+  ),
+  tar_render(twas_report,
+    path = here("slides/twas_report.Rmd"),
+    output_dir = here("reports"),
+    packages = c(
+      "xaringan",
+      "here", "knitr", "ragg", "ggplot2", "ggtext",
+      "patchwork", "data.table", "gt", "scales",
+      "showtext", "svglite", "katex",
+      "targets", "bacon", "utils"
+    )
+  )
 )
 
 list(
