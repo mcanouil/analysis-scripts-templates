@@ -129,7 +129,7 @@ epic_annot_pkg_urls <- c(
 epic_annot_pkg_urls <- epic_annot_pkg_urls[
   sapply(epic_annot_pkg_urls, function(url_in, t = 2) {
     con <- url(url_in)
-    check <- suppressWarnings(try(open.connection(con,open = "rt", timeout = t), silent = TRUE)[1])
+    check <- suppressWarnings(try(open.connection(con, open = "rt", timeout = t), silent = TRUE)[1])
     suppressWarnings(try(close.connection(con), silent = TRUE))
     is.null(check)
   })
