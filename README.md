@@ -79,3 +79,4 @@ is required\!
   - [genotype\_array\_qc\_report.Rmd](Rmarkdown/genotype_array_qc_report.Rmd)
   - [gwas\_report.Rmd](Rmarkdown/gwas_report.Rmd)
   - [methylation\_array\_qc\_report.Rmd](Rmarkdown/methylation_array_qc_report.Rmd)
+  - [twas\_report.Rmd](Rmarkdown/twas_report.Rmd)
