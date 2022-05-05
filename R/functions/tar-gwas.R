@@ -113,6 +113,7 @@ do_gwas <- function(
 ) {
   INFO <- TEST <- P <- NULL # "no visible binding for global variable" from `data.table` syntax
   path <- normalizePath(path)
+  dir.create(path = path, recursive = TRUE, mode = "0775", showWarnings = FALSE)
 
   plink_version <- try(
     expr = system(sprintf("%s --version", bin_path[["plink2"]]), intern = TRUE),

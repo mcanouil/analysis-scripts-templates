@@ -34,6 +34,8 @@ do_ewas <- function(
   path,
   epic_annot_pkg = "IlluminaHumanMethylationEPICanno.ilm10b5.hg38"
 ) {
+  path <- normalizePath(path)
+  dir.create(path = path, recursive = TRUE, mode = "0775", showWarnings = FALSE)
   if (!inherits(data, "data.table")) data.table::setDT(data)
 
   beta_matrix <- data.table::fread(file = beta_file, header = TRUE)

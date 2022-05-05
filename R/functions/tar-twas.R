@@ -331,6 +331,8 @@ plot_pca_twas <- function(txi, sample_sheet, pca_vars, n_comp = 10, fig_n_comp =
 #' @import utils
 #' @import stats
 do_twas <- function(txi, sample_sheet, model, path, rna_level = c("ensembl_gene_id", "ensembl_transcript_id"), biomart) {
+  path <- normalizePath(path)
+  dir.create(path = path, recursive = TRUE, mode = "0775", showWarnings = FALSE)
   rna_level <- rna_level[1]
   if (is.null(model[["covariates"]]) || nchar(model[["covariates"]]) == 0) {
     covariates <- NULL
