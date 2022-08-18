@@ -111,13 +111,13 @@ read_idats <- function(
     bc <- get_beadcount(rgSet)
     bc2 <- bc[rowSums(is.na(bc)) < bead_cutoff * (ncol(bc)), ]
     mset_f2 <- mset[minfi::featureNames(mset) %in% rownames(bc2), ]
-    n_beads_discarded <- format(dim(mset)[1] - dim(mset_f2)[1], big.mark = ",", digits = 0)
+    n_beads_discarded <- format(dim(mset)[1] - dim(mset_f2)[1], big.mark = ",", digits = digits = 1L, nsmall = 0L)
     mset <- mset_f2
   }
 
   if (filter_non_cpg) {
     mset_f2 <- minfi::dropMethylationLoci(mset, dropCH = TRUE)
-    n_non_cpg_discarded <- format(dim(mset)[1] - dim(mset_f2)[1], big.mark = ",", digits = 0)
+    n_non_cpg_discarded <- format(dim(mset)[1] - dim(mset_f2)[1], big.mark = ",", digits = digits = 1L, nsmall = 0L)
     mset <- mset_f2
   }
 
@@ -148,14 +148,14 @@ read_idats <- function(
     }
     maskname <- rownames(manifest_hg19)[which_population]
     mset_f2 <- mset[!minfi::featureNames(mset) %in% maskname, ]
-    n_snps_discarded <- format(dim(mset)[1] - dim(mset_f2)[1], big.mark = ",", digits = 0)
+    n_snps_discarded <- format(dim(mset)[1] - dim(mset_f2)[1], big.mark = ",", digits = digits = 1L, nsmall = 0L)
     mset <- mset_f2
   }
 
   if (filter_multihit) {
     multi_hit <- get(utils::data("multi.hit", package = "ChAMPdata"))
     mset_f2 <- mset[!minfi::featureNames(mset) %in% multi_hit$TargetID, ]
-    n_multihit_discarded <- format(dim(mset)[1] - dim(mset_f2)[1], big.mark = ",", digits = 0)
+    n_multihit_discarded <- format(dim(mset)[1] - dim(mset_f2)[1], big.mark = ",", digits = digits = 1L, nsmall = 0L)
     mset <- mset_f2
   }
 
@@ -168,7 +168,7 @@ read_idats <- function(
     probe_features <- get("probe.features")
     autosomes <- probe_features[!probe_features$CHR %in% c("X", "Y"), ]
     mset_f2 <- mset[minfi::featureNames(mset) %in% rownames(autosomes), ]
-    n_xy_discarded <- format(dim(mset)[1] - dim(mset_f2)[1], big.mark = ",", digits = 0)
+    n_xy_discarded <- format(dim(mset)[1] - dim(mset_f2)[1], big.mark = ",", digits = digits = 1L, nsmall = 0L)
     mset <- mset_f2
   }
 
@@ -213,12 +213,12 @@ read_idats <- function(
     log_msg <- c(log_msg, paste0(
       "Filtering samples with call rate below ",
       paste(format(callrate_samples * 100, digits = 1, nsmall = 1), "%"), ":\n",
-      "  - ", format(length(bad_samples), big.mark = ",", digits = 0), " samples were discarded."
+      "  - ", format(length(bad_samples), big.mark = ",", digits = digits = 1L, nsmall = 0L), " samples were discarded."
     ))
     log_msg <- c(log_msg, paste0(
       "Filtering probes with call rate below ",
       paste(format(callrate_probes * 100, digits = 1, nsmall = 1), "%"), ":\n",
-      "  - ", format(length(bad_cpgs), big.mark = ",", digits = 0), " probes were discarded."
+      "  - ", format(length(bad_cpgs), big.mark = ",", digits = digits = 1L, nsmall = 0L), " probes were discarded."
     ))
   }
   if (filter_beads) {
@@ -258,9 +258,9 @@ read_idats <- function(
     "Ones have been replaced with largest value below one.",
     paste0(
       "Data contains:\n",
-      "  - ", format(dim(methylation_matrix)[1], big.mark = ",", digits = 0), " probes.\n",
-      "  - ", format(dim(methylation_matrix)[2], big.mark = ",", digits = 0), " samples.\n",
-      "  - ", format(sum(is.na(methylation_matrix)), big.mark = ",", digits = 0), " missing values."
+      "  - ", format(dim(methylation_matrix)[1], big.mark = ",", digits = digits = 1L, nsmall = 0L), " probes.\n",
+      "  - ", format(dim(methylation_matrix)[2], big.mark = ",", digits = digits = 1L, nsmall = 0L), " samples.\n",
+      "  - ", format(sum(is.na(methylation_matrix)), big.mark = ",", digits = digits = 1L, nsmall = 0L), " missing values."
     )
   )
   if (echo) {

@@ -1013,7 +1013,7 @@ plot_pca_ethnicty <- function(data, pve, loadings) {
       title = "Ethnicity Inference Based On 1,000 Genomes Project Data",
       subtitle = paste0(
         "Principal Component Analysis using ",
-        format(nrow(loadings), big.mark = ",", digits = 0),
+        format(nrow(loadings), big.mark = ",", digits = digits = 1L, nsmall = 0L),
         " SNPs, with <b>A</b>) population level, and <b>B</b>) super population level."
       ),
       tag_levels = "A",

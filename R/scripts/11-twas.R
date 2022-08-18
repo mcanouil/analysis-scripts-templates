@@ -787,7 +787,7 @@ for (rna_level in c("genes", "isoforms")) {
                 out <- sprintf("<b>%s</b>) %s",
                   LETTERS[seq_along(lp)],
                   sapply(lp, function(.gg) {
-                    format(sum(.gg$data[[p]] < alpha, na.rm = TRUE), big.mark = ",", digits = 0, trim = TRUE)
+                    format(sum(.gg$data[[p]] < alpha, na.rm = TRUE), big.mark = ",", digits = digits = 1L, nsmall = 0L, trim = TRUE)
                   })
                 )
                 sprintf(

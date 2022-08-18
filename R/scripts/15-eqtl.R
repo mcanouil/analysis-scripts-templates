@@ -121,7 +121,7 @@ for (rna_level in c("genes", "isoforms")) {
       countsFromAbundance = "no"
     )
     txi_counts$length[txi_counts$length == 0] <- 1
-    txi_counts[["counts"]] <- round(txi_counts[["counts"]], digits = 0)
+    txi_counts[["counts"]] <- round(txi_counts[["counts"]], digits = digits = 1L, nsmall = 0L)
     class(txi_counts[["counts"]]) <- "integer"
     gene_matrix <- txi_counts[["counts"]][
       rowVars(txi_counts[["counts"]]) != 0 &
