@@ -187,7 +187,7 @@ enrich_sets <- lapply(
 #         p.adjust < fdr_pathway
 #       ][
 #         j = list(
-#           p.adjust = max(round(-log10(c(fdr_pathway, p.adjust)), digits = digits = 1L, nsmall = 0L)),
+#           p.adjust = max(round(-log10(c(fdr_pathway, p.adjust)), digits = 1L, nsmall = 0L)),
 #           Count = max(c(Count, 0))
 #         )
 #       ]
@@ -277,9 +277,9 @@ enrich_sets <- lapply(
 #     caption_plots <- sapply(.enrich_sets, FUN = function(.enrich) {
 #       sprintf(
 #         fmt = "%s (p-value < %s) and %s (all)",
-#         format(length(.enrich@gene), digits = digits = 1L, nsmall = 0L, big.mark = ","),
+#         format(length(.enrich@gene), digits = 1L, nsmall = 0L, big.mark = ","),
 #         pvalue_gene,
-#         format(length(.enrich@universe), digits = digits = 1L, nsmall = 0L, big.mark = ",")
+#         format(length(.enrich@universe), digits = 1L, nsmall = 0L, big.mark = ",")
 #       )
 #     })
 #     caption_plots <- sprintf(fmt = "<b>%s</b>) %s",
